@@ -1,25 +1,36 @@
 import React from 'react';
 import logo from './logo.svg';
 import './App.css';
+import {BrowserRouter, Route, Routes} from "react-router-dom";
+import LoginPage from "./user/LoginPage";
+import NavigationBar from "./NavigationBar";
+import HomePage from "./HomePage";
+import MyPage from "./user/MyPage";
+import SignUpPage from "./user/SignUpPage";
+import CalenderPage from "./calender/CalenderPage";
+import CommunityPage from "./community/CommunityPage";
+import CompanyPage from "./company/CompanyPage";
+import ReviewPage from "./review/ReviewPage";
+import SearchPage from "./search/SearchPage";
+
 
 function App() {
   return (
-    <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.tsx</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
-    </div>
+    <BrowserRouter>
+      <Routes>
+        <Route path={'/'} element={<NavigationBar/>}>
+            <Route index element={<HomePage/>}></Route>
+            <Route path={'/calender'} element={<CalenderPage/>}></Route>
+            <Route path={'/community'} element={<CommunityPage/>}></Route>
+            <Route path={'/company'} element={<CompanyPage/>}></Route>
+            <Route path={'/review'} element={<ReviewPage/>}></Route>
+            <Route path={'/search'} element={<SearchPage/>}></Route>
+            <Route path={'/login'} element={<LoginPage/>}></Route>
+            <Route path={'/mypage'} element={<MyPage/>}></Route>
+            <Route path={'/signup'} element={<SignUpPage/>}></Route>
+        </Route>
+      </Routes>
+    </BrowserRouter>
   );
 }
 
