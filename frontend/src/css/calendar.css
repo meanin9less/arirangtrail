@@ -1,0 +1,121 @@
+.festival-calendar-container {
+    max-width: 800px;
+    margin: 40px auto;
+    font-family: sans-serif;
+}
+.custom-header {
+    margin-bottom: 20px;
+}
+.header-title {
+    font-size: 28px;
+    font-weight: 300;
+}
+.header-title::after {
+    content: "2025.7";
+    display: block;
+    font-size: 56px;
+    font-weight: 700;
+    color: #8a2be2;
+    margin-top: -10px;
+}
+.fc {
+    border: none;
+}
+.fc .fc-toolbar.fc-header-toolbar {
+    margin-bottom: 1.5em;
+}
+.fc .fc-toolbar-title {
+    font-size: 24px;
+    font-weight: 600;
+    color: transparent;
+}
+.fc .fc-button {
+    background: transparent;
+    border: 1px solid #ddd;
+    color: #555;
+    box-shadow: none;
+}
+.fc .fc-col-header-cell {
+    background: #f8f3ff;
+    border: none;
+    padding: 15px 0;
+    font-weight: 600;
+}
+.fc .fc-col-header-cell.fc-day-sun {
+    color: #e63946;
+}
+.fc .fc-col-header-cell.fc-day-sat {
+    color: #1e90ff;
+}
+.fc .fc-daygrid-day {
+    border: 1px solid #f0f0f0;
+    padding: 5px;
+}
+.day-content-wrapper {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    cursor: pointer;
+}
+.day-number {
+    font-size: 18px;
+    font-weight: 500;
+}
+.fc-day-sun .day-number {
+    color: #e63946;
+}
+.fc-day-sat .day-number {
+    color: #1e90ff;
+}
+.day-event-info {
+    margin-top: 4px;
+}
+.day-event-count {
+    font-size: 12px;
+    color: #555;
+}
+.selected-date {
+    background-color: #8a2be2 !important;
+    color: white !important;
+}
+.selected-date .day-number,
+.selected-date .day-event-count {
+    color: white !important;
+}
+.festival-list-container {
+    margin-top: 30px;
+    padding: 20px;
+    background-color: #fafafa;
+    border-radius: 8px;
+}
+.festival-list-container h3 {
+    margin-top: 0;
+    font-size: 20px;
+    font-weight: 600;
+    border-bottom: 2px solid #eee;
+    padding-bottom: 10px;
+    margin-bottom: 20px;
+}
+.festival-list-container ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+.festival-item {
+    display: flex;
+    justify-content: space-between;
+    padding: 15px 10px;
+    border-bottom: 1px solid #eee;
+}
+.festival-item:last-child {
+    border-bottom: none;
+}
+.festival-title {
+    font-weight: 500;
+}
+.festival-location {
+    color: #777;
+    font-size: 14px;
+}
