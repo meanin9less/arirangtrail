@@ -1,4 +1,5 @@
-import React from 'react'; // React 라이브러리를 가져옵니다.
+import React from 'react';
+import {Link} from "react-router-dom"; // React 라이브러리를 가져옵니다.
 
 // Login 컴포넌트가 받을 props는 지금은 없으므로, 비어있는 인터페이스를 만듭니다.
 // 이렇게 하면 TypeScript에게 "나는 외부에서 특별히 받을 데이터(props)가 없어"라고 알려주는 거예요.
@@ -23,7 +24,10 @@ const LoginPage = ({}: LoginProps) => {
                 </div>
                 <button type="submit">로그인</button>
             </form>
-            <button style={{marginTop: '10px'}}>회원가입</button> {/* 간단한 여백 추가 */}
+            <Link to={'/signup'}>
+                <button style={{marginTop: '10px'}}>회원가입</button> {/* 간단한 여백 추가 */}
+            </Link>
+
         </div>
     );
 };
