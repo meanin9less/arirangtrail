@@ -8,7 +8,7 @@ const SearchPage = ({}:SearchProps)=>{
 
     return(
         <>
-            지역페이지
+            areacode 분류
         </>
     );
 }
