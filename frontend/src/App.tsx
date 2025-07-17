@@ -3,7 +3,7 @@ import logo from './logo.svg';
 import './App.css';
 import {BrowserRouter, Route, Routes} from "react-router-dom";
 import LoginPage from "./user/LoginPage";
-import NavigationBar from "./NavigationBar";
+import NavigationBar from "./navigation/NavigationBar";
 import HomePage from "./HomePage";
 import MyPage from "./user/MyPage";
 import SignUpPage from "./user/SignUpPage";
