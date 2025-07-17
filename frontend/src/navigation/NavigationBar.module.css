@@ -1,90 +1,211 @@
-/* ✨ 1. 내비게이션 바 전체 스타일 */
+/* NavigationBar.module.css */
+
+/* 1. 내비게이션 바 전체 스타일 */
 .navbar {
     background-color: #333; /* 어두운 배경색 */
     color: white;          /* 글자색 흰색 */
-    padding: 15px 20px;    /* 상하좌우 패딩으로 높이와 여백 확보 */
-    display: flex;         /* Flexbox 활성화 */
-    justify-content: space-between; /* 요소들을 양 끝과 중앙으로 분산 배치 */
-    align-items: center;    /* 세로 중앙 정렬 */
-    box-shadow: 0 2px 5px rgba(0,0,0,0.2); /* 그림자 효과로 입체감 부여 */
-    min-height: 60px;       /* 최소 높이 설정 (모바일에서도 충분한 터치 영역) */
-    flex-wrap: wrap;        /* 화면이 작아지면 줄바꿈 허용 (반응형) */
+    padding: 15px 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+    min-height: 60px;
+    flex-wrap: wrap;
 }
 
-/* ✨ 2. 그룹별 정렬 */
+/* 2. 그룹별 정렬 */
 .navGroupLeft {
-    margin-right: auto; /* auto margin으로 좌측에 고정 */
+    margin-right: auto;
 }
 
 .navGroupCenter {
     display: flex;
-    gap: 25px; /* 링크들 사이의 간격 */
-    flex-wrap: wrap; /* 화면이 작아지면 줄바꿈 허용 */
-    justify-content: center; /* 중앙 그룹 내 링크들 중앙 정렬 */
-    margin: 0 auto; /* auto margin으로 중앙에 배치 */
+    gap: 25px;
+    flex-wrap: wrap;
+    justify-content: center;
+    margin: 0 auto;
 }
 
 .navGroupRight {
-    margin-left: auto; /* auto margin으로 우측에 고정 */
+    margin-left: auto;
+    position: relative; /* 드롭다운 메뉴의 위치 기준점 */
 }
 
-/* ✨ 3. 모든 일반 링크 기본 스타일 */
-.navLink, .homeLink, .loginLink {
+/* 3. 모든 일반 링크 기본 스타일 */
+.navLink, .homeLink {
     color: white;
-    text-decoration: none; /* 기본 밑줄 제거 */
-    padding: 10px 15px;    /* 클릭 영역 확보 */
+    text-decoration: none;
+    padding: 10px 15px;
     border-radius: 5px;
-    position: relative; /* 밑줄 애니메이션을 위한 기준점 */
-    overflow: hidden; /* 밑줄이 링크 밖으로 나가지 않도록 */
-    transition: all 0.3s ease-in-out; /* 모든 변화에 부드러운 애니메이션 적용 */
+    position: relative;
+    overflow: hidden;
+    transition: all 0.3s ease-in-out;
+
+    display: flex;
+    align-items: center;
+    gap: 8px; /* 아이콘과 텍스트 사이의 간격 (홈 링크용) */
 }
 
-/* ✨ 4. 홈 링크 특정 스타일 */
+/* 4. 홈 링크 특정 스타일 */
 .homeLink {
     font-weight: bold;
     font-size: 1.2em;
+    /* 홈 링크 배경색은 기본적으로 투명하게 유지하고 호버 시에만 색상 변경 */
 }
 
-/* ✨ 5. 로그인 링크 특정 스타일 */
-.loginLink {
-    background-color: #007bff; /* 로그인 버튼 강조색 */
+/* 5. 로그인 링크 특정 스타일 (로그아웃 상태일 때 텍스트만 있는 링크) */
+.loginLinkTextOnly {
+    color: white;
+    text-decoration: none;
+    padding: 10px 15px;
+    border-radius: 5px;
+    transition: all 0.3s ease-in-out;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    white-space: nowrap;
 }
 
 /* ---------------------------------------------------------------------------------- */
-/* ✨ 6. 마우스 오버 (Hover) 애니메이션 효과 */
+/* 6. 마우스 오버 (Hover) 애니메이션 효과 */
 /* ---------------------------------------------------------------------------------- */
 
-/* 모든 링크 (홈, 일반, 로그인)에 적용될 공통 호버 효과 */
 .navLink:hover,
-.homeLink:hover,
-.loginLink:hover {
-    transform: translateY(-2px) scale(1.02); /* 살짝 위로 이동하고 아주 조금 커짐 */
-    background-color: rgba(255, 255, 255, 0.1); /* 배경색을 살짝 밝게 */
-    box-shadow: 0 4px 8px rgba(0,0,0,0.3); /* 그림자 강화 */
+.homeLink:hover {
+    transform: translateY(-2px) scale(1.02);
+    background-color: rgba(255, 255, 255, 0.1); /* 배경색을 살짝 밝게 (기존 스타일) */
+    box-shadow: 0 4px 8px rgba(0,0,0,0.3);
 }
 
-/* ✨ 밑줄 애니메이션 (::after 가상 요소를 사용) */
+.loginLinkTextOnly:hover {
+    transform: translateY(-2px) scale(1.02);
+    background-color: rgba(0, 112, 192, 0.4); /* 로그인 강조색의 더 어두운 버전 (청색 계열) */
+    box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+}
+
+
+/* 밑줄 애니메이션 (::after 가상 요소를 사용) */
 .navLink::after,
 .homeLink::after,
-.loginLink::after {
-    content: ''; /* 가상 요소는 content 속성이 필수 */
+.loginLinkTextOnly::after,
+.userTextButton::after { /* userTextButton에도 밑줄 적용 */
+    content: '';
     position: absolute;
     bottom: 0;
     left: 0;
-    width: 0; /* 초기 너비 0 */
-    height: 2px; /* 밑줄 두께 */
-    background-color: rgba(255, 255, 255, 0.6); /* 흰색보다 살짝 약한 색 */
-    transition: width 0.3s ease-out; /* 너비 변화에만 애니메이션 적용 */
+    width: 0;
+    height: 2px;
+    background-color: rgba(255, 255, 255, 0.6); /* 흰색보다 살짝 약한 색 (기존 스타일) */
+    transition: width 0.3s ease-out;
 }
 
-/* 마우스 오버 시 밑줄 너비 100%로 확장 */
 .navLink:hover::after,
 .homeLink:hover::after,
-.loginLink:hover::after {
+.loginLinkTextOnly:hover::after,
+.userTextButton:hover::after {
     width: 100%;
 }
 
-/* 로그인 링크의 밑줄은 강조색과 어울리도록 살짝 다르게 */
-.loginLink::after {
-    background-color: rgba(0, 123, 255, 0.8); /* 로그인 버튼 강조색보다 살짝 진하게 */
+.loginLinkTextOnly::after {
+    background-color: rgba(0, 123, 255, 0.8); /* 로그인 버튼 강조색과 어울리도록 (청색 계열) */
+}
+
+/* 7. 아이콘 이미지 스타일 (홈 아이콘에만 적용) */
+.icon {
+    height: 20px; /* 아이콘 이미지 높이 설정 */
+    width: 20px; /* 높이와 동일하게 설정하여 정사각형 유지 */
+    object-fit: contain;
+    filter: invert(100%); /* ✨ 검은색 아이콘을 흰색으로 반전 */
+    transition: transform 0.3s ease;
+}
+
+.homeLink:hover .icon {
+    transform: scale(1.1); /* 마우스 오버 시 아이콘도 살짝 커짐 */
+}
+
+/* 9-1. 사용자 텍스트 버튼 스타일 (로그인 상태일 때 마이페이지 버튼) */
+.userTextButton {
+    background-color: #007bff; /* 청색 계열 */
+    color: white;
+    border: none;
+    padding: 10px 15px;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: all 0.3s ease-in-out;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    white-space: nowrap;
+}
+
+/* 마이페이지 버튼 호버 시 청색 계열 배경 유지 */
+.userTextButton:hover {
+    transform: translateY(-2px) scale(1.02);
+    background-color: rgba(0, 112, 192, 0.4); /* 호버 시 더 어둡게 (청색 계열) */
+    box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+}
+
+/* 10. 사용자 드롭다운 메뉴 컨테이너 */
+.userMenuContainer {
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+/* 11. 드롭다운 메뉴 스타일 */
+.userDropdownMenu {
+    position: absolute;
+    top: 100%;
+    right: 0;
+    background-color: #444; /* 메뉴 배경색 */
+    border-radius: 5px;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+    min-width: 150px;
+    display: flex;
+    flex-direction: column;
+    padding: 10px 0;
+    z-index: 100;
+    animation: fadeIn 0.2s ease-out;
+}
+
+/* 12. 드롭다운 메뉴 항목 스타일 */
+.dropdownItem {
+    color: white;
+    text-decoration: none;
+    padding: 10px 15px;
+    text-align: left;
+    transition: background-color 0.2s ease;
+    border: none;
+    background: none;
+    width: 100%;
+    cursor: pointer;
+}
+
+.dropdownItem:hover {
+    background-color: rgba(255, 255, 255, 0.1); /* 호버 시 배경색 변경 (기존 스타일) */
+}
+
+/* 13. 애니메이션 키프레임 */
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* 텍스트를 시각적으로 숨기지만 스크린 리더에서는 읽히도록 (선택 사항) */
+.linkText {
+    /* position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0; */
 }

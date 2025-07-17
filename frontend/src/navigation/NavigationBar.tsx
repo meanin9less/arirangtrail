@@ -1,27 +1,58 @@
-import React from 'react';
-import { Link, Outlet } from "react-router-dom";
-// ✨ CSS 모듈 임포트: 같은 디렉토리에 NavigationBar.module.css 파일을 생성해야 합니다.
+import React, { useState, useEffect, useRef } from 'react';
+import { Link, Outlet, useNavigate } from "react-router-dom";
+import { useSelector, useDispatch } from 'react-redux';
+import { RootState, AppDispatch, setToken } from '../store';
 import styles from './NavigationBar.module.css';
 
+// ✨ homeIcon만 임포트합니다.
+import homeIcon from '../images/home.png';
+import personIcon from '../images/person.png';
 
 interface NaviProps {
     // 현재는 아무 props도 받지 않습니다.
 }
 
 const NavigationBar = ({}: NaviProps) => {
+    const navigate = useNavigate();
+    const dispatch: AppDispatch = useDispatch();
+    const jwtToken = useSelector((state: RootState) => state.token.token);
+    const isLoggedIn = !!jwtToken;
+
+    const [showUserDropdown, setShowUserDropdown] = useState(false);
+    const dropdownRef = useRef<HTMLDivElement>(null);
+
+    useEffect(() => {
+        const handleClickOutside = (event: MouseEvent) => {
+            if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+                setShowUserDropdown(false);
+            }
+        };
+
+        document.addEventListener('mousedown', handleClickOutside);
+        return () => {
+            document.removeEventListener('mousedown', handleClickOutside);
+        };
+    }, [dropdownRef]);
+
+    const handleLogout = () => {
+        localStorage.removeItem('jwtToken');
+        dispatch(setToken(null));
+        setShowUserDropdown(false);
+        navigate('/login');
+    };
 
     return (
         <>
-            {/* ✨ nav 태그에 클래스 적용 및 기본 스타일 유지 */}
             <nav className={styles.navbar}>
-                {/* ✨ 좌측 그룹: 홈 */}
+                {/* 좌측 그룹: 홈 아이콘 적용 */}
                 <div className={styles.navGroupLeft}>
                     <Link to={"/"} className={styles.homeLink}>
-                        홈
+                        <img src={homeIcon} alt="홈 아이콘" className={styles.icon}/> {/* 홈 아이콘 이미지 */}
+                        <span className={styles.linkText}></span>
                     </Link>
                 </div>
 
-                {/* ✨ 중앙 그룹: 캘린더, 지역검색, 축제후기, 커뮤니티, 회사소개 */}
+                {/* 중앙 그룹: 기존 링크들 */}
                 <div className={styles.navGroupCenter}>
                     <Link to={"/calender"} className={styles.navLink}>캘린더</Link>
                     <Link to={"/search"} className={styles.navLink}>지역검색</Link>
@@ -30,14 +61,37 @@ const NavigationBar = ({}: NaviProps) => {
                     <Link to={"/company"} className={styles.navLink}>회사소개</Link>
                 </div>
 
-                {/* ✨ 우측 그룹: 로그인 */}
-                <div className={styles.navGroupRight}>
-                    <Link to={"/login"} className={styles.loginLink}>
-                        로그인
-                    </Link>
+                {/* 우측 그룹: 로그인/마이페이지 조건부 렌더링 (텍스트만) */}
+                <div className={styles.navGroupRight} ref={dropdownRef}>
+                    {isLoggedIn ? (
+                        // 로그인 상태일 때: 마이페이지 텍스트 버튼
+                        <div className={styles.userMenuContainer}>
+                            <button
+                                className={styles.userTextButton}
+                                onClick={() => setShowUserDropdown(!showUserDropdown)}
+                            >
+                                마이페이지
+                            </button>
+                            {showUserDropdown && (
+                                // 드롭다운 메뉴
+                                <div className={styles.userDropdownMenu}>
+                                    <Link to={"/mypage"} className={styles.dropdownItem} onClick={() => setShowUserDropdown(false)}>
+                                        마이페이지
+                                    </Link>
+                                    <button onClick={handleLogout} className={styles.dropdownItem}>
+                                        로그아웃
+                                    </button>
+                                </div>
+                            )}
+                        </div>
+                    ) : (
+                        // 로그아웃 상태일 때: 로그인 텍스트 링크
+                        <Link to={"/login"} className={styles.loginLinkTextOnly}>
+                            <img src={personIcon} alt="로그인 아이콘" className={styles.icon}/> {/* 로그인 아이콘 이미지 */}
+                        </Link>
+                    )}
                 </div>
             </nav>
-            {/* 내비게이션 바 아래에 자식 라우트 컴포넌트들이 렌더링될 위치 */}
             <Outlet />
         </>
     );
