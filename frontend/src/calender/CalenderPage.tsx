@@ -1,41 +1,43 @@
-// --- 1. 필요한 도구와 부품들 가져오기 (import) ---
-// 리액트의 핵심 기능과, 컴포넌트의 '기억(상태)'을 관리하고, API 호출 시점을 정할 도구들을 불러옵니다.
 import React, {useState, useEffect, useMemo} from "react";
-// FullCalendar 라이브러리에서 리액트용 달력 부품과 확장 기능들을 가져옵니다.
+
+// FullCalendar 라이브러리에서 리액트용 달력 부품과 확장 기능들
 import FullCalendar from "@fullcalendar/react";
 import dayGridPlugin from "@fullcalendar/daygrid";
 import interactionPlugin, {DateClickArg} from "@fullcalendar/interaction";
-// 인터넷을 통해 데이터를 요청하는 '택배기사' 역할을 할 axios를 가져옵니다.
+
 import axios from "axios";
-// 우리가 직접 꾸밀 디자인(CSS) 파일을 가져옵니다.
 import "../css/calendar.css"
+import {useNavigate} from "react-router-dom";
 
-// --- 2. 데이터의 '설계도' 정의하기 ---
-
-// (1) 외부용 설계도: API 응답의 'item' 객체 하나의 모양
-// 우리가 사용할 데이터만 골라서 정의합니다. (전부 다 쓸 필요 없음!)
-interface ApiFestivalItem {
-    title: string;          // "title": "베어트리파크 봄꽃 축제"
-    addr1: string;          // "addr1": "세종특별자치시..."
-    eventstartdate: string; // "eventstartdate": "20250329"
-    eventenddate: string;   // "eventenddate": "20250511"
-    firstimage: string;     // "firstimage": "http://..."
-    tel: string;            // "tel": "044-866-7766"
+// 외부용 설계도: API 응답의 'item' 객체 하나의 모양
+interface ApiFestival {
+    title: string;
+    addr1: string;
+    addr2: string;
+    contenttypeid: string;
+    contentid: string;
+    eventstartdate: string;
+    eventenddate: string;
+    firstimage: string;
+    firstimage2: string;
+    tel: string;
 }
 
-// (2) 내부용 설계도: 우리 앱에서 사용할 최종 데이터의 모양
-interface Festival {
-    id: string;
+// 내부용 설계도: 우리 앱에서 사용할 최종 데이터의 모양
+interface MyFestival {
     title: string;
-    start: string;
-    end: string;
     location: string;
-    image?: string; // 이미지는 없을 수도 있으니 '?'를 붙여 선택적 속성으로 만듭니다.
+    addr1: string;
+    addr2: string;
+    id: string;
+    startdate: string;
+    enddate: string;
+    image?: string; // ?선택적 속성
+    image2?: string;
     tel?: string;
 }
 
-// --- 3. 작은 '도우미' 함수 만들기 ---
-// new Date()로 만들어진 날짜 객체는 다루기 복잡해서, 'YYYY-MM-DD' 형태의 예쁜 문자열로 바꿔주는 도우미입니다.
+// new Date()로 만들어진 날짜 객체를 'YYYY-MM-DD' 형태의 문자열로 변환
 const toYYYYMMDD = (date: Date): string => {
     const year = date.getFullYear();
     const month = (date.getMonth() + 1).toString().padStart(2, "0");
@@ -43,180 +45,206 @@ const toYYYYMMDD = (date: Date): string => {
     return `${year}-${month}-${day}`;
 };
 
-// --- 4. '축제 달력'이라는 이름의 메인 부품 만들기 시작 ---
+const getLastDayOfMonth = (year: number, month: number): number => {
+    return new Date(year, month, 0).getDate();
+};
+
+// 메인 켈린더 컴포넌트
 const CalendarPage = () => {
-    // --- 4-1. 이 부품이 기억해야 할 중요한 정보들(상태, State) 정의 ---
-    // API를 통해 받아온 실제 축제 데이터들을 저장할 '바구니'입니다. 처음엔 비어있습니다.
-    const [festivals, setFestivals] = useState<Festival[]>([]);
-    // 사용자가 달력을 넘겨서 보게 될 '현재 연도'를 기억하는 공간입니다.
+    // API를 통해 받아온 실제 축제 데이터들을 저장
+    const [festivals, setFestivals] = useState<MyFestival[]>([]);
     const [currentYear, setCurrentYear] = useState(new Date().getFullYear());
-    // 사용자가 보게 될 '현재 월'을 기억하는 공간입니다.
     const [currentMonth, setCurrentMonth] = useState(new Date().getMonth() + 1);
-    // 사용자가 클릭한 '선택된 날짜'를 기억하는 공간입니다.
     const [selectedDate, setSelectedDate] = useState<string | null>(null);
-    // API 요청이 진행 중인지(로딩 중인지) 알려주는 스위치입니다. 처음엔 로딩 상태가 아닙니다.
-    const [isLoading, setIsLoading] = useState(false);
-    // 만약 에러가 발생하면, 어떤 에러인지 기록해 둘 메모장입니다.
-    const [error, setError] = useState<string | null>(null);
+    const navigate = useNavigate();
 
-    // --- 4-2. API 데이터를 가져오는 '심장' 같은 부분 (useEffect) ---
-    // 이 코드는 '감시카메라'와 같습니다. [currentYear, currentMonth] 값이 바뀔 때마다 아래의 모든 코드를 다시 실행합니다.
+    // 외부 API 데이터 가져오기
     useEffect(() => {
-        // 'fetchFestivals'라는 이름의, 서버에 데이터를 요청하는 함수를 만듭니다.
         const fetchFestivals = async () => {
-            setIsLoading(true); // "지금부터 데이터 가지러 갈게!" 로딩 스위치를 켭니다.
-            setError(null); // 혹시 이전에 에러가 있었다면, 일단 깨끗하게 지우고 시작합니다.
-
+            const SERVICE_KEY = "WCIc8hzzBS3Jdod%2BVa357JmB%2FOS0n4D2qPHaP9PkN4bXIfcryZyg4iaZeTj1fEYJ%2B8q2Ol8FIGe3RkW3d72FHA%3D%3D";
+            const API_URL =
+                `https://apis.data.go.kr/B551011/KorService2/searchFestival2?serviceKey=${SERVICE_KEY}&MobileApp=AppTest&MobileOS=ETC&_type=json`;
             try {
-                // 'try-catch'는 "일단 시도해보고, 만약 실패하면 알려줘" 라는 뜻의 안전장치입니다.
+                const lastDay = getLastDayOfMonth(currentYear, currentMonth);
+                const startDateString = `${currentYear}${currentMonth.toString().padStart(2, "0")}01`;
+                const endDateString = `${currentYear}${currentMonth.toString().padStart(2, "0")}${lastDay.toString().padStart(2, '0')}`;
 
-                // [핵심!] axios 택배기사를 시켜 API 서버로 '데이터 요청서'를 보냅니다.
-                const response = await axios.get(
-                    // =================================================================
-                    // ▼▼▼ 1. 나중에 여기에 실제 API 주소를 넣어주세요. ▼▼▼
-                    "YOUR_API_ENDPOINT_HERE", // 예: 'https://korean.visitkorea.or.kr/kfes/list/selectFstvlCal.do'
-                    // =================================================================
-                    {
-                        // 상세 요청 내용 (params)
-                        params: {
-                            // =================================================================
-                            // ▼▼▼ 2. API 문서에 맞는 파라미터 이름을 여기에 넣어주세요. ▼▼▼
-                            searchYr: currentYear,
-                            searchMn: currentMonth.toString().padStart(2, "0"),
-                            // =================================================================
-                        },
-                    }
-                );
+                const response = await axios.get(API_URL, {
+                    params: {
+                        numOfRows: 50,
+                        pageNo: 1,
+                        arrange: "B",
+                        eventStartDate: startDateString,
+                        eventEndDate: endDateString,
+                    },
+                });
+                console.log("서버로부터 받은 전체 데이터:", response.data);
 
-                // [가장 중요!] 서버가 준 데이터(response.data)를 우리 앱에 맞게 변환하는 과정입니다.
-                // 서버가 준 데이터 묶음이 response.data.resultList 에 들어있다고 가정합니다.
-                // 이 부분은 실제 API 응답 구조를 보고 수정해야 합니다.
-                const festivalListFromApi = response.data.resultList || [];
-
-                const transformedFestivals: Festival[] = festivalListFromApi.map(
-                    (item: ApiFestival) => {
-                        // 'YYYYMMDD'를 'YYYY-MM-DD' 형식으로 바꿔줍니다.
-                        const startDate = `${item.fstvlBgngDe.substring(
-                            0,
-                            4
-                        )}-${item.fstvlBgngDe.substring(4, 6)}-${item.fstvlBgngDe.substring(
-                            6,
-                            8
-                        )}`;
-                        const endDateRaw = new Date(
-                            `${item.fstvlEndDe.substring(0, 4)}-${item.fstvlEndDe.substring(
-                                4,
-                                6
-                            )}-${item.fstvlEndDe.substring(6, 8)}`
-                        );
-                        endDateRaw.setDate(endDateRaw.getDate() + 1); // 종료일은 +1일 해야 달력에 예쁘게 표시됩니다.
-                        const endDate = toYYYYMMDD(endDateRaw);
-
-                        // 최종적으로 우리 앱이 사용할 'Festival' 모양으로 조립해서 반환합니다.
+                const festivalListFromApi = response.data.response.body.items.item || [];
+                const transformedFestivals: MyFestival[] = festivalListFromApi.map(
+                    (item: any) => {
                         return {
-                            id: `${item.fstvlBgngDe}-${item.fstvlNm}`,
-                            title: item.fstvlNm,
-                            start: startDate,
-                            end: endDate,
-                            location: item.opnhmVenu,
+                            serviceKey: SERVICE_KEY,
+                            id: item.contentid,
+                            contenttypeid: item.contenttypeid,
+                            title: item.title,
+                            addr1: item.addr1,
+                            addr2: item.addr2,
+                            location: `${item.addr1} ${item.addr2}`.trim(),
+                            startdate: `${item.eventstartdate.substring(0, 4)}-${item.eventstartdate.substring(4, 6)}-${item.eventstartdate.substring(6, 8)}`,
+                            enddate: `${item.eventenddate.substring(0, 4)}-${item.eventenddate.substring(4, 6)}-${item.eventenddate.substring(6, 8)}`,
+                            image: item.firstimage,
+                            image2: item.firstimage2,
+                            tel: item.tel,
                         };
                     }
                 );
-
-                setFestivals(transformedFestivals); // 예쁘게 변환된 데이터들을 우리 '축제 바구니'에 넣어줍니다. (이때 화면이 새로 그려집니다!)
+                setFestivals(transformedFestivals); // 변환된 데이터들을 우리 바구니에 넣어줌. (화면이 새로 랜더링)
             } catch (err) {
-                // 만약 위 'try' 과정에서 뭔가 실패하면(catch), 여기로 빠집니다.
-                console.error("API 호출 중 에러 발생:", err); // 개발자에게만 자세한 에러 내용을 보여줍니다.
-                setError("축제 정보를 불러오는 데 실패했습니다."); // 사용자에게 보여줄 간단한 에러 메시지를 메모장에 기록합니다.
-            } finally {
-                // 성공하든 실패하든, 모든 작업이 끝나면 무조건 실행됩니다.
-                setIsLoading(false); // "데이터 가져오는 일 끝났어!" 로딩 스위치를 끕니다.
+                console.error("API 호출 중 에러 발생:", err);
             }
         };
 
-        fetchFestivals(); // 위에서 길게 만든 'fetchFestivals' 함수를 여기서 실제로 실행시킵니다.
-    }, [currentYear, currentMonth]); // 이 useEffect 감시카메라가 지켜볼 값들입니다.
+        fetchFestivals();
+    }, [currentYear, currentMonth]);
 
-    // --- 4-3. 나머지 계산 로직들 (useMemo) ---
-    // 날짜별 축제 개수를 계산합니다. 'festivals' 데이터가 바뀔 때만 다시 계산해서 성능을 아낍니다.
-    const festivalCountsByDate = useMemo(() => {
-        const counts: { [date: string]: number } = {};
-        festivals.forEach((festival) => {
-            // (이 부분은 여러 날에 걸친 행사를 매일 카운트하도록 더 복잡한 로직이 필요하지만, 일단은 시작일 기준으로만 카운트합니다.)
-            if (festival.start) {
-                counts[festival.start] = (counts[festival.start] || 0) + 1;
+    // useMemo는 'festivals' 데이터가 바뀔 때만 아래의 복잡한 계산들을 다시 실행해서,
+    // 불필요한 재계산을 막아 앱의 성능을 향상시키는 똑똑한 기능입니다.
+
+    // 이유: 우리가 만든 MyFestival은 'startdate' 속성을 쓰지만, FullCalendar 라이브러리는 'start'라는 속성 이름을 요구합니다.
+    // 따라서, 달력에 데이터를 표시하기 직전에, 이름만 바꿔주는 '출력용' 데이터를 새로 만듭니다.
+    const calendarEvents = useMemo(() => { // 'festivals' 배열이 바뀔 때만 이 함수가 다시 실행됩니다.
+        return festivals.map(festival => { // 'festivals' 배열의 각 항목을 하나씩 순회합니다.
+            // FullCalendar는 종료일을 그 날짜 '전까지'로 인식하는 특성이 있습니다.
+            // 예를 들어 25일에 끝나는 행사를 달력에 25일까지 색칠하려면, 종료일을 26일로 설정해야 합니다.
+            const endDate = new Date(festival.enddate); // 우리 데이터의 종료일 문자열로 Date 객체를 만듭니다.
+            endDate.setDate(endDate.getDate() + 1); // 만든 Date 객체의 날짜에 +1일을 더합니다.
+
+            return { // 달력이 알아들을 수 있는 새로운 객체를 만들어서 반환합니다.
+                id: festival.id, // 축제 ID는 그대로 전달합니다.
+                title: festival.title, // 축제 제목도 그대로 전달합니다.
+                start: festival.startdate, // MyFestival의 'startdate' 값을 FullCalendar가 사용할 'start' 속성에 넣어줍니다.
+                end: toYYYYMMDD(endDate),  // 위에서 +1일 처리한 종료일을 'YYYY-MM-DD' 형식으로 바꿔서 'end' 속성에 넣어줍니다.
+            };
+        });
+    }, [festivals]); // 이 useMemo는 오직 'festivals' 데이터가 변경될 때만 다시 계산을 수행합니다.
+
+
+    // 날짜별로 몇 개의 축제가 진행 중인지 개수를 계산합니다.
+    const festivalCountsByDate = useMemo(() => { // 'festivals' 배열이 바뀔 때만 이 함수가 다시 실행됩니다.
+        const counts: { [date: string]: number } = {}; // 날짜를 키, 축제 개수를 값으로 하는 빈 객체를 만듭니다. 예: { "2025-07-20": 2 }
+        festivals.forEach((festival) => { // 모든 축제 데이터를 하나씩 순회합니다.
+            let currentDate = new Date(festival.startdate); // 각 축제의 시작일부터 루프를 시작합니다.
+            const finalDate = new Date(festival.enddate); // 각 축제의 종료일까지 루프를 돕니다.
+
+            while (currentDate <= finalDate) { // 시작일부터 종료일까지 하루씩 반복합니다.
+                const dateStr = toYYYYMMDD(currentDate); // 현재 날짜를 'YYYY-MM-DD' 형식의 문자열로 바꿉니다.
+                counts[dateStr] = (counts[dateStr] || 0) + 1; // 해당 날짜의 카운트를 1 올립니다. (원래 값이 없었으면 0에서 시작)
+                currentDate.setDate(currentDate.getDate() + 1); // 다음 날로 날짜를 이동시킵니다.
             }
         });
-        return counts;
-    }, [festivals]);
+        return counts; // 모든 계산이 끝난 최종 개수 객체를 반환합니다.
+    }, [festivals]); // 이 useMemo도 오직 'festivals' 데이터가 변경될 때만 다시 계산을 수행합니다.
 
-    // 선택된 날짜에 해당하는 축제 목록만 골라냅니다. 'selectedDate'가 바뀔 때만 다시 계산합니다.
-    const festivalsForSelectedDate = useMemo(() => {
-        if (!selectedDate) return [];
-        return festivals.filter((festival) => festival.start === selectedDate);
-    }, [selectedDate, festivals]);
+    // 사용자가 달력에서 선택한 날짜에 해당하는 축제 목록만 골라냅니다.
+    const festivalsForSelectedDate = useMemo(() => { // 'selectedDate'나 'festivals'가 바뀔 때만 다시 실행됩니다.
+        if (!selectedDate) return []; // 만약 선택된 날짜가 없다면, 빈 배열을 반환하고 즉시 종료합니다.
 
-    // --- 4-4. 사용자의 행동에 반응하는 함수들 (이벤트 핸들러) ---
+        // 전체 축제 목록에서 필터링을 시작합니다.
+        return festivals.filter((festival) => {
+            // "선택된 날짜가 축제 기간(시작일 ~ 종료일) 사이에 있는지" 확인하는 로직입니다.
+            const startDate = new Date(festival.startdate); // 축제의 시작일을 Date 객체로 만듭니다.
+            const endDate = new Date(festival.enddate); // 축제의 종료일을 Date 객체로 만듭니다.
+            const sDate = new Date(selectedDate); // 사용자가 클릭한 날짜도 Date 객체로 만듭니다.
+            return sDate >= startDate && sDate <= endDate; // 선택일이 시작일과 같거나 크고, 종료일과 같거나 작으면 true를 반환 (목록에 포함)
+        });
+    }, [selectedDate, festivals]); // 이 useMemo는 'selectedDate' 또는 'festivals'가 바뀔 때마다 다시 계산합니다.
+
     // 달력의 날짜를 '클릭'했을 때 어떤 일을 할지 정의하는 함수입니다.
-    const handleDateClick = (clickInfo: DateClickArg) => {
-        setSelectedDate((prev) =>
-            prev === clickInfo.dateStr ? null : clickInfo.dateStr
+    const handleDateClick = (clickInfo: DateClickArg) => { // FullCalendar가 클릭 정보를 'clickInfo' 객체에 담아 전달해줍니다.
+        setSelectedDate((prev) => // 현재 'selectedDate'의 값을 확인하고 새로운 값을 결정합니다.
+            prev === clickInfo.dateStr ? null : clickInfo.dateStr // 만약 이미 선택된 날짜를 또 클릭했다면 선택을 해제(null)하고, 다른 날짜를 클릭했다면 그 날짜로 설정합니다.
         );
     };
 
     // 달력의 '이전', '다음' 버튼을 눌러서 보이는 월이 바뀔 때마다 실행되는 함수입니다.
-    const handleDatesSet = (dateInfo: any) => {
-        const newDate = dateInfo.view.currentStart;
-        setCurrentYear(newDate.getFullYear());
-        setCurrentMonth(newDate.getMonth() + 1);
+    const handleDatesSet = (dateInfo: any) => { // FullCalendar가 변경된 날짜 정보를 'dateInfo'에 담아 전달합니다.
+        const newDate = dateInfo.view.currentStart; // 새로 보여지는 달의 시작 날짜(예: 8월 1일)를 가져옵니다.
+        setCurrentYear(newDate.getFullYear()); // 그 날짜에서 '년도'를 추출해서 상태를 업데이트합니다.
+        setCurrentMonth(newDate.getMonth() + 1); // 그 날짜에서 '월'을 추출해서 상태를 업데이트합니다. (getMonth는 0~11을 반환하므로 +1)
     };
 
-    // --- 4-5. 화면에 보여줄 최종 모습 그리기 (JSX) ---
-    // 만약 에러 메모장에 글자가 있다면, 달력 대신 에러 메시지를 보여줍니다.
-    if (error) return <div className="info-message">에러: {error}</div>;
-    // 만약 로딩 스위치가 켜져 있다면, 로딩 메시지를 보여줍니다.
-    if (isLoading) return <div className="info-message">로딩 중...</div>;
+    const handleEventClick = (festivalId: string) => {
+        navigate(`/calender/${festivalId}`);
+    };
 
-    // 에러도 없고 로딩 중도 아니라면, 정상적인 달력 화면을 보여줍니다.
     return (
         <div className="festival-calendar-container">
             <div className="custom-header">
-                <div className="header-title">월별 축제 달력 (API 연동)</div>
+                <div className="header-title">월별 축제 달력</div>
             </div>
-            <FullCalendar
-                plugins={[dayGridPlugin, interactionPlugin]}
-                initialView="dayGridMonth"
-                locale="ko"
-                events={festivals} // [가장 중요!] 달력의 행사 목록은 이제 API로 받아온 'festivals' 바구니에 있는 것들입니다.
-                headerToolbar={{left: "prev", center: "title", right: "next"}}
-                dateClick={handleDateClick}
-                datesSet={handleDatesSet} // [중요] 달력의 월이 바뀔 때마다 'handleDatesSet' 함수를 실행시켜 주세요.
-                dayCellContent={(arg) => {
-                    const dateStr = toYYYYMMDD(arg.date);
-                    const count = festivalCountsByDate[dateStr] || 0;
-                    return (
-                        <div className="day-content-wrapper">
-                            <div className="day-number">
-                                {arg.dayNumberText.replace("일", "")}
+            <FullCalendar // FullCalendar 라이브러리의 메인 컴포넌트입니다.
+                plugins={[dayGridPlugin, interactionPlugin]} // '월별 달력'과 '클릭 같은 상호작용' 기능을 사용하겠다고 선언합니다.
+                initialView="dayGridMonth" // 달력의 기본 보기 형식을 '월별'로 설정합니다.
+                locale="ko" // 달력의 언어를 한국어로 설정합니다. (요일, 월 등)
+                events={[]} // [핵심 연결!] 달력에 표시할 이벤트 목록으로, 위에서 최종 변환한 'calendarEvents'를 사용합니다.
+                headerToolbar={{
+                    left: "prev",
+                    center: "title",
+                    right: "next"
+                }} // 달력 상단 툴바의 구성을 설정합니다. (이전 버튼, 제목, 다음 버튼)
+                dateClick={handleDateClick} // 달력의 날짜를 클릭했을 때, 위에서 만든 'handleDateClick' 함수를 실행하도록 연결합니다.
+                datesSet={handleDatesSet} // 달력의 월이 바뀌었을 때, 위에서 만든 'handleDatesSet' 함수를 실행하도록 연결합니다.
+                dayCellContent={(arg) => { // 달력의 각 '날짜 칸'의 내용을 직접 꾸미는 기능입니다.
+                    const dateStr = toYYYYMMDD(arg.date); // 해당 칸의 날짜를 'YYYY-MM-DD' 형식으로 바꿉니다.
+                    const count = festivalCountsByDate[dateStr] || 0; // 위에서 계산한 축제 개수 객체에서 해당 날짜의 개수를 가져옵니다.
+                    return ( // 이 JSX가 각 날짜 칸 안에 실제로 렌더링됩니다.
+                        <div className="day-content-wrapper"> {/* 날짜 칸 내부를 감싸는 래퍼입니다. */}
+                            <div className="day-number"> {/* 날짜 숫자를 표시하는 부분입니다. */}
+                                {arg.dayNumberText.replace("일", "")} {/* '20일' 에서 '일'을 뺀 숫자 '20'만 표시합니다. */}
                             </div>
-                            {count > 0 && (
-                                <div className="day-event-info">
-                                    <span className="day-event-count">{count}개</span>
+                            {count > 0 && ( // 만약 축제 개수가 1개 이상일 때만 아래 내용을 보여줍니다.
+                                <div className="day-event-info"> {/* 축제 정보(개수)를 표시하는 영역입니다. */}
+                                    <span className="day-event-count">{count}개</span> {/* "N개" 형식으로 개수를 보여줍니다. */}
                                 </div>
                             )}
                         </div>
                     );
                 }}
-                dayCellDidMount={(arg) => {
-                    arg.el.classList.toggle(
-                        "selected-date",
-                        selectedDate === toYYYYMMDD(arg.date)
+                dayCellDidMount={(arg) => { // 각 '날짜 칸'이 화면에 그려진 직후에 실행되는 함수입니다.
+                    arg.el.classList.toggle( // 해당 날짜 칸(DOM 요소)의 CSS 클래스를 조작합니다.
+                        "selected-date", // 'selected-date' 라는 클래스 이름을
+                        selectedDate === toYYYYMMDD(arg.date) // 'selectedDate'와 현재 칸의 날짜가 같으면 추가하고, 다르면 제거합니다.
                     );
                 }}
             />
-            {selectedDate && (
+            {selectedDate && ( // 'selectedDate'에 날짜 값이 있을 때만(클릭했을 때만) 이 부분을 화면에 보여줍니다.
                 <div className="festival-list-container">
-                    {/* ... 클릭 시 축제 목록 보여주는 부분 (이전과 동일) ... */}
+                    <h3>{selectedDate}의 축제 목록</h3>
+                    {festivalsForSelectedDate.length > 0 ? (
+                        <ul>
+                            {festivalsForSelectedDate.map(festival => (
+                                <li key={festival.id} onClick={() => handleEventClick(festival.id)}
+                                    className="festival-item">
+                                    {festival.image && (
+                                        <img
+                                            src={festival.image}
+                                            alt={festival.title}
+                                            className="festival-image"
+                                        />
+                                    )}
+                                    <div className="festival-details">
+                                        <strong>{festival.title}</strong>
+                                        <p>({festival.location})</p>
+                                        <p>({festival.startdate}~{festival.enddate})</p>
+                                    </div>
+
+                                </li>
+                            ))}
+                        </ul>
+                    ) : (
+                        <p>해당 날짜에 진행 중인 축제가 없습니다.</p>
+                    )}
                 </div>
             )}
         </div>
@@ -224,3 +252,4 @@ const CalendarPage = () => {
 };
 
 export default CalendarPage;
+

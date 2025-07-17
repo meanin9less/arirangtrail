@@ -10,14 +10,6 @@
     font-size: 28px;
     font-weight: 300;
 }
-.header-title::after {
-    content: "2025.7";
-    display: block;
-    font-size: 56px;
-    font-weight: 700;
-    color: #8a2be2;
-    margin-top: -10px;
-}
 .fc {
     border: none;
 }
@@ -27,7 +19,7 @@
 .fc .fc-toolbar-title {
     font-size: 24px;
     font-weight: 600;
-    color: transparent;
+    color: #333;
 }
 .fc .fc-button {
     background: transparent;
@@ -84,11 +76,13 @@
 .selected-date .day-event-count {
     color: white !important;
 }
+/* 축제 목록을 감싸는 전체 컨테이너 */
 .festival-list-container {
     margin-top: 30px;
     padding: 20px;
     background-color: #fafafa;
     border-radius: 8px;
+    border: 1px solid #eee;
 }
 .festival-list-container h3 {
     margin-top: 0;
@@ -102,12 +96,24 @@
     list-style: none;
     padding: 0;
     margin: 0;
+    display: grid; /* 이 태그를 Grid 레이아웃으로 설정합니다. */
+    grid-template-columns: repeat(2, 1fr); /* 한 줄에 2개의 아이템을, 각각 동일한 너비(1fr)로 배치합니다. */
+    gap: 20px; /* 아이템(카드) 사이의 간격을 20px로 설정합니다. */
 }
+/* 각 축제 아이템(카드) li 태그 스타일 */
 .festival-item {
+    /* [수정!] 내부 아이템(이미지, 텍스트)을 세로로 배치하기 위해 flex-direction을 column으로 설정합니다. */
     display: flex;
-    justify-content: space-between;
-    padding: 15px 10px;
-    border-bottom: 1px solid #eee;
+    flex-direction: column;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    overflow: hidden; /* 모서리가 둥글게 처리된 부분 밖으로 이미지가 튀어나오지 않게 합니다. */
+    background-color: white;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+    transition: transform 0.2s ease-in-out;
+}
+.festival-item:hover {
+    transform: translateY(-5px); /* 마우스를 올리면 살짝 위로 올라가는 효과 */
 }
 .festival-item:last-child {
     border-bottom: none;
@@ -118,4 +124,68 @@
 .festival-location {
     color: #777;
     font-size: 14px;
+}
+
+/* 축제 이미지 스타일 */
+.festival-image {
+    width: 100%;  /* [수정!] 카드(li)의 가로 너비에 꽉 차게 설정합니다. */
+    height: 300px; /* 이미지의 세로 높이를 고정값으로 설정합니다. */
+    object-fit: cover;
+}
+/* 제목 스타일 */
+.festival-details strong {
+    font-weight: 600;
+    font-size: 16px;
+    display: block;
+    margin-bottom: 5px;
+}
+/* 위치 정보 스타일 */
+.festival-details p {
+    color: #777;
+    font-size: 14px;
+    margin: 0;
+}
+/* 축제 텍스트 정보(제목, 위치)를 감싸는 div */
+.festival-details {
+    padding: 15px; /* 이미지와 텍스트 사이에 여백을 줍니다. */
+}
+
+/* --- Swiper 스타일링 --- */
+
+/* 1. Swiper를 감싸는 전체 컨테이너 스타일 */
+.swiper-container {
+    width: 100%; /* 부모 요소의 너비에 꽉 채웁니다. */
+    height: 450px; /* 슬라이더의 전체 높이를 고정합니다. 이 값을 조절하여 원하는 높이로 맞추세요. */
+    margin-bottom: 30px; /* 슬라이더와 아래 콘텐츠(기본 정보) 사이의 간격 */
+    border-radius: 12px; /* 모서리를 부드럽게 */
+    overflow: hidden; /* 둥근 모서리 밖으로 이미지가 튀어나가지 않도록 합니다. */
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1); /* 은은한 그림자 효과 */
+}
+
+/* 2. 각 슬라이드 안에 있는 이미지 스타일 (가장 중요!) */
+.swiper-container .swiper-slide img {
+    width: 100%; /* 이미지의 너비를 슬라이드에 꽉 채웁니다. */
+    height: 100%; /* 이미지의 높이를 슬라이드에 꽉 채웁니다. */
+    object-fit: cover; /* 이미지가 찌그러지지 않으면서, 영역을 꽉 채우도록 설정 (비율에 맞게 자동으로 잘라냄) */
+    display: block; /* 이미지 아래에 생길 수 있는 미세한 공백을 제거합니다. */
+}
+
+/* 3. 좌우 네비게이션 버튼(화살표) 스타일 */
+/* Swiper가 제공하는 CSS 변수를 사용하여 색상을 쉽게 바꿀 수 있습니다. */
+.swiper-container .swiper-button-prev,
+.swiper-container .swiper-button-next {
+    color: #ffffff; /* 화살표 색상을 흰색으로 변경 */
+    text-shadow: 0 0 5px rgba(0,0,0,0.5); /* 어두운 이미지에서도 잘 보이도록 그림자 추가 */
+}
+
+/* 4. 하단 페이지네이션(점) 스타일 */
+.swiper-container .swiper-pagination-bullet {
+    background: rgba(255, 255, 255, 0.7); /* 기본 점 색상을 반투명 흰색으로 */
+    width: 10px; /* 점 크기 키우기 */
+    height: 10px;
+}
+
+/* 현재 활성화된(선택된) 페이지네이션 점 스타일 */
+.swiper-container .swiper-pagination-bullet-active {
+    background: #ffffff; /* 활성화된 점은 완전한 흰색으로 */
 }
