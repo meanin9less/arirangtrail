@@ -12,6 +12,7 @@ import CommunityPage from "./community/CommunityPage";
 import CompanyPage from "./company/CompanyPage";
 import ReviewPage from "./review/ReviewPage";
 import SearchPage from "./search/SearchPage";
+import Footer from "./footer/Footer";
 import {Provider} from "react-redux";
 import store from "./store";
 
@@ -34,6 +35,7 @@ function App() {
             </Route>
           </Routes>
         </BrowserRouter>
+          <Footer />
       </Provider>
   );
 }
