@@ -62,4 +62,9 @@ public class ReviewEntity {
     @OneToMany(mappedBy = "reviewid")
     private Set<ReviewphotoEntity> reviewphotos = new LinkedHashSet<>();
 
+    @Size(max = 255)
+    @NotNull
+    @Column(name = "contenttitle", nullable = false)
+    private String contenttitle;
+
 }
