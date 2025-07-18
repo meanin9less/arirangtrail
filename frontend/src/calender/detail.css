@@ -1,0 +1,114 @@
+/* detail.css 파일의 내용을 아래 코드로 완전히 교체하세요. */
+
+/* --- 페이지 전체 컨테이너 --- */
+.festival-detail-container {
+    max-width: 900px;
+    margin: 50px auto;
+    background-color: #ffffff;
+    border-radius: 16px;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.08);
+    overflow: hidden;
+    position: relative;
+}
+
+/* --- 상단 헤더  */
+.detail-header {
+    text-align: center; /* 제목을 가운데 정렬 */
+    padding: 40px 20px 30px; /* 위아래 여백 추가 */
+}
+
+.detail-title {
+    font-size: 36px;
+    font-weight: 700;
+    color: #212529;
+    margin: 0; /* 불필요한 마진 제거 */
+}
+
+/* --- 이미지 슬라이더 (Swiper) --- */
+.swiper-container {
+    position: relative;
+    width: 900px;  /* 가로 폭을 900px로 고정합니다. */
+    height: 700px; /* 세로 높이를 550px로 고정합니다. */
+    background-color: #f1f3f5;
+}
+
+.swiper-slide img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover; /* 이미지가 찌그러지지 않고 꽉 채우도록 설정 */
+}
+
+/* 화살표 버튼 */
+.swiper-button-prev,
+.swiper-button-next {
+    color: #ffffff;
+    text-shadow: 0 1px 4px rgba(0, 0, 0, 0.5); /* 그림자 추가해서 더 잘보이게 */
+}
+
+/* 하단 페이지네이션(점) */
+.swiper-pagination-bullet {
+    background: rgba(255, 255, 255, 0.8);
+    width: 10px;
+    height: 10px;
+}
+.swiper-pagination-bullet-active {
+    background: #ffffff;
+}
+
+.swiper-horizontal {
+   height: 100%;
+}
+
+
+/* --- 컨텐츠(텍스트 정보) 래퍼 --- */
+.detail-content-wrapper {
+    padding: 40px;
+}
+
+/* --- 상세 정보 목록 --- */
+.detail-info-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.info-item {
+    display: grid;
+    grid-template-columns: 100px 1fr;
+    gap: 20px;
+    align-items: flex-start;
+    padding: 20px 0;
+    border-bottom: 1px solid #f1f3f5;
+}
+
+.info-item:last-child {
+    border-bottom: none;
+}
+
+.info-label {
+    font-weight: 600;
+    font-size: 16px;
+    color: #495057;
+}
+
+.info-content {
+    font-size: 16px;
+    color: #343a40;
+    line-height: 1.7;
+    word-break: keep-all;
+}
+
+/* 로딩 오버레이 전체 스타일 */
+.loading-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(255, 255, 255, 0.85);
+    z-index: 10;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
