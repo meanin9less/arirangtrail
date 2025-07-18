@@ -47,9 +47,11 @@ public class SecurityConfig {
                 .httpBasic(httpBasic->httpBasic.disable())
 
                 .authorizeHttpRequests(authorizeHttpRequests->{
-                    authorizeHttpRequests.requestMatchers("/", "/api/join", "/api/login", "/api/reissue", "/api/naver", "/api/kakao", "/api/login/oauth2/code/*").permitAll();
+                    authorizeHttpRequests.requestMatchers("/", "/api/join", "/api/login", "/api/reissue", "/api/naver", "/api/kakao",
+                            "/api/login/oauth2/code/*", "/api/redis/**", "/api/reviews", "/api/reviews/", "/api/**").permitAll();
+                    authorizeHttpRequests.requestMatchers("/", "/api/join", "/api/login", "/api/reissue", "/api/naver", "/api/kakao", "/api/login/oauth2/code/*","/api/chat/**", "/ws-stomp/**").permitAll();
                     authorizeHttpRequests.requestMatchers("/api/admin").hasRole("ADMIN");
-                    authorizeHttpRequests.anyRequest().authenticated();
+//                    authorizeHttpRequests.anyRequest().authenticated();
                 })
 
                 .cors(cors->cors.configurationSource(request -> {
