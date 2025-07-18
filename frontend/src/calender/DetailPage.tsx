@@ -6,6 +6,14 @@ import {Navigation, Pagination} from "swiper/modules";
 import 'swiper/css';
 import 'swiper/css/navigation';
 import 'swiper/css/pagination';
+import "./detail.css"
+
+// 네이버 지도 API의 타입 선언
+declare global {
+    interface Window {
+        naver: any;
+    }
+}
 
 interface FestivalDetail {
     title: string;
@@ -35,6 +43,7 @@ const DetailPage = () => {
     const {festivalId} = useParams<{ festivalId: string }>();
     const [festival, setFestival] = useState<FestivalDetail | null>(null);
     const [images, setImages] = useState<ImageItem[]>([]);
+    const [isLoading, setIsLoading] = useState<boolean>(true);
 
     useEffect(() => {
         if (festivalId) {
@@ -46,7 +55,7 @@ const DetailPage = () => {
                         params: {
                             numOfRows: 50,
                             pageNo: 1,
-                            contentId: festivalId,
+                            contentId: festivalId, // contentId 요청보낼때는 id 대문자로, 받을때는 소문자로
                         }
                     });
                     console.log(response.data);
@@ -67,6 +76,8 @@ const DetailPage = () => {
                     });
                 } catch (e) {
                     console.error("상세 정보 로딩 실패:", e);
+                } finally {
+                    setIsLoading(false); // 요청이 성공하든 실패하든 로딩 상태를 false로 변경
                 }
             };
             fetchDetail();
@@ -94,57 +105,114 @@ const DetailPage = () => {
 
                 } catch (e) {
                     console.error("추가 이미지 로딩 실패:", e);
+                } finally {
+                    setIsLoading(false); // 요청이 성공하든 실패하든 로딩 상태를 false로 변경
                 }
             };
             fetchImages();
         }
     }, [festivalId]);
 
+    // // 네이버 지도 설정
+    // useEffect(() => {
+    //     // festival 데이터나 네이버 지도 API(window.naver)가 준비되지 않았으면 아무것도 하지 않습니다.
+    //     if (!festival || !festival.mapy || !festival.mapx || !window.naver) {
+    //         return;
+    //     }
+    //
+    //     const mapContainer = document.getElementById('map'); // 지도를 담을 영역
+    //     if (!mapContainer) return; // 지도를 담을 영역이 없으면 중단
+    //
+    //     // 네이버 지도 옵션을 설정합니다.
+    //     const mapOptions = {
+    //         center: new window.naver.maps.LatLng(festival.mapy, festival.mapx),
+    //         zoom: 15, // 네이버 지도의 확대 수준 (숫자가 클수록 확대됨)
+    //         zoomControl: true, // 확대/축소 컨트롤 표시
+    //     };
+    //
+    //     // 지도를 생성합니다.
+    //     const map = new window.naver.maps.Map(mapContainer, mapOptions);
+    //
+    //     // 마커(위치 표시)를 생성합니다.
+    //     new window.naver.maps.Marker({
+    //         position: new window.naver.maps.LatLng(festival.mapy, festival.mapx),
+    //         map: map, // 생성한 지도에 마커를 추가합니다.
+    //     });
+    //
+    // }, [festival]); // festival 데이터가 로드된 후에만 이 코드가 실행됩니다.
+
+    if (isLoading) {
+        return (
+            <div className="loading-overlay">
+                <span>Loading data</span>
+            </div>
+        );
+    }
+
     if (!festival) {
-        return <div>해당 축제 정보를 찾을 수 없습니다.</div>;
+        return <div className="error-message">해당 축제 정보를 찾을 수 없습니다.</div>;
     }
 
     return (
-        <div className="detail-page-container">
-            <h1>{festival.title}</h1>
-            <Swiper
-                modules={[Navigation, Pagination]}
-                spaceBetween={10}
-                slidesPerView={1}
-                navigation
-                pagination={{clickable: true}}
-                style={{marginBottom: "30px"}}
-            >
-                <SwiperSlide>
-                    <img src={festival.firstimage} alt={festival.title}/>
-                </SwiperSlide>
-                {images.map(image => (
-                    <SwiperSlide key={image.serialnum}>
-                        <img src={image.originimgurl} alt={image.imgname}/>
+        <div className="festival-detail-container">
+            {isLoading && (
+                <div className="loading-overlay">
+                    <span>Loading data</span>
+                </div>
+            )}
+            <div className="detail-header">
+                <h1 className="detail-title">{festival.title}</h1>
+            </div>
+            <div className="swiper-container">
+                <Swiper
+                    modules={[Navigation, Pagination]}
+                    spaceBetween={0}
+                    slidesPerView={1}
+                    navigation
+                    pagination={{clickable: true}}
+                >
+                    <SwiperSlide key={festival.firstimage}>
+                        <img src={festival.firstimage} alt={festival.title}/>
                     </SwiperSlide>
-                ))}
+                    {images.map(image => (
+                        <SwiperSlide key={image.serialnum}>
+                            <img src={image.originimgurl} alt={image.imgname}/>
+                        </SwiperSlide>
+                    ))}
+                </Swiper>
+            </div>
 
-            </Swiper>
+            <div className="detail-content-wrapper">
 
-            <img src={festival.firstimage} alt={festival.title} style={{maxWidth: "100%", borderRadius: "8px"}}/>
-
-            <h2>기본 정보</h2>
-            <ul>
-                <li><strong>주소:</strong> {festival.addr1} {festival.addr2}</li>
-                <li><strong>연락처:</strong> {festival.tel}</li>
-            </ul>
-
-            <h2>축제 소개</h2>
-            <div dangerouslySetInnerHTML={{__html: festival.overview}}/>
-
-            홈페이지:{" "}
-            <div
-                dangerouslySetInnerHTML={{__html: festival.homepage}}
-            />
-            {/*{festival.mapx}*/}
-            {/*{festival.mapy}*/}
+                <ul className="detail-info-list">
+                    <li className="info-item">
+                        <span className="info-label">소개</span>
+                        <div className="info-content" dangerouslySetInnerHTML={{__html: festival.overview}}/>
+                    </li>
+                    <li className="info-item">
+                        <span className="info-label">주소</span>
+                        <div className="info-content">{festival.addr1}</div>
+                    </li>
+                    {festival.tel && (
+                        <li className="info-item">
+                            <span className="info-label">연락처</span>
+                            <div className="info-content">{festival.tel}</div>
+                        </li>
+                    )}
+                    {festival.homepage && (
+                        <li className="info-item">
+                            <span className="info-label">홈페이지</span>
+                            <div className="info-content" dangerouslySetInnerHTML={{__html: festival.homepage}}/>
+                        </li>
+                    )}
+                </ul>
+                <div className="detail-map-section">
+                    <h3 className="section-title">위치 정보</h3>
+                    <div id="map" style={{width: '100%', height: '400px'}}></div>
+                </div>
+            </div>
         </div>
     );
-}
+};
 
 export default DetailPage;
