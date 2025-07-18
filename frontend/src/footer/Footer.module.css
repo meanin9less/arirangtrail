@@ -1,0 +1,49 @@
+/* src/components/Footer.module.css */
+
+.footer {
+    background-color: #333; /* 어두운 배경색 */
+    color: #bbb; /* 밝은 회색 글자색 */
+    padding: 30px 20px; /* 상하좌우 패딩 */
+    text-align: center; /* 텍스트 중앙 정렬 */
+    font-size: 0.9em; /* 글자 크기 약간 작게 */
+    line-height: 1.6; /* 줄 간격 조절 */
+    margin-top: 50px; /* 위쪽 콘텐츠와의 간격 */
+    box-shadow: 0 -2px 5px rgba(0,0,0,0.1); /* 상단에 그림자 효과 */
+}
+
+.footerContent {
+    max-width: 960px; /* 내용의 최대 너비 제한 (가운데 정렬) */
+    margin: 0 auto; /* 중앙 정렬 */
+}
+
+.companyName {
+    font-weight: bold;
+    color: #fff; /* 회사 이름은 흰색으로 더 강조 */
+    margin-bottom: 10px;
+    font-size: 1.1em;
+}
+
+.address, .contact, .copyright {
+    margin-bottom: 5px;
+}
+
+.copyright {
+    margin-top: 20px;
+    font-size: 0.85em;
+    color: #999;
+}
+
+/* 모바일 반응형 */
+@media (max-width: 768px) {
+    .footer {
+        padding: 20px 15px;
+    }
+
+    .companyName {
+        font-size: 1em;
+    }
+
+    .address, .contact, .copyright {
+        font-size: 0.8em;
+    }
+}
