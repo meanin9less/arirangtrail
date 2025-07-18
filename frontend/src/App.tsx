@@ -15,6 +15,7 @@ import SearchPage from "./search/SearchPage";
 import Footer from "./footer/Footer";
 import {Provider} from "react-redux";
 import store from "./store";
+import ReviewWritePage from "./review/ReviewWritePage";
 
 function App() {
   return (
@@ -28,6 +29,7 @@ function App() {
                 <Route path={'/community'} element={<CommunityPage/>}></Route>
                 <Route path={'/company'} element={<CompanyPage/>}></Route>
                 <Route path={'/review'} element={<ReviewPage/>}></Route>
+                <Route path={'/review/write'} element={<ReviewWritePage/>}></Route>
                 <Route path={'/search'} element={<SearchPage/>}></Route>
                 <Route path={'/login'} element={<LoginPage/>}></Route>
                 <Route path={'/mypage'} element={<MyPage/>}></Route>

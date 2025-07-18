@@ -4,9 +4,10 @@ import { useSelector, useDispatch } from 'react-redux';
 import { RootState, AppDispatch, setToken } from '../store';
 import styles from './NavigationBar.module.css';
 
-// ✨ homeIcon만 임포트합니다.
+// ✨ 이미지 파일 임포트 경로 수정: src/images/ 에 있다고 가정합니다.
 import homeIcon from '../images/home.png';
-import personIcon from '../images/person.png';
+import personIcon from '../images/person.png'; // 로그인 아이콘으로 사용할 이미지
+import arirangTrailIcon from '../images/arirang1.png';
 
 interface NaviProps {
     // 현재는 아무 props도 받지 않습니다.
@@ -35,20 +36,22 @@ const NavigationBar = ({}: NaviProps) => {
     }, [dropdownRef]);
 
     const handleLogout = () => {
-        localStorage.removeItem('jwtToken');
-        dispatch(setToken(null));
-        setShowUserDropdown(false);
-        navigate('/login');
+        // 로컬 스토리지와 Redux Store 클리어는 LogoutPage에서 처리하도록 위임
+        setShowUserDropdown(false); // 드롭다운 닫기
+        navigate('/logout'); // /logout 경로로 이동하여 LogoutPage에서 실제 로그아웃 처리
     };
 
     return (
         <>
             <nav className={styles.navbar}>
-                {/* 좌측 그룹: 홈 아이콘 적용 */}
+                {/* 좌측 그룹: 홈 아이콘 적용 (텍스트 제거) */}
+                <div>
+                    <img src={arirangTrailIcon} alt="아리랑 트레일 로고" className={styles.arirangicon} />
+                </div>
                 <div className={styles.navGroupLeft}>
                     <Link to={"/"} className={styles.homeLink}>
                         <img src={homeIcon} alt="홈 아이콘" className={styles.icon}/> {/* 홈 아이콘 이미지 */}
-                        <span className={styles.linkText}></span>
+                        {/* ✨ 홈 텍스트 제거: <span className={styles.linkText}>홈</span> */}
                     </Link>
                 </div>
 
@@ -61,7 +64,7 @@ const NavigationBar = ({}: NaviProps) => {
                     <Link to={"/company"} className={styles.navLink}>회사소개</Link>
                 </div>
 
-                {/* 우측 그룹: 로그인/마이페이지 조건부 렌더링 (텍스트만) */}
+                {/* 우측 그룹: 로그인/마이페이지 조건부 렌더링 */}
                 <div className={styles.navGroupRight} ref={dropdownRef}>
                     {isLoggedIn ? (
                         // 로그인 상태일 때: 마이페이지 텍스트 버튼
@@ -85,9 +88,10 @@ const NavigationBar = ({}: NaviProps) => {
                             )}
                         </div>
                     ) : (
-                        // 로그아웃 상태일 때: 로그인 텍스트 링크
+                        // 로그아웃 상태일 때: 로그인 아이콘 링크 (텍스트 제거)
                         <Link to={"/login"} className={styles.loginLinkTextOnly}>
                             <img src={personIcon} alt="로그인 아이콘" className={styles.icon}/> {/* 로그인 아이콘 이미지 */}
+                            {/* ✨ 로그인 텍스트 제거: <span className={styles.linkText}>로그인</span> */}
                         </Link>
                     )}
                 </div>

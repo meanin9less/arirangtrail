@@ -1,0 +1,152 @@
+/* src/user/MyPage.module.css */
+
+.myPageContainer {
+    max-width: 800px;
+    margin: 50px auto;
+    padding: 30px;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    background-color: #fff;
+    box-sizing: border-box;
+}
+
+.pageTitle {
+    text-align: center;
+    color: #333;
+    margin-bottom: 30px;
+    font-size: 2em;
+    font-weight: bold;
+}
+
+.message {
+    text-align: center;
+    color: #666;
+    margin-bottom: 10px;
+}
+
+.userInfoSection, .menuSection {
+    margin-bottom: 30px;
+    padding: 20px;
+    background-color: #f9f9f9;
+    border-radius: 5px;
+    border: 1px solid #eee;
+}
+
+.sectionTitle {
+    color: #555;
+    margin-bottom: 15px;
+    font-size: 1.5em;
+    border-bottom: 1px solid #eee;
+    padding-bottom: 10px;
+}
+
+.menuList {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.menuList li {
+    margin-bottom: 10px;
+}
+
+.menuButton {
+    width: 100%;
+    padding: 12px 15px;
+    background-color: #007bff;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    font-size: 1em;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+    text-align: left;
+}
+
+.menuButton:hover {
+    background-color: #0056b3;
+}
+
+/* ✨ Simple Authentication Section Styles */
+.authSection {
+    margin-top: 15px;
+    padding-top: 15px;
+    border-top: 1px solid #eee;
+    display: flex;
+    flex-direction: column;
+    gap: 10px; /* 요소들 사이의 간격 */
+    align-items: center; /* 자식 요소들을 가로 중앙 정렬 */
+    background-color: #f0f0f0; /* 배경색으로 구분 */
+    border-radius: 5px;
+    padding-bottom: 15px; /* 하단 패딩 */
+}
+
+.authPrompt {
+    font-size: 0.95em;
+    color: #555;
+    text-align: center;
+    margin-bottom: 5px;
+}
+
+.authInputField {
+    width: 80%; /* 입력 필드 너비 조정 */
+    max-width: 250px; /* 최대 너비 제한 */
+    padding: 8px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    box-sizing: border-box;
+    text-align: center; /* 입력 텍스트 중앙 정렬 */
+}
+
+.authButton {
+    width: 60%; /* 버튼 너비 조정 */
+    max-width: 150px; /* 최대 너비 제한 */
+    padding: 10px;
+    background-color: #28a745; /* 녹색 계열 (인증 버튼) */
+    color: white;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+}
+
+.authButton:hover {
+    background-color: #218838;
+}
+
+.authButton:disabled {
+    background-color: #cccccc;
+    cursor: not-allowed;
+}
+
+.authSuccessMessage {
+    color: green;
+    font-weight: bold;
+    text-align: center;
+    margin-top: 5px;
+}
+
+.authErrorMessage {
+    color: red;
+    font-weight: bold;
+    text-align: center;
+    margin-top: 5px;
+}
+
+
+/* 모바일 반응형 */
+@media (max-width: 768px) {
+    .myPageContainer {
+        margin: 20px auto;
+        padding: 20px;
+    }
+
+    .pageTitle {
+        font-size: 1.8em;
+    }
+
+    .sectionTitle {
+        font-size: 1.3em;
+    }
+}
