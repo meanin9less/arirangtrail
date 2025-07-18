@@ -133,8 +133,8 @@ function ReviewWritePage() {
                         required
                         className={styles.selectField}
                     >
-                        {[5, 4, 3, 2, 1].map(num => ( // 5점부터 내림차순으로 표시
-                            <option key={num} value={num}>{num}점</option>
+                        {["⭐⭐⭐⭐⭐", "⭐⭐⭐⭐", "⭐⭐⭐", "⭐⭐", "⭐"].map(num => ( // 5점부터 내림차순으로 표시
+                            <option key={num} value={num}>{num}</option>
                         ))}
                     </select>
                 </div>
