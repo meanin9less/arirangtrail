@@ -4,8 +4,9 @@ import apiClient from "../api/axiosInstance";
 import axios from 'axios';
 import { useDispatch } from 'react-redux';
 import { setToken, AppDispatch } from '../store';
-// ✨ CSS 모듈 임포트 경로 변경: user.module.css 사용
-import styles from './User.module.css';
+import styles from './User.module.css'; // user.module.css로 임포트 경로 일치
+
+import arirang from '../images/arirang1.png'; // 아리랑 이미지 임포트 유지
 
 interface LoginProps {}
 interface LoginFormData {
@@ -18,6 +19,7 @@ interface LoginResponseData {
 }
 
 const LoginPage = ({}: LoginProps) => {
+
     const navigate = useNavigate();
     const dispatch: AppDispatch = useDispatch();
 
@@ -30,7 +32,7 @@ const LoginPage = ({}: LoginProps) => {
     const [showModal, setShowModal] = useState<boolean>(false);
     const [modalMessage, setModalMessage] = useState<string>('');
 
-    const handleChange = (e: ChangeEvent<HTMLInputElement>) =>{
+    const handleChange = (e: React.ChangeEvent<HTMLInputElement>) =>{
         const {name, value} = e.target;
         setFormData(prevData => ({
             ...prevData,
@@ -46,7 +48,7 @@ const LoginPage = ({}: LoginProps) => {
         }
     };
 
-    const handleLogin = async (e: FormEvent<HTMLFormElement>) =>{
+    const handleLogin = async (e: React.FormEvent<HTMLFormElement>) =>{
         e.preventDefault();
         setMessage(null);
         setLoading(true);
@@ -58,20 +60,18 @@ const LoginPage = ({}: LoginProps) => {
         }
 
         try {
-            const response = await apiClient.post<LoginResponseData>('/login', formData);
+            // [백엔드 연동 필요] 실제 로그인 API 엔드포인트로 변경하세요.
+            // 예: const response = await apiClient.post<LoginResponseData>('/api/login', formData);
+            const response = await apiClient.post<LoginResponseData>('http://localhost:8080/login', formData);
 
             const successMessage = response.data.message || '로그인 성공!';
             setMessage(successMessage);
-            console.log('로그인 성공 응답:', response.data);
 
             const token = response.headers['authorization'] || response.data.accessToken;
 
             if (token) {
                 localStorage.setItem('jwtToken', token);
-                console.log('JWT 토큰 localStorage에 저장됨:', token);
                 dispatch(setToken(token));
-                console.log('JWT 토큰 Redux Store에 저장됨.');
-
                 setModalMessage(successMessage);
                 setShowModal(true);
 
@@ -80,7 +80,6 @@ const LoginPage = ({}: LoginProps) => {
                 setMessage(noTokenMessage);
                 setModalMessage(noTokenMessage);
                 setShowModal(true);
-                console.warn('로그인 성공 응답에 토큰이 없습니다.');
             }
 
         } catch (error: any) {
@@ -100,19 +99,19 @@ const LoginPage = ({}: LoginProps) => {
     }
 
     return (
-        // ✨ 클래스 이름 변경: loginContainer -> authContainer
         <div className={styles.authContainer}>
+            {/* 아리랑 이미지 추가 */}
+            <img src={arirang} alt="아리랑 이미지" className={styles.arirangImage} />
+
             <h2>로그인</h2>
             {message && (
-                // ✨ 클래스 이름 변경: successMessage/errorMessage
                 <p className={message.includes('성공') ? styles.successMessage : styles.errorMessage}>
                     {message}
                 </p>
             )}
 
-            {/* ✨ 클래스 이름 변경: loginForm -> authForm */}
             <form onSubmit={handleLogin} className={styles.authForm}>
-                <div>
+                <div className={styles.formGroup}>
                     <label htmlFor="username">아이디:</label>
                     <input
                         type="text"
@@ -124,7 +123,7 @@ const LoginPage = ({}: LoginProps) => {
                         className={styles.inputField}
                     />
                 </div>
-                <div>
+                <div className={styles.formGroup}>
                     <label htmlFor="password">비밀번호:</label>
                     <input
                         type="password"
@@ -136,8 +135,7 @@ const LoginPage = ({}: LoginProps) => {
                         className={styles.inputField}
                     />
                 </div>
-                <div className={styles.buttonContainer} style={{marginBottom:'10px'}}>
-                    {/* ✨ 클래스 이름 변경: loginButton -> primaryButton */}
+                <div className={`${styles.buttonContainer} ${styles.loginButtonMargin}`}> {/* 인라인 스타일을 클래스로 변경 */}
                     <button
                         type="submit"
                         disabled={loading}
@@ -148,9 +146,8 @@ const LoginPage = ({}: LoginProps) => {
                 </div>
             </form>
 
-            <Link to={'/signup'} style={{textDecorationLine:'none'}}>
+            <Link to={'/signup'} className={styles.noTextDecoration}> {/* 인라인 스타일을 클래스로 변경 */}
                 <div className={styles.buttonContainer}>
-                    {/* ✨ 클래스 이름 변경: signupButton -> secondaryButton */}
                     <button
                         className={styles.secondaryButton}
                     >

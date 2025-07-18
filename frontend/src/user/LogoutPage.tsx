@@ -23,8 +23,8 @@ const LogoutPage = ({}: LogoutPageProps) => {
         console.log('Redux Store에서 토큰 상태 초기화됨.');
 
         // 3. 로그아웃 처리 후 로그인 페이지 또는 홈 페이지로 리디렉션
-        // 보통 로그아웃 후에는 로그인 페이지로 이동하는 것이 일반적입니다.
-        navigate('/login');
+        // 로그아웃 후에는 메인 페이지로 이동
+        navigate('/');
         // 또는 navigate('/'); // 홈 페이지로 이동하고 싶다면 이 줄을 사용
     }, [dispatch, navigate]); // dispatch와 navigate는 변경되지 않으므로 의존성 배열에 포함해도 무방
 
