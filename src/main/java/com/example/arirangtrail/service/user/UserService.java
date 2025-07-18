@@ -1,6 +1,6 @@
 package com.example.arirangtrail.service.user;
 
-import com.example.arirangtrail.data.dao.UserDAO;
+import com.example.arirangtrail.data.dao.user.UserDAO;
 import com.example.arirangtrail.data.dto.user.JoinDTO;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -17,6 +17,7 @@ public class UserService {
                 joinDTO.getEmail(),
                 joinDTO.getFirstname(),
                 joinDTO.getLastname(),
+                joinDTO.getBirthdate(),
                 joinDTO.getNickname()
         );
     }

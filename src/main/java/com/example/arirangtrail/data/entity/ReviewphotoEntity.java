@@ -22,10 +22,12 @@ public class ReviewphotoEntity {
     private Long id;
 
     @NotNull
+    // ⭐ 중요: optional=false는 reviewid가 '절대' null이 될 수 없다는 강력한 제약입니다.
+    // 객체 생성 시점 등을 고려해 optional = true가 더 유연할 수 있습니다. 여기서는 그대로 둡니다.
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
-    @OnDelete(action = OnDeleteAction.CASCADE)
+    @OnDelete(action = OnDeleteAction.CASCADE) // DB 레벨에서의 CASCADE 설정
     @JoinColumn(name = "reviewid", nullable = false)
-    private ReviewEntity reviewid;
+    private ReviewEntity reviewid; // User가 제공한 필드명 그대로 사용
 
     @Size(max = 255)
     @NotNull

@@ -5,6 +5,9 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.time.LocalDate;
+import java.util.Date;
+
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
@@ -15,5 +18,6 @@ public class JoinDTO {
     private String email;
     private String firstname;
     private String lastname;
+    private LocalDate birthdate;
     private String nickname;
 }

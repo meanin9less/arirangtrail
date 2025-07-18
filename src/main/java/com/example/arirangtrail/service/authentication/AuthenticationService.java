@@ -1,10 +1,8 @@
 package com.example.arirangtrail.service.authentication;
 
-import com.example.arirangtrail.data.dao.UserDAO;
+import com.example.arirangtrail.data.dao.user.UserDAO;
 import com.example.arirangtrail.data.entity.UserEntity;
 import lombok.RequiredArgsConstructor;
-import org.springframework.security.authentication.AuthenticationManager;
-import org.springframework.security.authorization.AuthorizationDeniedException;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.User;
