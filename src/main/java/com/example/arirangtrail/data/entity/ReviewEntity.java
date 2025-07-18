@@ -11,6 +11,7 @@ import java.math.BigDecimal;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.util.LinkedHashSet;
+import java.util.List;
 import java.util.Set;
 
 @Getter
@@ -66,5 +67,18 @@ public class ReviewEntity {
     @NotNull
     @Column(name = "contenttitle", nullable = false)
     private String contenttitle;
+
+    //== 연관관계 편의 메소드 (Service 로직을 깔끔하게 만들어 줍니다) ==//
+    public void changePhotos(List<ReviewphotoEntity> newPhotos) {
+        // 1. 기존 사진 목록을 모두 비웁니다. (orphanRemoval = true 덕분에 DB에서 DELETE 쿼리가 나감)
+        this.reviewphotos.clear();
+
+        // 2. 새로운 사진 목록을 추가합니다.
+        if (newPhotos != null) {
+            this.reviewphotos.addAll(newPhotos);
+            // 3. 각 사진(자식)에게 부모가 누구인지 알려줍니다.
+            newPhotos.forEach(photo -> photo.setReviewid(this));
+        }
+    }
 
 }
