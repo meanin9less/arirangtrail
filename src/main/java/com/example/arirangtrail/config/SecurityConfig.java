@@ -49,6 +49,7 @@ public class SecurityConfig {
                 .authorizeHttpRequests(authorizeHttpRequests->{
                     authorizeHttpRequests.requestMatchers("/", "/api/join", "/api/login", "/api/reissue", "/api/naver", "/api/kakao",
                             "/api/login/oauth2/code/*", "/api/redis/**", "/api/reviews", "/api/reviews/", "/api/**").permitAll();
+                    authorizeHttpRequests.requestMatchers("/", "/api/join", "/api/login", "/api/reissue", "/api/naver", "/api/kakao", "/api/login/oauth2/code/*","/api/chat/**", "/ws-stomp/**").permitAll();
                     authorizeHttpRequests.requestMatchers("/api/admin").hasRole("ADMIN");
 //                    authorizeHttpRequests.anyRequest().authenticated();
                 })
