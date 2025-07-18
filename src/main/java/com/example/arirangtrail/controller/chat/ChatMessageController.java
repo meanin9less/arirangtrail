@@ -1,29 +1,33 @@
-package com.example.arirangtrail.controller;
+package com.example.arirangtrail.controller.chat;
 
 import com.example.arirangtrail.DTO.ChatMessageDTO;
-import lombok.Getter;
-import lombok.Setter;
+import com.example.arirangtrail.service.ChatService;
+import lombok.RequiredArgsConstructor;
 import org.springframework.messaging.handler.annotation.MessageMapping;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Controller;
-import lombok.RequiredArgsConstructor;
 
 @Controller
 @RequiredArgsConstructor
 public class ChatMessageController {
 
-    private final SimpMessagingTemplate template; // 특정 Broker로 메세지를 전달
+    private final SimpMessagingTemplate template;
+    private final ChatService chatService;
 
-    // 클라이언트가 /pub/chat/enter 로 메시지를 발행하면 이 메서드가 처리합니다.
+    // 경로: /api/pub/chat/enter
     @MessageMapping(value = "/chat/enter")
     public void enterUser(ChatMessageDTO message) {
         message.setMessage(message.getSender() + "님이 채팅방에 참여하였습니다.");
+        message.setType(ChatMessageDTO.MessageType.ENTER);
         template.convertAndSend("/sub/chat/room/" + message.getRoomId(), message);
     }
 
-    // 클라이언트가 /pub/chat/message 로 메시지를 발행하면 이 메서드가 처리합니다.
+    // 경로: /api/pub/chat/message
     @MessageMapping(value = "/chat/message")
     public void sendMessage(ChatMessageDTO message) {
+        message.setType(ChatMessageDTO.MessageType.TALK);
+        // 여기서 DB에 메시지 저장 로직을 추가할 수 있습니다.
+        chatService.saveMessage(message);
         template.convertAndSend("/sub/chat/room/" + message.getRoomId(), message);
     }
 }
