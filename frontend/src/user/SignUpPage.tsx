@@ -2,23 +2,25 @@ import React, { useState, ChangeEvent, FormEvent } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import apiClient from '../api/axiosInstance';
 import axios from 'axios';
-import styles from './User.module.css'; // User.module.css로 임포트 경로 일치
+import styles from './User.module.css';
+
+import arirang from '../images/arirang1.png'; // 아리랑 이미지 임포트
 
 interface JoinFormData {
-    username: string; // userId -> username
+    username: string;
     password: string;
     email: string;
-    firstname: string; // firstName -> firstname
-    lastname: string;  // lastName -> lastname
-    birthdate: string; // dateOfBirth -> birthdate
-    nickname: string;  // 새로 추가된 필드
+    firstname: string;
+    lastname: string;
+    birthdate: string;
+    nickname: string;
 }
 
 interface JoinResponse {
     message: string;
 }
 
-function JoinPage() { // 컴포넌트 함수 이름은 JoinPage로 유지합니다.
+function SignUpPage() { // 파일 이름에 맞춰 함수 이름도 SignUpPage로 변경
     const navigate = useNavigate();
 
     const [formData, setFormData] = useState<JoinFormData>({
@@ -58,8 +60,6 @@ function JoinPage() { // 컴포넌트 함수 이름은 JoinPage로 유지합니�
         setMessage(null);
         setLoading(true);
 
-        // console.log('회원가입 데이터:', formData); // 개발용 로그는 제거
-
         try {
             // [백엔드 연동 필요] 실제 회원가입 API 엔드포인트로 변경하세요.
             // 예: const response = await apiClient.post<JoinResponse>('/api/signup', formData);
@@ -88,6 +88,8 @@ function JoinPage() { // 컴포넌트 함수 이름은 JoinPage로 유지합니�
 
     return (
         <div className={styles.authContainer}>
+            <img src={arirang} alt="아리랑 이미지" className={styles.arirangImage} />
+
             <h2>회원가입</h2>
 
             {message && (
@@ -188,4 +190,4 @@ function JoinPage() { // 컴포넌트 함수 이름은 JoinPage로 유지합니�
     );
 }
 
-export default JoinPage;
+export default SignUpPage;

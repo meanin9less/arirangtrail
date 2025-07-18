@@ -7,6 +7,7 @@ import styles from './NavigationBar.module.css';
 // ✨ 이미지 파일 임포트 경로 수정: src/images/ 에 있다고 가정합니다.
 import homeIcon from '../images/home.png';
 import personIcon from '../images/person.png'; // 로그인 아이콘으로 사용할 이미지
+import arirangTrailIcon from '../images/arirang1.png';
 
 interface NaviProps {
     // 현재는 아무 props도 받지 않습니다.
@@ -44,6 +45,9 @@ const NavigationBar = ({}: NaviProps) => {
         <>
             <nav className={styles.navbar}>
                 {/* 좌측 그룹: 홈 아이콘 적용 (텍스트 제거) */}
+                <div>
+                    <img src={arirangTrailIcon} alt="아리랑 트레일 로고" className={styles.arirangicon} />
+                </div>
                 <div className={styles.navGroupLeft}>
                     <Link to={"/"} className={styles.homeLink}>
                         <img src={homeIcon} alt="홈 아이콘" className={styles.icon}/> {/* 홈 아이콘 이미지 */}
