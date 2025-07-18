@@ -1,101 +1,89 @@
-
 import axios, {
     AxiosInstance,
-    AxiosRequestConfig,
-    AxiosResponse,
     AxiosError,
     AxiosHeaders,
-    InternalAxiosRequestConfig
+    InternalAxiosRequestConfig,
+    AxiosResponse
 } from "axios";
 
 import store, { setToken } from "../store";
 
+// Axios RequestConfig에 _retry 속성을 추가하여 재시도 여부를 관리합니다.
 declare module 'axios' {
     export interface AxiosRequestConfig {
-        _retry?: boolean; // _retry 속성을 옵셔널한 boolean 타입으로 추가합니다.
+        _retry?: boolean;
     }
 }
 
-
-// 1. Axios 인스턴스를 생성하고 타입을 명시합니다.
+// 1. Axios 인스턴스를 생성합니다.
 const apiClient: AxiosInstance = axios.create({
-    baseURL: "http://localhost:8080", // ✨ localhost로 baseURL 변경
+    baseURL: "http://localhost:8080", // 백엔드 서버의 기본 URL (프로젝트 요구사항에 따라 고정)
     headers: {
         "Content-Type": "application/json",
     },
-    withCredentials: true, // 크로스 도메인 요청 시 쿠키 전송 허용
-    // timeout: 3000, // 필요하다면 주석 해제
+    withCredentials: true, // 크로스 도메인 요청 시 쿠키 전송 허용 (리프레시 토큰 사용 시 필요)
 });
 
-// 2. 요청 인터셉터 (Request Interceptor) 설정
+// 2. 요청 인터셉터: 모든 요청에 JWT 토큰을 추가합니다.
 apiClient.interceptors.request.use((config: InternalAxiosRequestConfig) => {
-    // config 객체의 타입을 InternalAxiosRequestConfig로 명시하여 타입 안정성 확보
-
-    // 요청 데이터가 URLSearchParams 타입인지 확인
+    // 요청 데이터가 URLSearchParams 타입인 경우 Content-Type을 변경합니다.
     if (config.data instanceof URLSearchParams) {
-        // headers가 없을 수 있으므로 초기화 (이젠 InternalAxiosRequestConfig 타입이 더 엄격하므로 필요할 수 있습니다)
         config.headers["Content-Type"] = "application/x-www-form-urlencoded";
     }
 
     // Redux store에서 JWT 토큰을 가져옵니다.
     const jwtToken = store.getState().token.token;
 
-    // JWT 토큰이 존재하면 요청 헤더에 Authorization을 추가합니다.
+    // JWT 토큰이 존재하면 Authorization 헤더에 'Bearer' 접두사와 함께 토큰을 추가합니다.
     if (jwtToken) {
-        config.headers["authorization"] = `${jwtToken}`; // 'Bearer ' 접두사가 필요한 경우 추가: `Bearer ${jwtToken}`
+        config.headers["Authorization"] = `Bearer ${jwtToken}`;
     }
 
-    return config; // 수정된 config 반환
+    return config; // 수정된 요청 설정 반환
 }, (error: AxiosError) => {
-    // 요청을 가로채는 중에 에러 발생 시 처리
-    console.error("요청 인터셉터 오류:", error);
+    // 요청을 보내기 전에 에러 발생 시 처리
+    console.error("Request Interceptor Error:", error);
     return Promise.reject(error);
 });
 
-// 3. 응답 인터셉터 (Response Interceptor) 설정
+// 3. 응답 인터셉터: 토큰 만료 시 재발급 로직을 처리합니다.
 apiClient.interceptors.response.use(
     (response: AxiosResponse) => response, // 성공적인 응답은 그대로 반환
-    async (error: AxiosError) => { // ✨ 에러 객체의 타입을 AxiosError로 명시
-        const originalRequest = error.config as InternalAxiosRequestConfig; // 타입 단언 (Assertion) 추가
+    async (error: AxiosError) => {
+        const originalRequest = error.config as InternalAxiosRequestConfig;
 
-        // 456 상태 코드는 임의로 설정하신 토큰 만료 코드라고 가정합니다.
-        // !originalRequest._retry: 무한 루프를 방지하기 위해 재시도 플래그 확인
+        // 서버에서 토큰 만료(예: 456 상태 코드) 응답을 받았고, 아직 재시도하지 않은 경우
+        // (참고: 456은 사용자 정의 코드이며, 일반적으로 401 Unauthorized를 사용합니다.)
         if (error.response && error.response.status === 456 && originalRequest && !originalRequest._retry) {
-            originalRequest._retry = true; // 재시도 플래그를 true로 설정
+            originalRequest._retry = true; // 재시도 플래그를 설정하여 무한 루프 방지
 
             try {
-                // 토큰 재발급 요청 (리프레시 토큰 사용)
-                const response = await axios.post("http://localhost:8080/reissue", null, { // ✨ 재발급 API도 localhost로 변경
+                // 토큰 재발급 요청 (리프레시 토큰은 withCredentials 덕분에 자동으로 전송)
+                const response = await axios.post("http://localhost:8080/reissue", null, {
                     withCredentials: true,
                 });
 
-                // 새로운 액세스 토큰을 응답 헤더에서 가져옵니다. (서버 설정에 따라 다를 수 있음)
+                // 새로운 액세스 토큰을 응답 헤더에서 가져옵니다.
                 const newAccessToken = response.headers['authorization'];
 
                 if (newAccessToken) {
                     // Redux store에 새로운 액세스 토큰을 저장합니다.
                     store.dispatch(setToken(newAccessToken));
-                    console.log("액세스 토큰 재발급 성공 및 Redux Store 업데이트");
 
                     // 원래 실패했던 요청을 새로운 액세스 토큰으로 재시도합니다.
-                    if (originalRequest.headers) { // headers 객체 자체가 존재하는지 확인 (필요 없을 수도 있음)
-                        originalRequest.headers['authorization'] = newAccessToken;
-                    } else {
-                        // InternalAxiosRequestConfig에서는 headers가 거의 항상 존재하지만,
-                        // 만약을 대비해 빈 AxiosHeaders 객체로 초기화.
-                        originalRequest.headers = new AxiosHeaders(); // AxiosHeaders 생성자를 사용합니다.
-                        originalRequest.headers['authorization'] = newAccessToken;
-                    }
-
-                    console.log("만료된 요청 재시도");
+                    originalRequest.headers['Authorization'] = `Bearer ${newAccessToken}`;
                     return apiClient(originalRequest); // 재시도된 요청 반환
                 } else {
-                    console.error("재발급 성공했으나 새로운 토큰이 응답 헤더에 없음.");
+                    console.error("Token reissue successful, but no new token in response header.");
                     return Promise.reject(error);
                 }
 
-            } catch (refreshError: any) { // 재발급 자체에서 에러 발생 시
-                console.error('리프레시 토큰으로 재발급 실패:', refreshError);
+            } catch (refreshError: any) {
+                console.error('Failed to refresh token:', refreshError);
+                // 리프레시 토큰 재발급 실패 시 (예: 리프레시 토큰 만료),
+                // 사용자에게 재로그인을 요청하거나 로그인 페이지로 리디렉션하는 로직이 필요할 수 있습니다.
+                store.dispatch(setToken(null)); // Redux Store 토큰 초기화
+                // navigate('/login'); // 컴포넌트 외부이므로 직접 호출 불가, 상위 컴포넌트에서 에러 처리 필요
                 return Promise.reject(refreshError);
             }
         }
