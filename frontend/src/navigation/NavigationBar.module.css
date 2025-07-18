@@ -95,7 +95,7 @@
     left: 0;
     width: 0;
     height: 2px;
-    background-color: rgba(255, 255, 255, 0.6); /* 흰색보다 살짝 약한 색 (기존 스타일) */
+    background-color: rgba(0, 123, 255, 0.8); /* 흰색보다 살짝 약한 색 (기존 스타일) */
     transition: width 0.3s ease-out;
 }
 

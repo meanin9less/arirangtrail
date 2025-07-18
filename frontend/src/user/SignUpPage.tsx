@@ -2,16 +2,16 @@ import React, { useState, ChangeEvent, FormEvent } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import apiClient from '../api/axiosInstance';
 import axios from 'axios';
-// ✨ CSS 모듈 임포트 경로 변경: user.module.css 사용
-import styles from './User.module.css';
+import styles from './User.module.css'; // User.module.css로 임포트 경로 일치
 
 interface JoinFormData {
-    userId: string;
+    username: string; // userId -> username
     password: string;
     email: string;
-    firstName: string;
-    lastName: string;
-    dateOfBirth: string;
+    firstname: string; // firstName -> firstname
+    lastname: string;  // lastName -> lastname
+    birthdate: string; // dateOfBirth -> birthdate
+    nickname: string;  // 새로 추가된 필드
 }
 
 interface JoinResponse {
@@ -22,12 +22,13 @@ function JoinPage() { // 컴포넌트 함수 이름은 JoinPage로 유지합니�
     const navigate = useNavigate();
 
     const [formData, setFormData] = useState<JoinFormData>({
-        userId: '',
+        username: '',
         password: '',
         email: '',
-        firstName: '',
-        lastName: '',
-        dateOfBirth: '',
+        firstname: '',
+        lastname: '',
+        birthdate: '',
+        nickname: '',
     });
 
     const [message, setMessage] = useState<string | null>(null);
@@ -57,10 +58,12 @@ function JoinPage() { // 컴포넌트 함수 이름은 JoinPage로 유지합니�
         setMessage(null);
         setLoading(true);
 
-        console.log('회원가입 데이터:', formData);
+        // console.log('회원가입 데이터:', formData); // 개발용 로그는 제거
 
         try {
-            const response = await apiClient.post<JoinResponse>('/signup', formData);
+            // [백엔드 연동 필요] 실제 회원가입 API 엔드포인트로 변경하세요.
+            // 예: const response = await apiClient.post<JoinResponse>('/api/signup', formData);
+            const response = await apiClient.post<JoinResponse>('http://localhost:8080/signup', formData);
 
             const successMessage = response.data.message || '회원가입 성공!';
             setMessage(successMessage);
@@ -84,27 +87,24 @@ function JoinPage() { // 컴포넌트 함수 이름은 JoinPage로 유지합니�
     };
 
     return (
-        // ✨ 클래스 이름 변경: joinContainer -> authContainer
         <div className={styles.authContainer}>
             <h2>회원가입</h2>
 
             {message && (
-                // ✨ 클래스 이름 변경: successMessage/errorMessage
                 <p className={message.includes('성공') ? styles.successMessage : styles.errorMessage}>
                     {message}
                 </p>
             )}
 
-            {/* ✨ 클래스 이름 변경: joinForm -> authForm */}
             <form onSubmit={handleSubmit} className={styles.authForm}>
                 <div className={styles.formGroup}>
-                    <label htmlFor="userId">아이디:</label>
+                    <label htmlFor="username">아이디:</label>
                     <input
                         type="text"
-                        id="userId"
-                        name="userId"
+                        id="username"
+                        name="username"
                         placeholder="User Name"
-                        value={formData.userId}
+                        value={formData.username}
                         onChange={handleChange}
                         required
                         className={styles.inputField}
@@ -126,28 +126,34 @@ function JoinPage() { // 컴포넌트 함수 이름은 JoinPage로 유지합니�
                 </div>
 
                 <div className={styles.formGroup}>
-                    <label htmlFor="firstName">성:</label>
-                    <input type="text" id="firstName" name="firstName" placeholder='First Name'
-                           value={formData.firstName} onChange={handleChange} required className={styles.inputField}
+                    <label htmlFor="firstname">성:</label>
+                    <input type="text" id="firstname" name="firstname" placeholder='First Name'
+                           value={formData.firstname} onChange={handleChange} required className={styles.inputField}
                     />
                 </div>
 
                 <div className={styles.formGroup}>
-                    <label htmlFor="lastName">이름:</label>
-                    <input type="text" id="lastName" name="lastName" placeholder='Last Name'
-                           value={formData.lastName} onChange={handleChange} required className={styles.inputField}
+                    <label htmlFor="lastname">이름:</label>
+                    <input type="text" id="lastname" name="lastname" placeholder='Last Name'
+                           value={formData.lastname} onChange={handleChange} required className={styles.inputField}
                     />
                 </div>
 
                 <div className={styles.formGroup}>
-                    <label htmlFor="dateOfBirth">생년월일:</label>
-                    <input type="date" id="dateOfBirth" name="dateOfBirth" placeholder='생년월일'
-                           value={formData.dateOfBirth} onChange={handleChange} required className={styles.inputField}
+                    <label htmlFor="birthdate">생년월일:</label>
+                    <input type="date" id="birthdate" name="birthdate" placeholder='생년월일'
+                           value={formData.birthdate} onChange={handleChange} required className={styles.inputField}
+                    />
+                </div>
+
+                <div className={styles.formGroup}>
+                    <label htmlFor="nickname">닉네임:</label>
+                    <input type="text" id="nickname" name="nickname" placeholder='NickName'
+                           value={formData.nickname} onChange={handleChange} required className={styles.inputField}
                     />
                 </div>
 
                 <div className={styles.buttonContainer}>
-                    {/* ✨ 클래스 이름 변경: joinButton -> primaryButton */}
                     <button
                         type="submit"
                         disabled={loading}
@@ -158,7 +164,6 @@ function JoinPage() { // 컴포넌트 함수 이름은 JoinPage로 유지합니�
                 </div>
             </form>
 
-            {/* ✨ 클래스 이름 변경: loginLinkText, loginLink */}
             <p className={styles.loginLinkText}>
                 <Link to="/login" className={styles.loginLink}>
                     이미 계정이 있으신가요? 로그인

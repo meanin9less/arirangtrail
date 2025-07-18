@@ -6,6 +6,7 @@ import { useDispatch } from 'react-redux';
 import { setToken, AppDispatch } from '../store';
 // ✨ CSS 모듈 임포트 경로 변경: user.module.css 사용
 import styles from './User.module.css';
+import arirang from '../images/arirang1.png'; // 아리랑 이미지
 
 interface LoginProps {}
 interface LoginFormData {
