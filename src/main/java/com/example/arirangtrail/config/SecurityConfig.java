@@ -61,8 +61,7 @@ public class SecurityConfig {
                     corsConfiguration.setExposedHeaders(List.of("Authorization")); //서버가 응답을 보낼때 브라우저가 접근할수 있는 헤더
                     corsConfiguration.addAllowedMethod("*");
                     corsConfiguration.addAllowedOrigin("http://localhost:3000");
-                    corsConfiguration.addAllowedOrigin("http://52.78.46.203");
-//                    corsConfiguration.addAllowedOrigin("http://52.78.46.203:3000");
+                    corsConfiguration.addAllowedOrigin("http://arirangtrail.duckdns.org");
                     return corsConfiguration;
                 }))
 
