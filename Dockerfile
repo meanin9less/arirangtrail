@@ -1,5 +1,5 @@
 # 1단계: 실행을 위한 JRE 기반의 작은 이미지 사용
-FROM openjdk:17-jre-slim
+FROM openjdk:17-jdk-slim
 WORKDIR /app
 
 # 2단계: GitHub Actions 워크플로우에서 빌드하고 생성한 JAR 파일을 이미지로 복사
