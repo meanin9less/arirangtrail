@@ -5,7 +5,7 @@ import LoginPage from "./user/LoginPage";
 import NavigationBar from "./navigation/NavigationBar";
 import HomePage from "./HomePage";
 import MyPage from "./user/MyPage";
-import SignUpPage from "./user/SignUpPage";
+import SignUpPage from "./user/JoinPage";
 import CalenderPage from "./calender/CalenderPage";
 import DetailPage from "./calender/DetailPage";
 import CommunityPage from "./community/CommunityPage";
@@ -33,7 +33,7 @@ function App() {
                 <Route path={'/search'} element={<SearchPage/>}></Route>
                 <Route path={'/login'} element={<LoginPage/>}></Route>
                 <Route path={'/mypage'} element={<MyPage/>}></Route>
-                <Route path={'/signup'} element={<SignUpPage/>}></Route>
+                <Route path={'/join'} element={<SignUpPage/>}></Route>
             </Route>
           </Routes>
         </BrowserRouter>

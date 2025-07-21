@@ -25,6 +25,7 @@ public class UserDAO {
                 .lastname(lastName)
                 .birthdate(birthdate)
                 .nickname(nickname)
+                .role("ROLE_USER")
                 .createdat(Instant.now())
                 .updatedat(Instant.now())
                 .build();

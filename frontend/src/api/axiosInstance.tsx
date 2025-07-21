@@ -17,7 +17,9 @@ declare module 'axios' {
 
 // 1. Axios 인스턴스를 생성합니다.
 const apiClient: AxiosInstance = axios.create({
-    baseURL: "http://localhost:8080", // 백엔드 서버의 기본 URL (프로젝트 요구사항에 따라 고정)
+    // ✨ 변경할 부분: 여기에 백엔드 서버의 실제 주소를 입력하세요.
+    // 예: "http://52.78.46.203:8080" 또는 "https://api.yourdomain.com"
+    baseURL: "http://localhost:8080", // 현재는 localhost:8080
     headers: {
         "Content-Type": "application/json",
     },
@@ -59,6 +61,8 @@ apiClient.interceptors.response.use(
 
             try {
                 // 토큰 재발급 요청 (리프레시 토큰은 withCredentials 덕분에 자동으로 전송)
+                // ✨ 변경할 부분: 여기에 백엔드 서버의 실제 주소를 입력하세요.
+                // 예: "http://52.78.46.203:8080/reissue"
                 const response = await axios.post("http://localhost:8080/reissue", null, {
                     withCredentials: true,
                 });
@@ -83,7 +87,6 @@ apiClient.interceptors.response.use(
                 // 리프레시 토큰 재발급 실패 시 (예: 리프레시 토큰 만료),
                 // 사용자에게 재로그인을 요청하거나 로그인 페이지로 리디렉션하는 로직이 필요할 수 있습니다.
                 store.dispatch(setToken(null)); // Redux Store 토큰 초기화
-                // navigate('/login'); // 컴포넌트 외부이므로 직접 호출 불가, 상위 컴포넌트에서 에러 처리 필요
                 return Promise.reject(refreshError);
             }
         }
