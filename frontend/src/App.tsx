@@ -16,11 +16,13 @@ import Footer from "./footer/Footer";
 import {Provider} from "react-redux";
 import store from "./store";
 import ReviewWritePage from "./review/ReviewWritePage";
+import TranslateWidget from "./TranslateWiget";
 
 function App() {
   return (
       <Provider store={store}>
         <BrowserRouter>
+            <TranslateWidget/>
           <Routes>
             <Route path={'/'} element={<NavigationBar/>}>
                 <Route index element={<HomePage/>}></Route>
