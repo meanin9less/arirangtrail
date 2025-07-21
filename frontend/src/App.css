@@ -36,3 +36,7 @@
     transform: rotate(360deg);
   }
 }
+
+#gt_float_wrapper{
+  left: 30px !important;
+}

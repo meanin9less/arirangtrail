@@ -8,13 +8,14 @@ import 'swiper/css/navigation';
 import 'swiper/css/pagination';
 import "./detail.css"
 
-// 네이버 지도 API의 타입 선언
+// 구글맵 API 타입 선언
 declare global {
     interface Window {
-        naver: any;
+        google: any;
     }
 }
 
+// API 요청 축제 상세 정보 데이터
 interface FestivalDetail {
     title: string;
     contentid: string;
@@ -23,12 +24,13 @@ interface FestivalDetail {
     homepage: string;
     firstimage: string;
     firstimage2: string;
-    mapx: string;
-    mapy: string;
+    mapx: string; // 경도(longitude)
+    mapy: string; // 위도(latitude)
     tel: string;
     overview: string;
 }
 
+// API 요청 추가이미지 정보 데이터
 interface ImageItem {
     contentid: string;
     imgname: string;
@@ -38,12 +40,14 @@ interface ImageItem {
 
 }
 
+
 const DetailPage = () => {
     const SERVICE_KEY = "WCIc8hzzBS3Jdod%2BVa357JmB%2FOS0n4D2qPHaP9PkN4bXIfcryZyg4iaZeTj1fEYJ%2B8q2Ol8FIGe3RkW3d72FHA%3D%3D";
     const {festivalId} = useParams<{ festivalId: string }>();
     const [festival, setFestival] = useState<FestivalDetail | null>(null);
     const [images, setImages] = useState<ImageItem[]>([]);
     const [isLoading, setIsLoading] = useState<boolean>(true);
+    const [userLocation, setUserLocation] = useState<{ lat: number; lng: number } | null>(null); // 사용자 현재 위치를 저장할 공간.
 
     useEffect(() => {
         if (festivalId) {
@@ -113,42 +117,68 @@ const DetailPage = () => {
         }
     }, [festivalId]);
 
-    // // 네이버 지도 설정
-    // useEffect(() => {
-    //     // festival 데이터나 네이버 지도 API(window.naver)가 준비되지 않았으면 아무것도 하지 않습니다.
-    //     if (!festival || !festival.mapy || !festival.mapx || !window.naver) {
-    //         return;
-    //     }
-    //
-    //     const mapContainer = document.getElementById('map'); // 지도를 담을 영역
-    //     if (!mapContainer) return; // 지도를 담을 영역이 없으면 중단
-    //
-    //     // 네이버 지도 옵션을 설정합니다.
-    //     const mapOptions = {
-    //         center: new window.naver.maps.LatLng(festival.mapy, festival.mapx),
-    //         zoom: 15, // 네이버 지도의 확대 수준 (숫자가 클수록 확대됨)
-    //         zoomControl: true, // 확대/축소 컨트롤 표시
-    //     };
-    //
-    //     // 지도를 생성합니다.
-    //     const map = new window.naver.maps.Map(mapContainer, mapOptions);
-    //
-    //     // 마커(위치 표시)를 생성합니다.
-    //     new window.naver.maps.Marker({
-    //         position: new window.naver.maps.LatLng(festival.mapy, festival.mapx),
-    //         map: map, // 생성한 지도에 마커를 추가합니다.
-    //     });
-    //
-    // }, [festival]); // festival 데이터가 로드된 후에만 이 코드가 실행됩니다.
+    useEffect(() => {
+        // festival 데이터나 '구글맵' API(window.google)가 준비되지 않았으면 실행하지 않음
+        if (!festival || !festival.mapy || !festival.mapx || !window.google) return;
+
+        const mapContainer = document.getElementById('map');
+        if (!mapContainer) return;
+
+        const lat = parseFloat(festival.mapy);
+        const lng = parseFloat(festival.mapx);
+        const position = {lat: lat, lng: lng}; // 구글맵은 {lat, lng} 객체를 사용합니다.
+
+        // 구글맵 옵션
+        const mapOptions = {
+            center: position,
+            zoom: 15,
+            disableDefaultUI: true, // 기본 UI(스트리트뷰, 확대/축소 등)를 숨겨서 깔끔하게
+            zoomControl: true,
+        };
+
+        // 구글맵 생성
+        const map = new window.google.maps.Map(mapContainer, mapOptions);
+
+        // 구글맵 마커 생성
+        const marker = new window.google.maps.Marker({
+            position: position,
+            map: map,
+        });
+
+        // 구글맵 인포윈도우 생성
+        const infowindow = new window.google.maps.InfoWindow({
+            content: `<div class="google-infowindow">${festival.title}</div>`
+        });
+
+        marker.addListener('click', () => {
+            infowindow.open({
+                anchor: marker,
+                map,
+            });
+        });
+
+    }, [festival]);
+
+    // 현재 위치로 길찾기 함수
+    const handleRouteFromCurrentLocation = () => {
+        if (!festival) return;
+        navigator.geolocation.getCurrentPosition(
+            (position) => {
+                const {latitude, longitude} = position.coords;
+                setUserLocation({lat: latitude, lng: longitude});
+                const url = `https://www.google.com/maps/dir/?api=1&origin=${latitude},${longitude}&destination=${festival.mapy},${festival.mapx}`;
+                window.open(url, '_blank');
+            },
+            (error) => {
+                alert("위치 정보를 가져오는 데 실패했습니다. 브라우저 설정을 확인해주세요.");
+                console.error("Geolocation Error:", error);
+            }
+        );
+    };
 
     if (isLoading) {
-        return (
-            <div className="loading-overlay">
-                <span>Loading data</span>
-            </div>
-        );
+        return <div className="loading-overlay"><span>축제 정보를 불러오는 중...</span></div>;
     }
-
     if (!festival) {
         return <div className="error-message">해당 축제 정보를 찾을 수 없습니다.</div>;
     }
@@ -189,26 +219,55 @@ const DetailPage = () => {
                         <span className="info-label">소개</span>
                         <div className="info-content" dangerouslySetInnerHTML={{__html: festival.overview}}/>
                     </li>
-                    <li className="info-item">
-                        <span className="info-label">주소</span>
-                        <div className="info-content">{festival.addr1}</div>
-                    </li>
-                    {festival.tel && (
-                        <li className="info-item">
-                            <span className="info-label">연락처</span>
-                            <div className="info-content">{festival.tel}</div>
-                        </li>
-                    )}
                     {festival.homepage && (
                         <li className="info-item">
                             <span className="info-label">홈페이지</span>
                             <div className="info-content" dangerouslySetInnerHTML={{__html: festival.homepage}}/>
                         </li>
                     )}
+                    {festival.tel && (
+                        <li className="info-item">
+                            <span className="info-label">연락처</span>
+                            <div className="info-content">{festival.tel}</div>
+                        </li>
+                    )}
+                    <li className="info-item">
+                        <span className="info-label">주소</span>
+                        <div className="info-content">{festival.addr1}</div>
+                    </li>
                 </ul>
                 <div className="detail-map-section">
-                    <h3 className="section-title">위치 정보</h3>
+                    <div className="section-header"><h3 className="section-title">위치 정보</h3></div>
                     <div id="map" style={{width: '100%', height: '400px'}}></div>
+                </div>
+
+                <div className="travel-guide-section">
+                    <h3 className="section-title">오시는 길 (Directions)</h3>
+                    <div className="travel-options">
+                        <div className="option-card primary-action">
+                            <div className="option-icon">📍</div>
+                            <div className="option-info">
+                                <h4>현재 위치에서 길찾기</h4>
+                                <p>가장 빠르고 정확한 경로를 확인하세요. (위치 정보 제공 동의 필요)</p>
+                                <button onClick={handleRouteFromCurrentLocation} className="primary-button">
+                                    내 위치에서 출발
+                                </button>
+                            </div>
+                        </div>
+                        <div className="option-card">
+                            <div className="option-icon">🚌🚆</div>
+                            <div className="option-info">
+                                <h4>대중교통 예매</h4>
+                                <p>고속버스나 기차를 이용해 편하게 이동하세요.</p>
+                                <div className="external-links">
+                                    <a href="https://www.kobus.co.kr/main.do" target="_blank" rel="noopener noreferrer"
+                                       className="option-link">고속버스 예매 (Kobus) →</a>
+                                    <a href="https://www.letskorail.com/" target="_blank" rel="noopener noreferrer"
+                                       className="option-link">기차 예매 (Korail) →</a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>

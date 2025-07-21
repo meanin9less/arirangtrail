@@ -1,38 +1,54 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useDispatch } from 'react-redux';
-import { setToken, AppDispatch } from '../store'; // Redux store 및 setToken 액션 임포트
+import { clearAuth, AppDispatch } from '../store'; // ✨ clearAuth 임포트
+import styles from './User.module.css'; // User.module.css 임포트 (모달 스타일 재사용)
 
-// LogoutPage 컴포넌트는 화면에 직접적으로 보여줄 UI가 없으므로 Props도 필요 없습니다.
-interface LogoutPageProps {
-    // 현재는 아무 props도 받지 않습니다.
-}
-
-const LogoutPage = ({}: LogoutPageProps) => {
+const LogoutPage = () => {
     const navigate = useNavigate();
     const dispatch: AppDispatch = useDispatch();
 
-    // 컴포넌트가 마운트될 때 로그아웃 로직을 실행합니다.
+    const [showModal, setShowModal] = useState<boolean>(false);
+    const [modalMessage, setModalMessage] = useState<string>('');
+
+    const handleCloseModal = () => {
+        setShowModal(false);
+        setModalMessage('');
+        navigate('/login'); // 모달 닫기 후 로그인 페이지로 이동
+    };
+
     useEffect(() => {
-        // 1. 로컬 스토리지에서 JWT 토큰 제거
-        localStorage.removeItem('jwtToken');
+        // ✨ clearAuth 액션을 디스패치하여 토큰과 프로필 정보를 모두 초기화
+        dispatch(clearAuth());
+        localStorage.removeItem('jwtToken'); // 로컬 스토리지에서도 제거
         console.log('로컬 스토리지에서 JWT 토큰 제거됨.');
+        console.log('Redux Store에서 토큰 및 프로필 상태 초기화됨.');
 
-        // 2. Redux Store에서 토큰 상태 초기화 (null로 설정)
-        dispatch(setToken(null));
-        console.log('Redux Store에서 토큰 상태 초기화됨.');
+        setModalMessage('로그아웃 되었습니다.');
+        setShowModal(true);
 
-        // 3. 로그아웃 처리 후 로그인 페이지 또는 홈 페이지로 리디렉션
-        // 로그아웃 후에는 메인 페이지로 이동
-        navigate('/');
-        // 또는 navigate('/'); // 홈 페이지로 이동하고 싶다면 이 줄을 사용
-    }, [dispatch, navigate]); // dispatch와 navigate는 변경되지 않으므로 의존성 배열에 포함해도 무방
+    }, [dispatch]);
 
-    // 이 컴포넌트는 로그아웃 로직만 처리하고 UI를 렌더링하지 않으므로 null을 반환합니다.
-    // 또는 "로그아웃 중..."과 같은 간단한 메시지를 잠시 보여줄 수도 있습니다.
     return (
-        <div style={{ textAlign: 'center', padding: '50px' }}>
-            <p>로그아웃 처리 중...</p>
+        <div className={styles.authContainer}>
+            <p className={styles.message}>로그아웃 처리 중...</p>
+
+            {showModal && (
+                <div className={styles.modalOverlay}>
+                    <div className={styles.modalContent}>
+                        <h3>알림</h3>
+                        <p>
+                            {modalMessage}
+                        </p>
+                        <button
+                            onClick={handleCloseModal}
+                            className={styles.modalButton}
+                        >
+                            확인
+                        </button>
+                    </div>
+                </div>
+            )}
         </div>
     );
 };
