@@ -4,6 +4,7 @@ import ChatRoom from './ChatRoom'; // 실제 채팅이 이루어질 컴포넌트
 
 // 백엔드에서 받아올 채팅방의 타입 정의
 interface Room {
+    title: any;
     id: string; // MongoDB ObjectId
     name: string;
 }
@@ -17,7 +18,7 @@ const CommunityPage = () => {
     // 컴포넌트 마운트 시 채팅방 목록 불러오기
     useEffect(() => {
         fetchRooms();
-        // 간단히 프롬프트로 사용자 이름 받기 (실제로는 로그인 정보 사용)
+        // 간단히 프롬프트로 사용자 이름 받기 (실제로는 로그인 정보 사용)// 추후에 nickname으로 예상되는 부분 넘어오면 해당 내용 사용/ nickname(username 일부*화)이런식으로
         const user = prompt("사용자 이름을 입력하세요:");
         if (user) setUserName(user);
     }, []);
@@ -41,6 +42,7 @@ const CommunityPage = () => {
     };
 
     // 새로운 채팅방을 생성하는 함수
+    // handleCreateRoom 함수 내부
     const handleCreateRoom = async (e: FormEvent) => {
         e.preventDefault();
         if (!newRoomName.trim() || !userName) {
@@ -48,12 +50,22 @@ const CommunityPage = () => {
             return;
         }
         try {
+            // 보낼 데이터를 객체로 만든다.
+            const requestData = {
+                title: newRoomName,
+                username: userName
+            };
+
+            // axios.post의 두 번째 인자로 데이터 객체를 전달한다.
             const response = await axios.post<Room>(
-                `http://localhost:8080/api/chat/rooms?name=${newRoomName}`
+                'http://localhost:8080/api/chat/rooms',
+                requestData // 여기에 데이터 객체를 담아 보냄
             );
+
             setNewRoomName('');
             fetchRooms(); // 목록 새로고침
-            alert(`'${response.data.name}' 방이 생성되었습니다. 입장해주세요.`);
+            // 백엔드에서 받은 방의 제목(title)을 사용하도록 변경
+            alert(`'${response.data.title}' 방이 생성되었습니다. 입장해주세요.`);
         } catch (error) {
             console.error("채팅방 생성에 실패했습니다.", error);
         }
@@ -121,3 +133,12 @@ const CommunityPage = () => {
 };
 
 export default CommunityPage;
+
+// 지금 방에서 구현하고 있는 기능들과 상관관계-박시현
+// 1. 상태변수: 메세지 내용 불러오기, 보낼 내용 설정, 웹소켓에 연결된 객체 유지 및 기능
+// 2. 함수: 초기-> 1) 유저 이름 프롬프트 및 세팅하기 2) 몽고db에서 채팅방 목록 가져오기, 3) 채팅방 이름 생성(저장)하여 다시 불러오는 api,
+// 4) 채팅방 입장하는 함수: 룸아이디를 세팅하는 함수 5)채팅방에서 나가는 함수(룸아이디=null)
+// 3. 화면 구성: 선택된 방이 있으면 챗룸을 렌더링하고, 아니면 밑에 채팅방 생성폼과 채팅방 목록을 렌더링 한다.
+
+// 필요: 현재 내가 소속되어 있는 채팅방을 알고, 리턴부에 표현할 수 있어야 한다. 전제조건-> 내가 완전히 나가는 것과 그냥 접속 끊긴것의 구분이 있어야 할려면,
+// 챗룸에서 나가기 버튼 눌를때,

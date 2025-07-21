@@ -1,8 +1,9 @@
 package com.example.arirangtrail.controller.chat;
 
 
-import com.example.arirangtrail.chat.ChatRoom;
-import com.example.arirangtrail.service.ChatService;
+import com.example.arirangtrail.data.document.ChatRoom;
+import com.example.arirangtrail.data.dto.chat.CreateRoomDTO;
+import com.example.arirangtrail.service.chat.ChatService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -24,13 +25,14 @@ public class ChatRoomController {
 
     // 채팅방 생성
     @PostMapping("/rooms")
-    public ResponseEntity<ChatRoom> createRoom(@RequestParam String name) {
-        return ResponseEntity.ok(chatService.createRoom(name));
+    public ResponseEntity<ChatRoom> createRoom(@RequestBody CreateRoomDTO createRoomDTO) {
+
+        return ResponseEntity.ok(chatService.createRoom(createRoomDTO.getUsername(), createRoomDTO.getTitle()));
     }
 
     // 특정 채팅방 조회
     @GetMapping("/rooms/{roomId}")
-    public ResponseEntity<ChatRoom> getRoomById(@PathVariable String roomId) {
+    public ResponseEntity<ChatRoom> getRoomById(@PathVariable Long roomId) {
         return ResponseEntity.ok(chatService.findRoomById(roomId));
     }
 }

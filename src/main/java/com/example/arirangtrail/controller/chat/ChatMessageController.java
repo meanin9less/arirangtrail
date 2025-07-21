@@ -1,7 +1,7 @@
 package com.example.arirangtrail.controller.chat;
 
-import com.example.arirangtrail.DTO.ChatMessageDTO;
-import com.example.arirangtrail.service.ChatService;
+import com.example.arirangtrail.data.dto.chat.ChatMessageDTO;
+import com.example.arirangtrail.service.chat.ChatService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.messaging.handler.annotation.MessageMapping;
 import org.springframework.messaging.simp.SimpMessagingTemplate;

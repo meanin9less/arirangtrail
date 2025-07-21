@@ -1,6 +1,6 @@
-package com.example.arirangtrail.data.repository;
+package com.example.arirangtrail.data.repository.chat;
 
-import com.example.arirangtrail.chat.ChatMessage;
+import com.example.arirangtrail.data.document.ChatMessage;
 import org.springframework.data.mongodb.repository.MongoRepository;
 import java.util.List;
 

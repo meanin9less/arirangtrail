@@ -1,4 +1,4 @@
-package com.example.arirangtrail.DTO;
+package com.example.arirangtrail.data.dto.chat;
 
 import lombok.Getter;
 import lombok.Setter;
@@ -10,7 +10,7 @@ public class ChatMessageDTO {
         ENTER, TALK, LEAVE
     }
     private MessageType type;
-    private String roomId;
+    private Long roomId;
     private String sender;
     private String message;
 }
