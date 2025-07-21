@@ -6,10 +6,6 @@ WORKDIR /app
 # build/libs/ 디렉토리에 있는 JAR 파일을 app.jar 라는 이름으로 복사합니다.
 COPY build/libs/*.jar app.jar
 
-# 3단계: 리뷰 이미지 저장을 위한 디렉토리 생성
-# 이 디렉토리는 EC2 호스트의 볼륨과 연결됩니다.
-RUN mkdir -p /app/images
-
 # 4단계: 애플리케이션 실행 포트 노출
 EXPOSE 8080
 
