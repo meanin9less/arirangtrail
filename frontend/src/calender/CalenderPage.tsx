@@ -201,7 +201,7 @@ const CalendarPage = () => {
                             </div>
                             {count > 0 && ( // 만약 축제 개수가 1개 이상일 때만 아래 내용을 보여줌
                                 <div className="day-event-info"> {/* 축제 정보(개수)를 표시하는 영역입니다. */}
-                                    <span className="day-event-count">{count} count</span>
+                                    <span className="day-event-count">{count} 개</span>
                                 </div>
                             )}
                         </div>
