@@ -36,3 +36,4 @@ public class ChatRoomController {
         return ResponseEntity.ok(chatService.findRoomById(roomId));
     }
 }
+///
