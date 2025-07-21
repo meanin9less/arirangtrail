@@ -1,0 +1,125 @@
+# 워크플로우 이름
+name: Build and Push Docker Images
+
+# 이벤트 트리거 설정
+on:
+  push:
+    branches:
+      - main # backend 브랜치에 푸시될 때 실행
+
+# 실행될 작업 정의
+jobs:
+  # 빌드 및 푸시 작업
+  build_and_push:
+    # 실행 환경 설정
+    runs-on: ubuntu-latest
+
+    # 작업 단계
+    steps:
+      # 1. DockerHub 로그인
+      - name: Login to DockerHub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      # 2. 소스 코드 체크아웃
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      # 3. MySQL Docker 이미지 빌드 및 푸시
+      - name: Build MySQL Docker image
+        working-directory: db/mysql # 작업 디렉토리를 db/mysql로 변경
+        run: |
+          docker build -t ${{ secrets.DOCKERHUB_USERNAME }}/arirangmysql .
+
+      - name: Push MySQL Docker image
+        run: |
+          docker push ${{ secrets.DOCKERHUB_USERNAME }}/arirangmysql
+
+      # 4. Mongo Docker 이미지 빌드 및 푸시
+      - name: Build Mongo Docker image
+        working-directory: db/mongo # 작업 디렉토리를 db/mongo로 변경
+        run: |
+          docker build -t ${{ secrets.DOCKERHUB_USERNAME }}/arirangmongo .
+
+      - name: Push Mongo Docker image
+        run: |
+          docker push ${{ secrets.DOCKERHUB_USERNAME }}/arirangmongo
+
+      # 5. Redis Docker 이미지 빌드 및 푸시
+      - name: Build Redis Docker image
+        working-directory: db/redis # 작업 디렉토리를 db/redis로 변경
+        run: |
+          docker build -t ${{ secrets.DOCKERHUB_USERNAME }}/arirangredis .
+
+      - name: Push Redis Docker image
+        run: |
+          docker push ${{ secrets.DOCKERHUB_USERNAME }}/arirangredis
+
+      # 6. Frontend Docker 이미지 빌드 및 푸시
+      - name: Build Frontend Docker image
+        working-directory: frontend # 작업 디렉토리를 frontend로 변경
+        run: |
+          docker build -t ${{ secrets.DOCKERHUB_USERNAME }}/arirangfrontend .
+
+      - name: Push Frontend Docker image
+        run: |
+          docker push ${{ secrets.DOCKERHUB_USERNAME }}/arirangfrontend
+
+      # 7. Backend Docker 이미지 빌드 및 푸시
+      - name: Build Backend Docker image
+        run: |
+          docker build -t ${{ secrets.DOCKERHUB_USERNAME }}/arirangbackend .
+      - name: Push Backend Docker image
+        run: |
+          docker push ${{ secrets.DOCKERHUB_USERNAME }}/arirangbackend
+
+  # 배포 작업
+  deploy:
+    # build_and_push 작업이 성공해야 실행
+    needs: build_and_push
+    runs-on: ubuntu-latest
+    steps:
+      # EC2에 SSH로 접속하여 배포 스크립트 실행
+      - name: Docker pull and run
+        uses: appleboy/ssh-action@v0.1.10
+        with:
+          username: ubuntu
+          host: ${{ secrets.LIVE_SERVER_IP }}
+          key: ${{ secrets.EC2_SSH_KEY }}
+          script: |
+            # 기존 Docker 컨테이너 중지 및 삭제
+            if [ "$(sudo docker ps -a -q -f name=arirangmysql)" ]; then sudo docker rm -f arirangmysql; fi
+            if [ "$(sudo docker ps -a -q -f name=arirangmongo)" ]; then sudo docker rm -f arirangmongo; fi
+            if [ "$(sudo docker ps -a -q -f name=arirangredis)" ]; then sudo docker rm -f arirangredis; fi
+            if [ "$(sudo docker ps -a -q -f name=arirangbackend)" ]; then sudo docker rm -f arirangbackend; fi
+            if [ "$(sudo docker ps -a -q -f name=arirangfrontend)" ]; then sudo docker rm -f arirangfrontend; fi
+
+            # 기존 Docker 이미지 삭제
+            if [ "$(sudo docker images -q ${{ secrets.DOCKERHUB_USERNAME }}/arirangmysql)" ]; then sudo docker rmi -f ${{ secrets.DOCKERHUB_USERNAME }}/arirangmysql; fi
+            if [ "$(sudo docker images -q ${{ secrets.DOCKERHUB_USERNAME }}/arirangmongo)" ]; then sudo docker rmi -f ${{ secrets.DOCKERHUB_USERNAME }}/arirangmongo; fi
+            if [ "$(sudo docker images -q ${{ secrets.DOCKERHUB_USERNAME }}/arirangredis)" ]; then sudo docker rmi -f ${{ secrets.DOCKERHUB_USERNAME }}/arirangredis; fi
+            if [ "$(sudo docker images -q ${{ secrets.DOCKERHUB_USERNAME }}/arirangbackend)" ]; then sudo docker rmi -f ${{ secrets.DOCKERHUB_USERNAME }}/arirangbackend; fi
+            if [ "$(sudo docker images -q ${{ secrets.DOCKERHUB_USERNAME }}/arirangfrontend)" ]; then sudo docker rmi -f ${{ secrets.DOCKERHUB_USERNAME }}/arirangfrontend; fi
+
+            # DockerHub에서 최신 이미지 pull
+            sudo docker pull ${{ secrets.DOCKERHUB_USERNAME }}/arirangmysql
+            sudo docker pull ${{ secrets.DOCKERHUB_USERNAME }}/arirangmongo
+            sudo docker pull ${{ secrets.DOCKERHUB_USERNAME }}/arirangredis
+            sudo docker pull ${{ secrets.DOCKERHUB_USERNAME }}/arirangbackend
+            sudo docker pull ${{ secrets.DOCKERHUB_USERNAME }}/arirangfrontend
+
+            # Docker 컨테이너 실행
+            sudo docker run -d -p 3308:3306 --name arirangmysql -v arirangmysql_volume:/var/lib/mysql ${{ secrets.DOCKERHUB_USERNAME }}/arirangmysql
+            sudo docker run -d -p 27017:27017 --name arirangmongo -v arirangmongo_volume:/data/db ${{ secrets.DOCKERHUB_USERNAME }}/arirangmongo
+            sudo docker run -d -p 6379:6379 --name arirangredis -v arirangredis_volume:/data ${{ secrets.DOCKERHUB_USERNAME }}/arirangredis redis-server --requirepass ${{ secrets.REDIS_PASSWORD }}
+            sudo docker run -d -p 8080:8080 --name arirangbackend \
+            -e GOOGLE_CLIENT_ID=${{secrets.GOOGLE_CLIENT_ID}} \
+            -e GOOGLE_CLIENT_SECRET=${{secrets.GOOGLE_CLIENT_SECRET}} \
+            -e NAVER_CLIENT_ID=${{secrets.NAVER_CLIENT_ID}} \
+            -e NAVER_CLIENT_SECRET=${{secrets.NAVER_CLIENT_SECRET}} \
+            -e KAKAO_CLIENT_ID=${{secrets.KAKAO_CLIENT_ID}} \
+            -e KAKAO_CLIENT_SECRET=${{secrets.KAKAO_CLIENT_SECRET}} \
+            ${{ secrets.DOCKERHUB_USERNAME }}/arirangbackend
+            sudo docker run -d -p 80:80 --name arirangfrontend ${{ secrets.DOCKERHUB_USERNAME }}/arirangfrontend
