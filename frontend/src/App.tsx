@@ -5,7 +5,7 @@ import LoginPage from "./user/LoginPage";
 import NavigationBar from "./navigation/NavigationBar";
 import HomePage from "./HomePage";
 import MyPage from "./user/MyPage";
-import SignUpPage from "./user/SignUpPage";
+import SignUpPage from "./user/JoinPage";
 import CalenderPage from "./calender/CalenderPage";
 import DetailPage from "./calender/DetailPage";
 import CommunityPage from "./community/CommunityPage";
@@ -19,29 +19,29 @@ import ReviewWritePage from "./review/ReviewWritePage";
 import TranslateWidget from "./TranslateWiget";
 
 function App() {
-    return (
-        <Provider store={store}>
-            <BrowserRouter>
-                <TranslateWidget/>
-                <Routes>
-                    <Route path={'/'} element={<NavigationBar/>}>
-                        <Route index element={<HomePage/>}></Route>
-                        <Route path={'/calender'} element={<CalenderPage/>}></Route>
-                        <Route path={"/calender/:festivalId"} element={<DetailPage/>}></Route>
-                        <Route path={'/search'} element={<SearchPage/>}></Route>
-                        <Route path={'/community'} element={<CommunityPage/>}></Route>
-                        <Route path={'/company'} element={<CompanyPage/>}></Route>
-                        <Route path={'/review'} element={<ReviewPage/>}></Route>
-                        <Route path={'/review/write'} element={<ReviewWritePage/>}></Route>
-                        <Route path={'/login'} element={<LoginPage/>}></Route>
-                        <Route path={'/mypage'} element={<MyPage/>}></Route>
-                        <Route path={'/signup'} element={<SignUpPage/>}></Route>
-                    </Route>
-                </Routes>
-            </BrowserRouter>
-            <Footer/>
-        </Provider>
-    );
+  return (
+      <Provider store={store}>
+        <BrowserRouter>
+            <TranslateWidget/>
+          <Routes>
+            <Route path={'/'} element={<NavigationBar/>}>
+                <Route index element={<HomePage/>}></Route>
+                <Route path={'/calender'} element={<CalenderPage/>}></Route>
+              <Route path={"/calender/:festivalId"} element={<DetailPage/>}></Route>
+                <Route path={'/community'} element={<CommunityPage/>}></Route>
+                <Route path={'/company'} element={<CompanyPage/>}></Route>
+                <Route path={'/review'} element={<ReviewPage/>}></Route>
+                <Route path={'/review/write'} element={<ReviewWritePage/>}></Route>
+                <Route path={'/search'} element={<SearchPage/>}></Route>
+                <Route path={'/login'} element={<LoginPage/>}></Route>
+                <Route path={'/mypage'} element={<MyPage/>}></Route>
+                <Route path={'/join'} element={<SignUpPage/>}></Route>
+            </Route>
+          </Routes>
+        </BrowserRouter>
+          <Footer />
+      </Provider>
+  );
 }
 
 export default App;

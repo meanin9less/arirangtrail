@@ -120,11 +120,10 @@ const SearchPage = () => {
                     placeholder="키워드를 입력해주세요.(예: 불꽃, 시장)"
                     value={searchKeyword}
                     onChange={(e) => setSearchKeyword(e.target.value)}
-                    disabled={isLoading} // 로딩 중에는 입력 비활성화
+                    disabled={isLoading} // 로딩 중에는 입력 비활성화b
                 />
             </div>
 
-            {/* --- 검색 결과 표시: 이제 filteredFestivals를 사용합니다 --- */}
             <div className="search-results-container">
                 {isLoading && <div className="loading-indicator">새로운 지역의 축제를 불러오는 중...</div>}
 

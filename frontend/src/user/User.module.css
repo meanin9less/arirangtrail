@@ -8,22 +8,23 @@
     max-width: 450px;
     margin: 50px auto;
     box-sizing: border-box;
-    display: flex; /* 내부 요소들을 flex로 정렬 */
-    flex-direction: column; /* 세로 방향으로 정렬 */
-    align-items: center; /* 가로 중앙 정렬 */
+    display: flex;
+    flex-direction: column;
+    align-items: center;
 
-    background-color: #fff; /* 배경색 */
-    box-shadow: 0 2px 8px rgba(0,0,0,0.2); /* 그림자 효과 은은하게 조정 */
+    background-color: #fff;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
 }
 
 /* 아리랑 이미지 스타일 */
 .arirangImage {
-    max-width: 120px; /* 이미지 최대 너비를 180px로 고정하여 너무 커지지 않도록 설정 */
-    height: auto; /* 비율 유지를 위해 높이 자동 설정 */
-    object-fit: contain; /* 이미지가 잘리지 않고 컨테이너에 맞게 축소되도록 */
+    max-width: 150px;
+    height: auto;
+    margin-bottom: 20px;
+    border-radius: 8px;
+    object-fit: contain;
 }
 
-/* 메시지 스타일 (성공/실패 공통) */
 .successMessage {
     color: green;
     font-weight: bold;
@@ -34,54 +35,56 @@
     font-weight: bold;
 }
 
-/* 공통 폼 스타일 (로그인/회원가입 폼 모두 사용) */
+/* 전통 로그인 폼 스타일 */
 .authForm {
+    width: 100%;
     display: flex;
     flex-direction: column;
-    gap: 15px; /* 폼 내부 요소들 사이의 간격 */
-    width: 100%; /* 폼이 컨테이너 너비를 꽉 채우도록 */
+    gap: 15px;
+    margin-bottom: 20px; /* 소셜 로그인 버튼과의 간격 */
 }
 
-/* 입력 필드 스타일 (로그인/회원가입 폼 모두 사용) */
+.formGroup {
+    margin-bottom: 0;
+}
+
+.formGroup label {
+    display: block;
+    margin-bottom: 5px;
+    font-weight: bold;
+    color: #555;
+}
+
 .inputField {
     width: 100%;
-    padding: 8px;
+    padding: 10px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
     box-sizing: border-box;
-    border: 1px solid #ddd;
-    border-radius: 4px;
+    font-size: 1em;
 }
 
-/* 버튼 컨테이너 스타일 (버튼 중앙 정렬) */
 .buttonContainer {
     display: flex;
     justify-content: center;
-    width: 100%; /* 버튼 컨테이너가 폼의 너비를 꽉 채우도록 */
 }
 
-/* 로그인 버튼 컨테이너의 하단 마진 */
-.loginButtonMargin {
-    margin-bottom: 10px;
-}
-
-/* 기본 버튼 스타일 (로그인/회원가입 버튼 공통) */
-.primaryButton, .secondaryButton {
-    width: 80%; /* 버튼 너비를 80%로 줄여서 너무 길게 늘어지지 않도록 */
-    max-width: 300px; /* 버튼 최대 너비 설정 */
-    padding: 10px;
+.primaryButton {
+    width: 80%;
+    max-width: 300px;
+    padding: 12px;
+    background-color: #007bff;
+    color: white;
     border: none;
     border-radius: 5px;
     cursor: pointer;
-    transition: background-color 0.3s ease;
-}
-
-/* 로그인 버튼 (주요 액션) */
-.primaryButton {
-    background-color: #007bff;
-    color: white;
+    transition: background-color 0.3s ease, transform 0.2s ease;
+    font-size: 1.1em;
 }
 
 .primaryButton:hover {
     background-color: #0056b3;
+    transform: translateY(-2px);
 }
 
 .primaryButton:disabled {
@@ -89,35 +92,91 @@
     cursor: not-allowed;
 }
 
-/* 회원가입 버튼 (보조 액션, 로그인 페이지 내 회원가입 버튼) */
-.secondaryButton {
-    background-color: #6c757d;
+/* ✨ 구분선 스타일 */
+.divider {
+    width: 100%;
+    text-align: center;
+    border-bottom: 1px solid #eee;
+    line-height: 0.1em;
+    margin: 20px 0;
+}
+
+.dividerText {
+    background:#fff;
+    padding:0 10px;
+    color: #888;
+    font-size: 0.9em;
+}
+
+
+/* OAuth 2.0 버튼 컨테이너 */
+.oauthButtonsContainer {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    width: 100%;
+    max-width: 300px;
+    margin-bottom: 20px; /* 회원가입 링크와의 간격 */
+}
+
+/* OAuth 2.0 버튼 공통 스타일 */
+.oauthButtonNaver,
+.oauthButtonKakao,
+.oauthButtonGoogle {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 12px 20px;
+    border: none;
+    border-radius: 5px;
+    font-size: 1em;
+    font-weight: bold;
     color: white;
-}
-
-.secondaryButton:hover {
-    background-color: #5a6268;
-}
-
-/* Link 컴포넌트의 밑줄 제거 */
-.noTextDecoration {
     text-decoration: none;
-    width: 100%; /* Link가 부모 div의 너비를 꽉 채우도록 */
-    display: block; /* Link를 블록 요소로 만들어 너비를 차지하게 함 */
+    cursor: pointer;
+    transition: background-color 0.3s ease, transform 0.2s ease;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.2);
 }
 
-
-/* 회원가입 페이지 전용 스타일 */
-.formGroup {
-    margin-bottom: 0; /* gap으로 간격 처리하므로 개별 margin-bottom 제거 */
+/* 각 OAuth 제공자별 색상 */
+.oauthButtonNaver {
+    background-color: #03c75a; /* 네이버 녹색 */
+}
+.oauthButtonNaver:hover {
+    background-color: #02a04a;
+    transform: translateY(-2px);
 }
 
-.formGroup label {
-    display: block;
-    margin-bottom: 5px;
+.oauthButtonKakao {
+    background-color: #FEE500; /* 카카오 노란색 */
+    color: #3C1E1E; /* 카카오 텍스트 색상 */
+}
+.oauthButtonKakao:hover {
+    background-color: #e6cb00;
+    transform: translateY(-2px);
 }
 
-/* 모달 스타일 (로그인/회원가입 페이지 모두 사용) */
+.oauthButtonGoogle {
+    background-color: #DB4437; /* 구글 빨간색 */
+}
+.oauthButtonGoogle:hover {
+    background-color: #c0392b;
+    transform: translateY(-2px);
+}
+
+/* 회원가입 링크 텍스트 스타일 */
+.signupLinkText {
+    margin-top: 15px;
+    text-align: center;
+    width: 100%;
+}
+
+.signupLink {
+    text-decoration: none;
+    color: #007bff;
+}
+
+/* 모달 스타일 (기존 모달 스타일 유지) */
 .modalOverlay {
     position: fixed;
     top: 0;
@@ -153,4 +212,18 @@
 
 .modalButton:hover {
     background-color: #0056b3;
+}
+
+/* 모바일 반응형 */
+@media (max-width: 768px) {
+    .authContainer {
+        max-width: 350px;
+        padding: 15px;
+    }
+    .oauthButtonsContainer {
+        max-width: 250px;
+    }
+    .primaryButton {
+        width: 100%;
+    }
 }
