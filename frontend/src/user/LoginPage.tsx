@@ -67,9 +67,23 @@ const LoginPage = () => {
             return;
         }
 
+        // ✨ ✨ ✨ 변경된 부분: URLSearchParams를 사용하여 데이터 형식 변경 ✨ ✨ ✨
+        const params = new URLSearchParams();
+        params.append('username', formData.username);
+        params.append('password', formData.password);
+
+        console.log('--- 프론트엔드: 로그인 요청 데이터 (URLSearchParams) ---');
+        console.log('전송될 사용자명:', formData.username);
+        console.log('전송될 비밀번호:', '[비밀번호 숨김]'); // 보안을 위해 비밀번호는 출력하지 않음
+        console.log('--------------------------------------------------');
+
         try {
-            // 전통 로그인 API 엔드포인트로 요청
-            const response = await apiClient.post<LoginResponseData>('/api/login', formData);
+            // ✨ 변경된 부분: params를 요청 본문으로 보내고 Content-Type 헤더 명시
+            const response = await apiClient.post<LoginResponseData>('/api/login', params, {
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded'
+                }
+            });
 
             const successMessage = response.data.message || '로그인 성공!';
             setMessage(successMessage);
@@ -100,7 +114,11 @@ const LoginPage = () => {
             let errorMessage = '로그인 실패: 네트워크 오류 또는 알 수 없는 오류가 발생했습니다.';
 
             if (axios.isAxiosError(error) && error.response) {
-                errorMessage = error.response.data?.message || '로그인 실패: 아이디 또는 비밀번호를 확인해주세요.';
+                // error.response.data 전체를 출력하여 자세한 에러 정보 확인
+                console.error('--- 프론트엔드: 백엔드 응답 에러 데이터 ---');
+                console.error(error.response.data);
+                console.error('---------------------------------------');
+                errorMessage = error.response.data?.error || error.response.data?.message || '로그인 실패: 아이디 또는 비밀번호를 확인해주세요.';
             }
             setMessage(errorMessage);
             setModalMessage(errorMessage);
@@ -123,7 +141,7 @@ const LoginPage = () => {
                 </p>
             )}
 
-            {/* ✨ 전통 로그인 폼 */}
+            {/* 전통 로그인 폼 */}
             <form onSubmit={handleTraditionalLogin} className={styles.authForm}>
                 <div className={styles.formGroup}>
                     <label htmlFor="username">아이디:</label>
@@ -133,8 +151,9 @@ const LoginPage = () => {
                         name="username"
                         value={formData.username}
                         onChange={handleChange}
-                        placeholder="아이디를 입력하세요"
+                        required
                         className={styles.inputField}
+                        placeholder="아이디를 입력하세요"
                     />
                 </div>
                 <div className={styles.formGroup}>
@@ -145,8 +164,9 @@ const LoginPage = () => {
                         name="password"
                         value={formData.password}
                         onChange={handleChange}
-                        placeholder="비밀번호를 입력하세요"
+                        required
                         className={styles.inputField}
+                        placeholder="비밀번호를 입력하세요"
                     />
                 </div>
                 <div className={`${styles.buttonContainer} ${styles.loginButtonMargin}`}>
@@ -160,12 +180,12 @@ const LoginPage = () => {
                 </div>
             </form>
 
-            {/* ✨ 구분선 또는 텍스트 */}
+            {/* 구분선 또는 텍스트 */}
             <div className={styles.divider}>
                 <span className={styles.dividerText}>또는</span>
             </div>
 
-            {/* ✨ OAuth 2.0 로그인 버튼들 */}
+            {/* OAuth 2.0 로그인 버튼들 */}
             <div className={styles.oauthButtonsContainer}>
                 <a href={`${BACKEND_OAUTH_BASE_URL}/oauth2/authorization/naver`} className={styles.oauthButtonNaver}>
                     네이버 로그인
@@ -180,7 +200,7 @@ const LoginPage = () => {
 
             {/* 회원가입 링크 */}
             <p className={styles.signupLinkText}>
-                <Link to={'/join'} className={styles.signupLink}>
+                <Link to={'/signup'} className={styles.signupLink}>
                     새 계정 만들기 (회원가입)
                 </Link>
             </p>
