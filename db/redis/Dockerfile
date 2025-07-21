@@ -8,11 +8,6 @@ FROM redis:7-alpine
 # 이 한 줄을 통해 우리가 정의한 설정으로 Redis 서버가 실행됩니다.
 COPY redis.conf /usr/local/etc/redis/redis.conf
 
-# 3. 데이터 볼륨 지정
-# Redis 데이터가 저장될 디렉토리(/data)를 볼륨으로 선언합니다.
-# 이렇게 하면 docker run 명령어에서 볼륨을 연결하여 데이터를 영속적으로 보관할 수 있습니다.
-VOLUME /data
-
 # 4. 포트 노출
 # Redis의 기본 포트인 6379를 외부에 노출하도록 명시합니다.
 EXPOSE 6379

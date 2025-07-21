@@ -113,7 +113,7 @@ jobs:
             # Docker 컨테이너 실행
             sudo docker run -d -p 3308:3306 --name arirangmysql -v arirangmysql_volume:/var/lib/mysql ${{ secrets.DOCKERHUB_USERNAME }}/arirangmysql
             sudo docker run -d -p 27017:27017 --name arirangmongo -v arirangmongo_volume:/data/db ${{ secrets.DOCKERHUB_USERNAME }}/arirangmongo
-            sudo docker run -d -p 6379:6379 --name arirangredis -v arirangredis_volume:/data ${{ secrets.DOCKERHUB_USERNAME }}/arirangredis
+            sudo docker run -d -p 6379:6379 --name arirangredis -v arirangredis_volume:/data ${{ secrets.DOCKERHUB_USERNAME }}/arirangredis redis-server --requirepass ${{ secrets.REDIS_PASSWORD }}
             sudo docker run -d -p 8080:8080 --name arirangbackend \
             -e GOOGLE_CLIENT_ID=${{secrets.GOOGLE_CLIENT_ID}} \
             -e GOOGLE_CLIENT_SECRET=${{secrets.GOOGLE_CLIENT_SECRET}} \
