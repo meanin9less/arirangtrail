@@ -1,7 +1,8 @@
-import React, {FormEvent, use, useEffect, useState} from "react";
+import React, {useEffect, useState} from "react";
 import axios from "axios";
 import './search.css'
 import {Link} from "react-router-dom";
+import {IoCalendarOutline, IoLocationOutline} from "react-icons/io5";
 
 // 지역 코드 데이터를 위한 인터페이스
 interface AreaInfo {
@@ -16,6 +17,8 @@ interface SearchFestival {
     title: string;
     addr1: string;
     firstimage?: string; // 이미지는 없을 수 있으므로 선택적으로
+    eventstartdate: string;
+    eventenddate: string;
 }
 
 // 지역 코드 데이터
@@ -103,8 +106,11 @@ const SearchPage = () => {
 
     return (
         <div className="search-page-container">
-            <h1 className="search-title">축제 검색</h1>
-            <div className="search-controls">
+            <header className="search-header">
+                <h1 className="search-title">지역검색</h1>
+                <p className="search-subtitle">찾으시는 지역 선택과 키워드를 입력하실 수 있습니다.</p>
+            </header>
+            <div className="search-input-wrapper">
                 <select
                     className="search-select-area"
                     value={selectAreaCode}
@@ -120,7 +126,7 @@ const SearchPage = () => {
                     placeholder="키워드를 입력해주세요.(예: 불꽃, 시장)"
                     value={searchKeyword}
                     onChange={(e) => setSearchKeyword(e.target.value)}
-                    disabled={isLoading} // 로딩 중에는 입력 비활성화b
+                    disabled={isLoading}
                 />
             </div>
 
@@ -133,21 +139,45 @@ const SearchPage = () => {
 
                 {!isLoading && filterFestivals.length > 0 && (
                     <ul className="festival-search-list">
-                        {filterFestivals.map(festival => (
-                            <li key={festival.contentid} className="festival-search-item">
-                                <Link to={`/calender/${festival.contentid}`} className="festival-search-link">
-                                    <img
-                                        src={festival.firstimage || 'https://via.placeholder.com/120x90.png?text=No+Image'}
-                                        alt={festival.title}
-                                        className="festival-search-image"
-                                    />
-                                    <div className="festival-search-info">
-                                        <h3 className="festival-search-title">{festival.title}</h3>
-                                        <p className="festival-search-address">{festival.addr1}</p>
-                                    </div>
-                                </Link>
-                            </li>
-                        ))}
+                        {filterFestivals.map(festival => {
+                            const today = new Date();
+                            today.setHours(0, 0, 0, 0);
+
+                            const startDateStr = `${festival.eventstartdate.substring(0, 4)}-${festival.eventstartdate.substring(4, 6)}-${festival.eventstartdate.substring(6, 8)}`;
+                            const endDateStr = `${festival.eventenddate.substring(0, 4)}-${festival.eventenddate.substring(4, 6)}-${festival.eventenddate.substring(6, 8)}`;
+                            const startDate = new Date(startDateStr);
+                            const endDate = new Date(endDateStr);
+
+                            const isOngoing = today >= startDate && today <= endDate;
+
+                            return (
+                                <li key={festival.contentid} className="festival-search-item">
+                                    <Link to={`/calender/${festival.contentid}`} className="festival-search-link">
+                                        <img
+                                            src={festival.firstimage || 'https://via.placeholder.com/130x100.png?text=No+Image'}
+                                            alt={festival.title}
+                                            className="festival-search-image"
+                                        />
+                                        <div className="festival-search-info">
+                                            <h3 className="festival-search-title">
+                                                <span>{festival.title}</span> {/* 제목을 span으로 감싸기 */}
+                                                {isOngoing && <span className="ongoing-badge">진행중</span>}
+                                            </h3>
+                                            <div className="festival-search-meta">
+                                                <span className="meta-item">
+                                                    <IoCalendarOutline/>
+                                                    {`${festival.eventstartdate.substring(0, 4)}.${festival.eventstartdate.substring(4, 6)}.${festival.eventstartdate.substring(6, 8)} ~ ${festival.eventenddate.substring(0, 4)}.${festival.eventenddate.substring(4, 6)}.${festival.eventenddate.substring(6, 8)}`}
+                                                </span>
+                                                <span className="meta-item">
+                                                    <IoLocationOutline/>
+                                                    {festival.addr1 || '주소 정보 없음'}
+                                                </span>
+                                            </div>
+                                        </div>
+                                    </Link>
+                                </li>
+                            );
+                        })}
                     </ul>
                 )}
             </div>
