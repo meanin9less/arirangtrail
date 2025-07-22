@@ -1,13 +1,15 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Link, Outlet, useNavigate } from "react-router-dom";
 import { useSelector, useDispatch } from 'react-redux';
-import { RootState, AppDispatch, setToken } from '../store';
+import { RootState, AppDispatch, clearAuth } from '../store'; // clearAuth 임포트
 import styles from './NavigationBar.module.css';
 
-// ✨ 이미지 파일 임포트 경로 수정: src/images/ 에 있다고 가정합니다.
-import homeIcon from '../images/home.png';
-import personIcon from '../images/person.png'; // 로그인 아이콘으로 사용할 이미지
-import arirangTrailIcon from '../images/arirang1.png';
+// 이미지 파일 임포트 (경로 확인: src/images/ 에 있다고 가정합니다.)
+import arirangTrailIcon from '../images/arirang1.png'; // ✨ 아리랑 트레일 로고 이미지 임포트
+import personIcon from '../images/person.png'; // 로그인 아이콘 (로그아웃 상태일 때)
+
+// ✨ 기본 프로필 이미지 URL (이미지 파일이 없을 경우 사용될 플레이스홀더)
+const defaultProfileIcon = 'https://placehold.co/30x30/cccccc/ffffff?text=U';
 
 interface NaviProps {
     // 현재는 아무 props도 받지 않습니다.
@@ -17,6 +19,7 @@ const NavigationBar = ({}: NaviProps) => {
     const navigate = useNavigate();
     const dispatch: AppDispatch = useDispatch();
     const jwtToken = useSelector((state: RootState) => state.token.token);
+    const userProfile = useSelector((state: RootState) => state.token.userProfile); // ✨ userProfile 가져오기
     const isLoggedIn = !!jwtToken;
 
     const [showUserDropdown, setShowUserDropdown] = useState(false);
@@ -36,22 +39,28 @@ const NavigationBar = ({}: NaviProps) => {
     }, [dropdownRef]);
 
     const handleLogout = () => {
-        // 로컬 스토리지와 Redux Store 클리어는 LogoutPage에서 처리하도록 위임
+        // ✨ clearAuth 액션을 디스패치하여 토큰과 프로필 정보를 모두 초기화
+        dispatch(clearAuth());
+        localStorage.removeItem('jwtToken'); // 로컬 스토리지에서도 제거
         setShowUserDropdown(false); // 드롭다운 닫기
-        navigate('/logout'); // /logout 경로로 이동하여 LogoutPage에서 실제 로그아웃 처리
+        navigate('/logout');
     };
+
+    // ✨ 프로필 이미지 URL 결정 (userProfile에서 가져오거나 기본값 사용)
+    const profileImageUrl = userProfile?.imageUrl || defaultProfileIcon;
+    // ✨ 표시할 닉네임 (userProfile에서 가져오거나 사용자명, 없으면 '사용자')
+    const displayNickname = userProfile?.nickname || userProfile?.username || '사용자';
 
     return (
         <>
             <nav className={styles.navbar}>
-                {/* 좌측 그룹: 홈 아이콘 적용 (텍스트 제거) */}
-                <div>
-                    <img src={arirangTrailIcon} alt="아리랑 트레일 로고" className={styles.arirangicon} />
-                </div>
+                {/* 좌측 그룹: 홈 아이콘 적용 (아리랑 트레일 로고 사용) */}
                 <div className={styles.navGroupLeft}>
                     <Link to={"/"} className={styles.homeLink}>
-                        <img src={homeIcon} alt="홈 아이콘" className={styles.icon}/> {/* 홈 아이콘 이미지 */}
-                        {/* ✨ 홈 텍스트 제거: <span className={styles.linkText}>홈</span> */}
+                        {/* ✨ 아리랑 트레일 로고 이미지 사용 및 arirangicon 클래스 적용 */}
+                        <img src={arirangTrailIcon} alt="홈 아이콘" className={styles.arirangicon}/>
+                        {/* 홈 텍스트는 필요에 따라 추가/제거 */}
+                        {/* <span className={styles.linkText}>홈</span> */}
                     </Link>
                 </div>
 
@@ -67,13 +76,23 @@ const NavigationBar = ({}: NaviProps) => {
                 {/* 우측 그룹: 로그인/마이페이지 조건부 렌더링 */}
                 <div className={styles.navGroupRight} ref={dropdownRef}>
                     {isLoggedIn ? (
-                        // 로그인 상태일 때: 마이페이지 텍스트 버튼
+                        // 로그인 상태일 때: 프로필 이미지와 닉네임이 있는 드롭다운 버튼
                         <div className={styles.userMenuContainer}>
                             <button
-                                className={styles.userTextButton}
+                                className={styles.userProfileButton} // ✨ 새로운 스타일 클래스 적용
                                 onClick={() => setShowUserDropdown(!showUserDropdown)}
                             >
-                                마이페이지
+                                {/* ✨ 프로필 이미지 (또는 플레이스홀더) */}
+                                <img
+                                    src={profileImageUrl}
+                                    alt="프로필"
+                                    className={styles.profileImageSmall} // ✨ 새로운 스타일 클래스 적용
+                                    onError={(e) => { // 이미지 로드 실패 시 플레이스홀더 이미지로 대체
+                                        const target = e.target as HTMLImageElement;
+                                        target.onerror = null; // 무한 루프 방지
+                                        target.src = defaultProfileIcon;
+                                    }}
+                                />
                             </button>
                             {showUserDropdown && (
                                 // 드롭다운 메뉴
@@ -88,10 +107,11 @@ const NavigationBar = ({}: NaviProps) => {
                             )}
                         </div>
                     ) : (
-                        // 로그아웃 상태일 때: 로그인 아이콘 링크 (텍스트 제거)
+                        // 로그아웃 상태일 때: 로그인 아이콘 링크
                         <Link to={"/login"} className={styles.loginLinkTextOnly}>
-                            <img src={personIcon} alt="로그인 아이콘" className={styles.icon}/> {/* 로그인 아이콘 이미지 */}
-                            {/* ✨ 로그인 텍스트 제거: <span className={styles.linkText}>로그인</span> */}
+                            <img src={personIcon} alt="로그인 아이콘" className={styles.icon}/>
+                            {/* 로그인 텍스트는 필요에 따라 추가/제거 */}
+                            {/* <span className={styles.linkText}>로그인</span> */}
                         </Link>
                     )}
                 </div>

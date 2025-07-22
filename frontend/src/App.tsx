@@ -17,6 +17,8 @@ import {Provider} from "react-redux";
 import store from "./store";
 import ReviewWritePage from "./review/ReviewWritePage";
 import TranslateWidget from "./TranslateWiget";
+import LogoutPage from "./user/LogoutPage";
+
 
 function App() {
   return (
@@ -27,7 +29,7 @@ function App() {
             <Route path={'/'} element={<NavigationBar/>}>
                 <Route index element={<HomePage/>}></Route>
                 <Route path={'/calender'} element={<CalenderPage/>}></Route>
-              <Route path={"/calender/:festivalId"} element={<DetailPage/>}></Route>
+                <Route path={"/calender/:festivalId"} element={<DetailPage/>}></Route>
                 <Route path={'/community'} element={<CommunityPage/>}></Route>
                 <Route path={'/company'} element={<CompanyPage/>}></Route>
                 <Route path={'/review'} element={<ReviewPage/>}></Route>
@@ -36,12 +38,14 @@ function App() {
                 <Route path={'/login'} element={<LoginPage/>}></Route>
                 <Route path={'/mypage'} element={<MyPage/>}></Route>
                 <Route path={'/join'} element={<SignUpPage/>}></Route>
+                <Route path={'/logout'} element={<LogoutPage/>}></Route>
             </Route>
           </Routes>
         </BrowserRouter>
-          <Footer />
+        <Footer />
       </Provider>
   );
+
 }
 
 export default App;
