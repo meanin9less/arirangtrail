@@ -45,6 +45,15 @@ const SearchPage = () => {
     const [festivals, setFestivals] = useState<SearchFestival[]>([]);
     const [filterFestivals, setFilterFestivals] = useState<SearchFestival[]>([]);
     const [isLoading, setIsLoading] = useState<boolean>(true);
+  
+    const getTodayDateString = () => {
+        const today = new Date();
+        const year = today.getFullYear();
+        const month = ('0' + (today.getMonth() + 1)).slice(-2); // 월은 0부터 시작하므로 +1, 두 자리로 맞춤
+        const day = ('0' + today.getDate()).slice(-2); // 날짜를 두 자리로 맞춤
+        return `${year}${month}${day}`;
+    };
+
 
     // 지역 코드 바뀔때마다 호출
     useEffect(() => {
@@ -56,7 +65,8 @@ const SearchPage = () => {
 
             const SERVICE_KEY = "WCIc8hzzBS3Jdod%2BVa357JmB%2FOS0n4D2qPHaP9PkN4bXIfcryZyg4iaZeTj1fEYJ%2B8q2Ol8FIGe3RkW3d72FHA%3D%3D";
             const API_URL =
-                `https://apis.data.go.kr/B551011/KorService2/areaBasedList2?serviceKey=${SERVICE_KEY}&MobileApp=AppTest&MobileOS=ETC&_type=json`;
+                `https://apis.data.go.kr/B551011/KorService2/searchFestival2?serviceKey=${SERVICE_KEY}&MobileApp=AppTest&MobileOS=ETC&_type=json`;
+            const todayString = getTodayDateString(); // 오늘 날짜 (YYYYMMDD)
 
             try {
                 const response = await axios.get(API_URL, {
@@ -64,7 +74,8 @@ const SearchPage = () => {
                         numOfRows: 50, // 50개만 가져오도록 설정
                         pageNo: 1,
                         areaCode: selectAreaCode, // 사용자가 선택한 지역 코드로 검색
-                        contentTypeId: 15,
+                        eventStartDate: todayString,
+                        arrange: 'B',
                     }
                 });
                 console.log(response.data);

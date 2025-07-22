@@ -19,11 +19,12 @@ import ReviewWritePage from "./review/ReviewWritePage";
 import TranslateWidget from "./TranslateWiget";
 import LogoutPage from "./user/LogoutPage";
 
+
 function App() {
   return (
       <Provider store={store}>
         <BrowserRouter>
-          <TranslateWidget/>
+            <TranslateWidget/>
           <Routes>
             <Route path={'/'} element={<NavigationBar/>}>
                 <Route index element={<HomePage/>}></Route>

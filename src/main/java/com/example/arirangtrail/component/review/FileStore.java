@@ -1,6 +1,8 @@
 package com.example.arirangtrail.component.review;
 
 
+import jakarta.annotation.PostConstruct;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -15,7 +17,16 @@ public class FileStore {
 
     // application.yml 등에서 설정값을 가져오는 것을 추천합니다.
     // assets/img/reviewimg/ 까지는 동일, 테스트하고싶으면 앞의 경로를 프로젝트폴더 자기 로컬의 절대경로로 설정 => 본인프로젝트폴더절대경로/assets/img/reviewimg/
-    private final String fileDir = "C:/Users/803-08/IdeaProjects/arirangtrail/assets/img/reviewimg/";
+    @Value("${file.upload-dir}")
+    private String fileDir;
+
+    @PostConstruct
+    public void init() {
+        File directory = new File(fileDir);
+        if (!directory.exists()) {
+            directory.mkdirs();
+        }
+    }
 
     public List<String> storeFiles(List<MultipartFile> multipartFiles) throws IOException {
         List<String> storeFileResult = new ArrayList<>();
