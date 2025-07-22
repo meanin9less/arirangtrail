@@ -75,7 +75,7 @@ const LoginPage = ({}: LoginProps) => {
             params.append('username', formData.username);
             params.append('password', formData.password);
 
-            const response = await apiClient.post<LoginResponseData>('/api/login', params, {
+            const response = await apiClient.post<LoginResponseData>('/login', params, {
                 headers: {
                     'Content-Type': 'application/x-www-form-urlencoded'
                 }
