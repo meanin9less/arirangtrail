@@ -1,0 +1,54 @@
+/* src/HomePage.module.css */
+
+/* 메인 컨테이너 스타일 */
+.homeContainer {
+    position: relative;
+    width: 100vw; /* 뷰포트 너비 꽉 채우기 */
+    height: calc(100vh - 60px); /* 내비게이션 바 높이 제외 (대략 60px) */
+    overflow: hidden; /* 넘치는 부분 숨김 */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    /* 배경 이미지와 전환 효과는 JSX에서 인라인으로 동적으로 적용됩니다. */
+    /* backgroundImage: url(...); */
+    /* transition: background-image 1.5s ease-in-out; */
+    background-size: cover; /* 배경 이미지가 요소를 꽉 채우도록 */
+    background-position: center center; /* 배경 이미지 중앙 정렬 */
+    background-repeat: no-repeat; /* 배경 이미지 반복 없음 */
+}
+
+/* 배경 이미지 위에 어두운 오버레이 */
+.overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5); /* 검은색 50% 투명도 오버레이 */
+    z-index: 1; /* 콘텐츠보다 아래에 위치 */
+}
+
+/* 로딩 및 오류 메시지 스타일 */
+.messageContainer {
+    background-color: #f0f0f0;
+    color: #333;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 100vw;
+    height: calc(100vh - 60px);
+    font-size: 1.2em;
+    font-weight: bold;
+}
+
+.errorMessage {
+    color: red;
+}
+
+/* 모바일 반응형 (선택 사항: 필요시 추가) */
+@media (max-width: 768px) {
+    .homeContainer, .messageContainer {
+        height: calc(100vh - 50px); /* 모바일 내비게이션 바 높이 조정 */
+    }
+}

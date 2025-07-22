@@ -3,7 +3,7 @@ import './App.css';
 import {BrowserRouter, Route, Routes} from "react-router-dom";
 import LoginPage from "./user/LoginPage";
 import NavigationBar from "./navigation/NavigationBar";
-import HomePage from "./HomePage";
+import HomePage from "./homepage/HomePage";
 import MyPage from "./user/MyPage";
 import CalenderPage from "./calender/CalenderPage";
 import DetailPage from "./calender/DetailPage";
