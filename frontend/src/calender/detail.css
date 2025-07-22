@@ -35,7 +35,7 @@
 .swiper-slide img {
     width: 100%;
     height: 100%;
-    object-fit: cover; /* 이미지가 찌그러지지 않고 꽉 채우도록 설정 */
+    object-fit: contain;
 }
 
 /* 화살표 버튼 */
@@ -111,4 +111,59 @@
     justify-content: center;
     align-items: center;
 }
+
+.detail-map-section {
+    margin-top: 40px;
+    padding: 24px;
+    background-color: #f9fafb;
+    border-radius: 20px;
+    border: 1px solid #e5e7eb;
+}
+
+.detail-map-section .section-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+}
+
+.detail-map-section .section-title {
+    font-size: 20px;
+    font-weight: 600;
+    color: #111827;
+}
+
+#map {
+    width: 100%;
+    height: 400px;
+    border-radius: 16px;
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.08);
+}
+
+.directions-button {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+
+    padding: 10px 20px;
+    font-size: 15px;
+    font-weight: 600;
+
+    color: #ffffff;
+    background-color: #2c3e50;
+
+    border: none;
+    border-radius: 10px;
+    cursor: pointer;
+
+    transition: background-color 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease;
+    box-shadow: 0 4px 15px rgba(44, 62, 80, 0.2);
+}
+
+.directions-button:hover {
+    background-color: #34495e;
+    transform: translateY(-3px);
+    box-shadow: 0 7px 20px rgba(44, 62, 80, 0.3);
+}
+
 

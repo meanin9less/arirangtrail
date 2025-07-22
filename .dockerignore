@@ -1,0 +1,2 @@
+# 백엔드 Docker 빌드 시 frontend 폴더를 제외합니다.
+frontend/

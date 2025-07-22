@@ -25,6 +25,7 @@ public class UserDAO {
                 .lastname(lastName)
                 .birthdate(birthdate)
                 .nickname(nickname)
+                .role("ROLE_USER")
                 .createdat(Instant.now())
                 .updatedat(Instant.now())
                 .build();
@@ -32,7 +33,8 @@ public class UserDAO {
             this.userRepository.save(userEntity);
             return "joined";
         }catch (Exception e){
-            return e.getMessage();
+            e.printStackTrace(); // ✨ 추가: 회원가입 실패 시 자세한 예외 스택 트레이스를 콘솔에 출력
+            return e.getMessage(); // ✨ 추가: 프론트엔드로 예외 메시지 전달 (디버깅용)
         }
     }
 
