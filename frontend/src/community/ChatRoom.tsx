@@ -18,16 +18,27 @@ interface ChatRoomProps {
     onLeave: () => void;
 }
 
+interface RoomInfo {
+    id: number;
+    title: string;
+    creator: string;
+    // 참여인원은 나중에 추가
+}
+
 const ChatRoom = ({ roomId, userName, onLeave }: ChatRoomProps) => {
     const [messages, setMessages] = useState<ChatMessage[]>([]);
     const [inputMessage, setInputMessage] = useState('');
     const clientRef = useRef<Client | null>(null);
+    const [lastMessageSeq, setLastMessageSeq] = useState<number>(0);
     const fileInputRef = useRef<HTMLInputElement>(null);
     // ★ 자동 스크롤을 위한 ref 추가
     const messagesEndRef = useRef<HTMLDivElement>(null);
+    // 이 ref는 항상 최신 lastMessageSeq 값을 담고 있을 것입니다.
+    const lastMessageSeqRef = useRef(lastMessageSeq);
+    // 채팅방 정보를 담을 상태를 추가합니다.
+    const [roomInfo, setRoomInfo] = useState<RoomInfo | null>(null);
 
-    // ★ 마지막으로 받은 메시지의 sequence를 저장하는 상태 추가
-    const [lastMessageSeq, setLastMessageSeq] = useState<number>(0);
+
 
     // --- 자동 스크롤 기능 ---
     const scrollToBottom = () => {
@@ -39,36 +50,70 @@ const ChatRoom = ({ roomId, userName, onLeave }: ChatRoomProps) => {
         scrollToBottom();
     }, [messages]);
 
+    useEffect(() => {
+        lastMessageSeqRef.current = lastMessageSeq;
+    }, [lastMessageSeq]);
+
+    //라스트 메세지를 0이 아닌 고정값으로 가져오기
+    useEffect(() => {
+        lastMessageSeqRef.current = lastMessageSeq;
+    }, [lastMessageSeq]);
 
     // ★ --- UserChatStatus의 seq를 갱신하는 로직 ---
     const updateLastReadSequence = async () => {
-        // 갱신할 seq가 없으면 함수 종료 (메시지가 하나도 없을 경우)
-        if (lastMessageSeq === 0) return;
+        // 이제 '사진 속 값'이 아닌, '현재 값'을 사용합니다.
+        if (lastMessageSeqRef.current === 0) return;
 
         try {
-              await axios.post('http://localhost:8080/api/chat/rooms/update-status', {
+            await axios.post('http://localhost:8080/api/chat/rooms/update-status', {
                 roomId: roomId,
-                username: userName, // Spring Security 등에서 Principal로 사용자 식별이 가능하다면 이 필드는 불필요
-                lastReadSeq: lastMessageSeq
+                username: userName,
+                lastReadSeq: lastMessageSeqRef.current, // ref의 현재 값을 사용
             });
-            console.log(`[Seq 갱신] Room: ${roomId}, User: ${userName}, LastReadSeq: ${lastMessageSeq}`);
+            console.log(`[Seq 갱신] Room: ${roomId}, User: ${userName}, LastReadSeq: ${lastMessageSeqRef.current}`);
         } catch (error) {
             console.error("마지막 읽은 메시지 순번(seq) 갱신에 실패했습니다.", error);
         }
     };
-    //테스트
-    // useEffect(  () => {
-    //     try{
-    //         const response= await axios.post(`http://localhost:8080/api/chat/rooms/${roomId}`
-    //         );
-    //         console.log(`[Seq 갱신] Room: ${roomId},LastReadSeq: ${response.data}`);
-    //     }catch (e){
-    //         e.
-    //     }
-    //
-    // }, []);
 
     useEffect(() => {
+        // 채팅방 정보를 가져오는 함수를 만듭니다.
+        const fetchRoomInfo = async () => {
+            try {
+                const response = await axios.get<RoomInfo>(`http://localhost:8080/api/chat/rooms/${roomId}`);
+                setRoomInfo(response.data);
+            } catch (error) {
+                console.error("채팅방 정보를 가져오는 데 실패했습니다.", error);
+            }
+        };
+
+        const fetchPreviousMessages = async () => {
+            try {
+                const response = await axios.get<ChatMessage[]>(
+                    `http://localhost:8080/api/chat/rooms/${roomId}/messages?size=50`
+                );
+                // 서버에서 받은 response.data가 정말 배열인지 확인합니다.
+                if (Array.isArray(response.data)) {
+                    // 배열이 맞을 경우에만 상태를 업데이트합니다.
+                    setMessages(response.data);
+
+                    if (response.data.length > 0) {
+                        const lastSeq = response.data[response.data.length - 1].messageSeq;
+                        if (lastSeq) {
+                            setLastMessageSeq(lastSeq);
+                        }
+                    }
+                } else {
+                    // 배열이 아닐 경우, 콘솔에 경고를 남기고 빈 배열로 안전하게 초기화합니다.
+                    console.warn("서버로부터 배열이 아닌 데이터가 수신되었습니다:", response.data);
+                    setMessages([]);
+                }
+            } catch (error) {
+                console.error("이전 대화 내역을 불러오는 데 실패했습니다.", error);
+                setMessages([]); // 에러 발생 시 빈 배열로 초기화
+            }
+        };
+        // 웹소켓 엔드api에 접속하여 기본적인 구독 설정 및 메세지 관련 동작
         // WebSocket 연결 로직
         const connect = () => {
             const client = new Client({
@@ -78,6 +123,10 @@ const ChatRoom = ({ roomId, userName, onLeave }: ChatRoomProps) => {
                 onConnect: () => {
                     console.log('연결 성공!');
                     client.subscribe(`/sub/chat/room/${roomId}`, (message) => {
+                        // ★★★★★★★★★★★★★ 이 한 줄을 추가하세요 ★★★★★★★★★★★★★
+                        console.log("서버로부터 받은 메시지 원본:", message.body);
+                        // ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★
+
                         const receivedMessage = JSON.parse(message.body) as ChatMessage;
 
                         // ★ 메시지를 받을 때마다 messageSeq 갱신
@@ -87,8 +136,8 @@ const ChatRoom = ({ roomId, userName, onLeave }: ChatRoomProps) => {
 
                         setMessages((prevMessages) => [...prevMessages, receivedMessage]);
                     });
-                    client.publish({
-                        destination: '/api/pub/chat/message',
+                    client.publish({// 입장
+                        destination: '/api/pub/chat/enter',
                         body: JSON.stringify({ roomId, sender: userName, type: 'ENTER' }),
                     });
                 },
@@ -97,8 +146,11 @@ const ChatRoom = ({ roomId, userName, onLeave }: ChatRoomProps) => {
             client.activate();
             clientRef.current = client;
         };
-
-        connect();
+        fetchRoomInfo();
+        fetchPreviousMessages().then(() => {
+            // 2. 대화 내역 로딩이 완료된 후에 WebSocket 연결을 시작한다.
+            connect();
+        });
 
         // ★ 주기적으로 seq 갱신 API 호출
         const seqUpdateInterval = setInterval(() => {
@@ -118,21 +170,19 @@ const ChatRoom = ({ roomId, userName, onLeave }: ChatRoomProps) => {
                 console.log('연결 종료됨.');
             }
         };
-    }, [roomId, userName, lastMessageSeq]); // lastMessageSeq를 dependency 배열에 추가
+    }, [roomId, userName]);
 
-    const sendMessage =
-    async () => {
+    const sendMessage = () => {
         if (inputMessage.trim() && clientRef.current?.connected) {
-            try {
-                const response= await axios.post(`http://localhost:8080/api/chat/rooms/${roomId}`
-                );
-                console.log(`[Seq 갱신] Room: ${roomId},LastReadSeq: ${response.data}`);
-            } catch (error) {
-                console.error("마지막 읽은 메시지 순번(seq) 갱신에 실패했습니다.", error);
-            }
+            // 어떠한 axios 호출도 없이, 순수하게 메시지 내용만 publish 합니다.
             clientRef.current.publish({
-                destination: '/api/pub/chat/message',
-                body: JSON.stringify({ roomId, sender: userName, message: inputMessage, type: 'TALK' }),
+                destination: '/api/pub/chat/message', // STOMP 메시지 목적지
+                body: JSON.stringify({
+                    roomId,
+                    sender: userName,
+                    message: inputMessage,
+                    type: 'TALK',
+                }),
             });
             setInputMessage('');
         }
@@ -150,7 +200,14 @@ const ChatRoom = ({ roomId, userName, onLeave }: ChatRoomProps) => {
         <div style={{ padding: '20px', border: '1px solid #ccc', borderRadius: '8px', display: 'flex', flexDirection: 'column', height: '90vh' }}>
             <div>
                 <button onClick={onLeave}>← 로비로 돌아가기</button>
-                <h2>채팅방: {roomId}</h2>
+                {roomInfo ? (
+                    <div>
+                        <h2>{roomInfo.title} (#{roomInfo.id})</h2>
+                        <p>개설자: {roomInfo.creator}</p>
+                    </div>
+                ) : (
+                    <h2>채팅방 정보 로딩 중...</h2>
+                )}
             </div>
 
             {/* ★ 메시지 목록 UI 변경: flex-grow를 사용하여 남은 공간을 모두 차지하도록 함 */}

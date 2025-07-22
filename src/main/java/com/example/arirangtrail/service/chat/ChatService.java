@@ -8,6 +8,8 @@ import com.example.arirangtrail.data.repository.chat.ChatMessageRepository;
 import com.example.arirangtrail.data.repository.chat.ChatRoomRepository;
 import com.example.arirangtrail.data.repository.chat.UserChatStatusRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.mongodb.core.FindAndModifyOptions;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.data.mongodb.core.query.Criteria;
@@ -17,6 +19,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional; // ★★★ 2. Spring의 Transactional을 사용하는 것이 좋습니다.
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 @Service
@@ -36,8 +40,9 @@ public class ChatService {
 
     // 특정 채팅방 찾기 (ID 타입을 Long으로 통일)
     public ChatRoom findRoomById(Long roomId) { // ★★★ 3. 파라미터 타입을 Long으로 변경하여 일관성을 유지합니다.
-        return chatRoomRepository.findById(roomId)
+        ChatRoom chatRoom= chatRoomRepository.findById(roomId)
                 .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 채팅방입니다. ID: " + roomId));
+        return chatRoom;
     }
 
     // 채팅방 생성
@@ -115,5 +120,17 @@ public class ChatService {
 
         // DB에 저장 (기존 문서가 있으면 덮어쓰고, 없으면 새로 삽입됨)
         userChatStatusRepository.save(userChatStatus);
+    }
+
+    public List<ChatMessage> getPreviousMessages(Long roomId, Pageable pageable) {
+        // Repository를 호출하여 페이징된 결과를 가져옵니다.
+        Page<ChatMessage> messagePage = chatMessageRepository.findByRoomIdOrderByMessageSeqDesc(roomId, pageable);
+
+        // 실제 메시지 내용(List<ChatMessage>)만 추출하여 반환합니다.
+        // 프론트엔드에서는 순서가 중요하므로, 역순으로 다시 뒤집어서 오름차순(과거->최신)으로 만들어줍니다.
+        List<ChatMessage> messages = new ArrayList<>(messagePage.getContent());
+        Collections.reverse(messages);
+
+        return messages;
     }
 }

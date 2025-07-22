@@ -31,11 +31,11 @@ public class ChatRoomController {
         return ResponseEntity.ok(chatService.createRoom(createRoomDTO.getTitle(),createRoomDTO.getUsername()));
     }
 
-    // 특정 채팅방 조회
-    @GetMapping("/rooms/{roomId}")
-    public ResponseEntity<ChatRoom> getRoomById(@PathVariable Long roomId) {
-        return ResponseEntity.ok(chatService.findRoomById(roomId));
-    }
+//    // 특정 채팅방 조회
+//    @GetMapping("/rooms/{roomId}")
+//    public ResponseEntity<ChatRoom> getRoomById(@PathVariable Long roomId) {
+//        return ResponseEntity.ok(chatService.findRoomById(roomId));
+//    }
 
     // 사용자가 마지막으로 읽은 메세지에 대하여 userchatstatus의 seq를 업데이트함
     @PostMapping("/rooms/update-status")
@@ -47,4 +47,24 @@ public class ChatRoomController {
         );
         return ResponseEntity.ok().build();
     }
+    //??
+//    @GetMapping("/rooms/{roomId}")
+//    public ResponseEntity<ChatRoom> getRoomInfo(@PathVariable Long roomId) {
+//        // 이미 만들어둔 findRoomById 서비스를 재사용합니다.
+//        ChatRoom roomInfo = chatService.findRoomById(roomId);
+//        return ResponseEntity.ok(roomInfo);
+//    }
+
+    @GetMapping("/rooms/{roomId}")
+    public ResponseEntity<ChatRoom> getRoomInfo(@PathVariable String roomId) { // ★ 여기도 String으로 변경
+        try {
+            Long roomIdLong = Long.parseLong(roomId);
+            ChatRoom roomInfo = chatService.findRoomById(roomIdLong);
+            return ResponseEntity.ok(roomInfo);
+        } catch (NumberFormatException e) {
+            return ResponseEntity.badRequest().build();
+        }
+    }
+
+
 }

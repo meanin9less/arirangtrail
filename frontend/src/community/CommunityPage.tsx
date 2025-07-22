@@ -2,10 +2,11 @@ import React, { useState, useEffect, FormEvent } from 'react';
 import axios from 'axios';
 import ChatRoom from './ChatRoom';
 
-// 타입 정의 (변경 없음)
+// 백엔드의 ChatRoom Document와 필드를 일치시킴
 interface Room {
-    id: string;
+    id: number;
     title: string;
+    creator: string;
 }
 
 const CommunityPage = () => {
@@ -13,14 +14,19 @@ const CommunityPage = () => {
     const [newRoomName, setNewRoomName] = useState('');
     const [selectedRoomId, setSelectedRoomId] = useState<string | null>(null);
     const [userName, setUserName] = useState('');
-    // ★ 사용자가 참여한(입장했던) 방 ID 목록을 관리하는 상태 추가
     const [joinedRoomIds, setJoinedRoomIds] = useState<Set<string>>(new Set());
 
+    // ★ 1단계: 최초 로딩 시 localStorage에서 데이터 불러오기
     useEffect(() => {
+        const savedRooms = localStorage.getItem('joinedRooms');
+        if (savedRooms) {
+            setJoinedRoomIds(new Set(JSON.parse(savedRooms)));
+        }
+
         fetchRooms();
         const user = prompt("사용자 이름을 입력하세요:");
         if (user) setUserName(user);
-    }, []);
+    }, []); // 최초 1회만 실행
 
     const fetchRooms = async () => {
         try {
@@ -56,29 +62,32 @@ const CommunityPage = () => {
         }
     };
 
+    // ★ 2단계: 입장 시 localStorage에 데이터 저장
     const handleEnterRoom = (roomId: string) => {
         if (!userName) {
             alert("사용자 이름이 설정되지 않았습니다. 페이지를 새로고침 해주세요.");
             return;
         }
         setSelectedRoomId(roomId);
-        // ★ 입장 시, 참여한 방 목록에 추가
-        setJoinedRoomIds(prev => new Set(prev).add(roomId));
+
+        const newJoinedRoomIds = new Set(joinedRoomIds).add(roomId);
+        setJoinedRoomIds(newJoinedRoomIds);
+        localStorage.setItem('joinedRooms', JSON.stringify(Array.from(newJoinedRoomIds)));
     };
 
     const handleLeaveRoom = () => {
         setSelectedRoomId(null);
     };
 
-    // ★ 참여한 방과 참여하지 않은 방을 분리
-    const myRooms = rooms.filter(room => joinedRoomIds.has(room.id));
-    const otherRooms = rooms.filter(room => !joinedRoomIds.has(room.id));
+    // ★ 3단계: 필터링 로직 (타입 일치)
+    const myRooms = rooms.filter(room => joinedRoomIds.has(room.id.toString()));
+    const otherRooms = rooms.filter(room => !joinedRoomIds.has(room.id.toString()));
 
     if (selectedRoomId) {
         return <ChatRoom roomId={selectedRoomId} userName={userName} onLeave={handleLeaveRoom} />;
     }
 
-    // --- UI 개선 ---
+    // ★★★★★ 4단계: JSX 렌더링 부분을 테이블로 변경 ★★★★★
     return (
         <div style={styles.container}>
             <header style={styles.header}>
@@ -100,33 +109,59 @@ const CommunityPage = () => {
                 </form>
             </section>
 
+            {/* --- 내 채팅방 섹션 (테이블 UI) --- */}
             <section style={styles.section}>
                 <h2>내 채팅방</h2>
                 {myRooms.length > 0 ? (
-                    <ul style={styles.roomList}>
+                    <table style={styles.roomTable}>
+                        <thead>
+                        <tr>
+                            <th style={styles.th}>방 번호</th>
+                            <th style={styles.th}>제목</th>
+                            <th style={styles.th}>개설자</th>
+                            <th style={styles.th}></th>
+                        </tr>
+                        </thead>
+                        <tbody>
                         {myRooms.map((room) => (
-                            <li key={room.id} style={styles.roomItem}>
-                                <span>{room.title}</span>
-                                <button onClick={() => handleEnterRoom(room.id)} style={styles.enterButton}>재입장</button>
-                            </li>
+                            <tr key={room.id}>
+                                <td style={styles.td}>{room.id}</td>
+                                <td style={styles.td}>{room.title}</td>
+                                <td style={styles.td}>{room.creator}</td>
+                                <td style={styles.td}><button onClick={() => handleEnterRoom(room.id.toString())} style={styles.enterButton}>재입장</button></td>
+                            </tr>
                         ))}
-                    </ul>
+                        </tbody>
+                    </table>
                 ) : (
                     <p style={styles.emptyMessage}>아직 참여한 채팅방이 없습니다.</p>
                 )}
             </section>
 
+            {/* --- 참여 가능한 채팅방 섹션 (테이블 UI) --- */}
             <section style={styles.section}>
                 <h2>참여 가능한 채팅방</h2>
                 {otherRooms.length > 0 ? (
-                    <ul style={styles.roomList}>
+                    <table style={styles.roomTable}>
+                        <thead>
+                        <tr>
+                            <th style={styles.th}>방 번호</th>
+                            <th style={styles.th}>제목</th>
+                            <th style={styles.th}>개설자</th>
+                            <th style={styles.th}></th>
+                        </tr>
+                        </thead>
+                        <tbody>
                         {otherRooms.map((room) => (
-                            <li key={room.id} style={styles.roomItem}>
-                                <span>{room.title}</span>
-                                <button onClick={() => handleEnterRoom(room.id)} style={styles.enterButton}>입장</button>
-                            </li>
+                            <tr key={room.id}>
+                                <td style={styles.td}>{room.id}</td>
+                                <td style={styles.td}>{room.title}</td>
+                                <td style={styles.td}>{room.creator}</td>
+                                <td style={styles.td}><button onClick={() => handleEnterRoom(room.id.toString())} style={styles.enterButton}>입장</button></td>
+                            </tr>
                         ))}
-                    </ul>
+                        </tbody>
+                    </table>
                 ) : (
                     <p style={styles.emptyMessage}>참여 가능한 다른 채팅방이 없습니다.</p>
                 )}
@@ -135,16 +170,17 @@ const CommunityPage = () => {
     );
 };
 
-// --- 스타일 객체 ---
-const styles = {
+// --- 가독성을 위한 스타일 객체 ---
+const styles: { [key: string]: React.CSSProperties } = {
     container: { padding: '20px', maxWidth: '800px', margin: '0 auto', fontFamily: 'sans-serif' },
     header: { borderBottom: '2px solid #eee', paddingBottom: '10px', marginBottom: '20px' },
     section: { marginBottom: '30px' },
     form: { display: 'flex', gap: '10px' },
     input: { flex: 1, padding: '10px', border: '1px solid #ccc', borderRadius: '4px' },
     button: { padding: '10px 15px', border: 'none', backgroundColor: '#007bff', color: 'white', borderRadius: '4px', cursor: 'pointer' },
-    roomList: { listStyle: 'none', padding: 0 },
-    roomItem: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px', border: '1px solid #eee', borderRadius: '4px', marginBottom: '10px' },
+    roomTable: { width: '100%', borderCollapse: 'collapse', marginTop: '10px' },
+    th: { borderBottom: '2px solid #ddd', padding: '12px', textAlign: 'left', backgroundColor: '#f8f8f8' },
+    td: { borderBottom: '1px solid #ddd', padding: '12px', verticalAlign: 'middle' },
     enterButton: { padding: '8px 12px', border: 'none', backgroundColor: '#28a745', color: 'white', borderRadius: '4px', cursor: 'pointer' },
     emptyMessage: { color: '#888' }
 };
