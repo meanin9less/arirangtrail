@@ -131,8 +131,6 @@ const LoginPage = ({}: LoginProps) => {
         }
     }
 
-    const BACKEND_OAUTH_BASE_URL = "http://localhost:8080";
-
     return (
         <div className={styles.authContainer}>
             <img src={arirang} alt="아리랑 이미지" className={styles.arirangImage} />
@@ -185,19 +183,19 @@ const LoginPage = ({}: LoginProps) => {
             </div>
 
             <div className={styles.oauthButtonsContainer}>
-                <a href={`${BACKEND_OAUTH_BASE_URL}/oauth2/authorization/naver`} className={styles.oauthButtonNaver}>
+                <a href={`/api/login/oauth2/code/naver`} className={styles.oauthButtonNaver}>
                     네이버 로그인
                 </a>
-                <a href={`${BACKEND_OAUTH_BASE_URL}/oauth2/authorization/kakao`} className={styles.oauthButtonKakao}>
+                <a href={`/api/login/oauth2/code/kakao`} className={styles.oauthButtonKakao}>
                     카카오 로그인
                 </a>
-                <a href={`${BACKEND_OAUTH_BASE_URL}/oauth2/authorization/google`} className={styles.oauthButtonGoogle}>
+                <a href={`/api/login/oauth2/code/google`} className={styles.oauthButtonGoogle}>
                     구글 로그인
                 </a>
             </div>
 
             <p className={styles.signupLinkText}>
-                <Link to={'/signup'} className={styles.signupLink}>
+                <Link to={'/join'} className={styles.signupLink}>
                     새 계정 만들기 (회원가입)
                 </Link>
             </p>

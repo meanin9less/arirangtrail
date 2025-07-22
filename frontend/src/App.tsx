@@ -5,7 +5,6 @@ import LoginPage from "./user/LoginPage";
 import NavigationBar from "./navigation/NavigationBar";
 import HomePage from "./HomePage";
 import MyPage from "./user/MyPage";
-import SignUpPage from "./user/JoinPage";
 import CalenderPage from "./calender/CalenderPage";
 import DetailPage from "./calender/DetailPage";
 import CommunityPage from "./community/CommunityPage";
@@ -18,6 +17,7 @@ import store from "./store";
 import ReviewWritePage from "./review/ReviewWritePage";
 import TranslateWidget from "./TranslateWiget";
 import LogoutPage from "./user/LogoutPage";
+import JoinPage from "./user/JoinPage";
 
 
 function App() {
@@ -37,7 +37,7 @@ function App() {
                 <Route path={'/search'} element={<SearchPage/>}></Route>
                 <Route path={'/login'} element={<LoginPage/>}></Route>
                 <Route path={'/mypage'} element={<MyPage/>}></Route>
-                <Route path={'/join'} element={<SignUpPage/>}></Route>
+                <Route path={'/join'} element={<JoinPage/>}></Route>
                 <Route path={'/logout'} element={<LogoutPage/>}></Route>
             </Route>
           </Routes>
