@@ -122,5 +122,7 @@ jobs:
             -e NAVER_CLIENT_SECRET=${{secrets.NAVER_CLIENT_SECRET}} \
             -e KAKAO_CLIENT_ID=${{secrets.KAKAO_CLIENT_ID}} \
             -e KAKAO_CLIENT_SECRET=${{secrets.KAKAO_CLIENT_SECRET}} \
+            -e AWS_ACCESS_KEY_ID=${{secrets.AWS_ACCESS_KEY_ID}} \
+            -e AWS_SECRET_ACCESS_KEY=${{secrets.AWS_SECRET_ACCESS_KEY}} \
             ${{ secrets.DOCKERHUB_USERNAME }}/arirangbackend
             sudo docker run -d -p 80:80 --name arirangfrontend ${{ secrets.DOCKERHUB_USERNAME }}/arirangfrontend
