@@ -25,6 +25,17 @@ public class JwtFilter extends OncePerRequestFilter {
 
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException {
+
+        // ======================= ▼▼▼▼▼ 이 부분 추가 ▼▼▼▼▼ =======================
+        // OAuth2 로그인 콜백 요청은 토큰 검사를 건너뜀
+        String requestURI = request.getRequestURI();
+        if (requestURI.startsWith("/api/login/oauth2/") || requestURI.startsWith("/login/oauth2/")) {
+            filterChain.doFilter(request, response);
+            return;
+        }
+        // ======================= ▲▲▲▲▲ 여기까지 추가 ▲▲▲▲▲ =======================
+
+
         String token = request.getHeader("Authorization");
         if (token == null || !token.startsWith("Bearer ")) {
             filterChain.doFilter(request, response);
@@ -37,7 +48,7 @@ public class JwtFilter extends OncePerRequestFilter {
             this.jwtUtil.isExpired(token);
         }catch(ExpiredJwtException e){
             response.getWriter().write("access token expired");
-            response.setStatus(456);
+            response.setStatus(456); // 커스텀 상태 코드
             response.setCharacterEncoding("UTF-8");
             return;
         }
