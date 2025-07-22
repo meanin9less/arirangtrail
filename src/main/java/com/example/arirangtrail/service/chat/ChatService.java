@@ -103,4 +103,17 @@ public class ChatService {
         }
         return updatedRoom.getLastMessageSeq();
     }
+
+    @Transactional
+    public void updateUserChatStatus(Long roomId, String username, long lastReadSeq) {
+        // roomId와 username으로 기존 상태를 찾는다.
+        UserChatStatus userChatStatus = userChatStatusRepository.findByRoomIdAndUsername(roomId, username)
+                .orElse(new UserChatStatus(roomId, username));
+
+        // 받은 seq로 업데이트
+        userChatStatus.setLastReadMessageSeq(lastReadSeq);
+
+        // DB에 저장 (기존 문서가 있으면 덮어쓰고, 없으면 새로 삽입됨)
+        userChatStatusRepository.save(userChatStatus);
+    }
 }

@@ -1,48 +1,42 @@
 import React, { useState, useEffect, FormEvent } from 'react';
 import axios from 'axios';
-import ChatRoom from './ChatRoom'; // 실제 채팅이 이루어질 컴포넌트
+import ChatRoom from './ChatRoom';
 
-// 백엔드에서 받아올 채팅방의 타입 정의
+// 타입 정의 (변경 없음)
 interface Room {
-    title: any;
-    id: string; // MongoDB ObjectId
-    name: string;
+    id: string;
+    title: string;
 }
 
 const CommunityPage = () => {
     const [rooms, setRooms] = useState<Room[]>([]);
     const [newRoomName, setNewRoomName] = useState('');
     const [selectedRoomId, setSelectedRoomId] = useState<string | null>(null);
-    const [userName, setUserName] = useState(''); // 간단한 사용자 이름 설정
+    const [userName, setUserName] = useState('');
+    // ★ 사용자가 참여한(입장했던) 방 ID 목록을 관리하는 상태 추가
+    const [joinedRoomIds, setJoinedRoomIds] = useState<Set<string>>(new Set());
 
-    // 컴포넌트 마운트 시 채팅방 목록 불러오기
     useEffect(() => {
         fetchRooms();
-        // 간단히 프롬프트로 사용자 이름 받기 (실제로는 로그인 정보 사용)// 추후에 nickname으로 예상되는 부분 넘어오면 해당 내용 사용/ nickname(username 일부*화)이런식으로
         const user = prompt("사용자 이름을 입력하세요:");
         if (user) setUserName(user);
     }, []);
 
-    // 백엔드 API로부터 채팅방 목록을 가져오는 함수
     const fetchRooms = async () => {
         try {
             const response = await axios.get<Room[]>('http://localhost:8080/api/chat/rooms');
-
-            // ★★★ API의 응답 데이터가 정말 배열인지 확인하는 방어 코드 ★★★
             if (Array.isArray(response.data)) {
                 setRooms(response.data);
             } else {
                 console.error("API 응답이 배열이 아닙니다:", response.data);
-                setRooms([]); // 에러가 발생해도 빈 배열로 상태를 유지하여 .map 에러 방지
+                setRooms([]);
             }
         } catch (error) {
             console.error("채팅방 목록을 불러오는 데 실패했습니다.", error);
-            setRooms([]); // 네트워크 에러가 발생해도 빈 배열로 상태 유지
+            setRooms([]);
         }
     };
 
-    // 새로운 채팅방을 생성하는 함수
-    // handleCreateRoom 함수 내부
     const handleCreateRoom = async (e: FormEvent) => {
         e.preventDefault();
         if (!newRoomName.trim() || !userName) {
@@ -50,86 +44,109 @@ const CommunityPage = () => {
             return;
         }
         try {
-            // 보낼 데이터를 객체로 만든다.
-            const requestData = {
-                title: newRoomName,
-                username: userName
-            };
-
-            // axios.post의 두 번째 인자로 데이터 객체를 전달한다.
             const response = await axios.post<Room>(
                 'http://localhost:8080/api/chat/rooms',
-                requestData // 여기에 데이터 객체를 담아 보냄
+                { title: newRoomName, username: userName }
             );
-
             setNewRoomName('');
-            fetchRooms(); // 목록 새로고침
-            // 백엔드에서 받은 방의 제목(title)을 사용하도록 변경
+            fetchRooms();
             alert(`'${response.data.title}' 방이 생성되었습니다. 입장해주세요.`);
         } catch (error) {
             console.error("채팅방 생성에 실패했습니다.", error);
         }
     };
 
-    // 특정 채팅방에 입장하는 함수
     const handleEnterRoom = (roomId: string) => {
         if (!userName) {
             alert("사용자 이름이 설정되지 않았습니다. 페이지를 새로고침 해주세요.");
             return;
         }
         setSelectedRoomId(roomId);
+        // ★ 입장 시, 참여한 방 목록에 추가
+        setJoinedRoomIds(prev => new Set(prev).add(roomId));
     };
 
-    // 채팅방에서 나가는 함수
     const handleLeaveRoom = () => {
         setSelectedRoomId(null);
-    }
+    };
 
-    // 선택된 방이 없다면 로비 화면을, 있다면 채팅방 컴포넌트를 렌더링
+    // ★ 참여한 방과 참여하지 않은 방을 분리
+    const myRooms = rooms.filter(room => joinedRoomIds.has(room.id));
+    const otherRooms = rooms.filter(room => !joinedRoomIds.has(room.id));
+
     if (selectedRoomId) {
         return <ChatRoom roomId={selectedRoomId} userName={userName} onLeave={handleLeaveRoom} />;
     }
 
+    // --- UI 개선 ---
     return (
-        <div style={{ padding: '20px' }}>
-            <h1>아리랑 트레일 커뮤니티</h1>
+        <div style={styles.container}>
+            <header style={styles.header}>
+                <h1>아리랑 트레일 커뮤니티</h1>
+                <p><strong>{userName || "게스트"}</strong>님, 환영합니다.</p>
+            </header>
 
-            {/* 사용자 이름 표시 (간단 구현) */}
-            <div>
-                <p><strong>내 이름:</strong> {userName || "이름을 설정해주세요."}</p>
-            </div>
+            <section style={styles.section}>
+                <h2>새로운 채팅방 만들기</h2>
+                <form onSubmit={handleCreateRoom} style={styles.form}>
+                    <input
+                        type="text"
+                        value={newRoomName}
+                        onChange={(e) => setNewRoomName(e.target.value)}
+                        placeholder="새 채팅방 이름"
+                        style={styles.input}
+                    />
+                    <button type="submit" style={styles.button}>만들기</button>
+                </form>
+            </section>
 
-            {/* 채팅방 생성 폼 */}
-            <form onSubmit={handleCreateRoom}>
-                <input
-                    type="text"
-                    value={newRoomName}
-                    onChange={(e) => setNewRoomName(e.target.value)}
-                    placeholder="새 채팅방 이름"
-                />
-                <button type="submit">채팅방 만들기</button>
-            </form>
-
-            <hr />
-
-            {/* 채팅방 목록 */}
-            <h2>채팅방 목록</h2>
-            <ul>
-                {rooms.length > 0 ? (
-                    rooms.map((room) => (
-                        <li key={room.id} style={{ margin: '10px 0' }}>
-                            <span>{room.name}</span>
-                            <button onClick={() => handleEnterRoom(room.id)} style={{ marginLeft: '10px' }}>
-                                입장
-                            </button>
-                        </li>
-                    ))
+            <section style={styles.section}>
+                <h2>내 채팅방</h2>
+                {myRooms.length > 0 ? (
+                    <ul style={styles.roomList}>
+                        {myRooms.map((room) => (
+                            <li key={room.id} style={styles.roomItem}>
+                                <span>{room.title}</span>
+                                <button onClick={() => handleEnterRoom(room.id)} style={styles.enterButton}>재입장</button>
+                            </li>
+                        ))}
+                    </ul>
                 ) : (
-                    <p>개설된 채팅방이 없습니다.</p>
+                    <p style={styles.emptyMessage}>아직 참여한 채팅방이 없습니다.</p>
                 )}
-            </ul>
+            </section>
+
+            <section style={styles.section}>
+                <h2>참여 가능한 채팅방</h2>
+                {otherRooms.length > 0 ? (
+                    <ul style={styles.roomList}>
+                        {otherRooms.map((room) => (
+                            <li key={room.id} style={styles.roomItem}>
+                                <span>{room.title}</span>
+                                <button onClick={() => handleEnterRoom(room.id)} style={styles.enterButton}>입장</button>
+                            </li>
+                        ))}
+                    </ul>
+                ) : (
+                    <p style={styles.emptyMessage}>참여 가능한 다른 채팅방이 없습니다.</p>
+                )}
+            </section>
         </div>
     );
+};
+
+// --- 스타일 객체 ---
+const styles = {
+    container: { padding: '20px', maxWidth: '800px', margin: '0 auto', fontFamily: 'sans-serif' },
+    header: { borderBottom: '2px solid #eee', paddingBottom: '10px', marginBottom: '20px' },
+    section: { marginBottom: '30px' },
+    form: { display: 'flex', gap: '10px' },
+    input: { flex: 1, padding: '10px', border: '1px solid #ccc', borderRadius: '4px' },
+    button: { padding: '10px 15px', border: 'none', backgroundColor: '#007bff', color: 'white', borderRadius: '4px', cursor: 'pointer' },
+    roomList: { listStyle: 'none', padding: 0 },
+    roomItem: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px', border: '1px solid #eee', borderRadius: '4px', marginBottom: '10px' },
+    enterButton: { padding: '8px 12px', border: 'none', backgroundColor: '#28a745', color: 'white', borderRadius: '4px', cursor: 'pointer' },
+    emptyMessage: { color: '#888' }
 };
 
 export default CommunityPage;
