@@ -44,29 +44,7 @@ function App() {
         <Footer />
       </Provider>
   );
-    return (
-        <Provider store={store}>
-            <BrowserRouter>
-                <TranslateWidget/>
-                <Routes>
-                    <Route path={'/'} element={<NavigationBar/>}>
-                        <Route index element={<HomePage/>}></Route>
-                        <Route path={'/calender'} element={<CalenderPage/>}></Route>
-                        <Route path={"/calender/:festivalId"} element={<DetailPage/>}></Route>
-                        <Route path={'/search'} element={<SearchPage/>}></Route>
-                        <Route path={'/community'} element={<CommunityPage/>}></Route>
-                        <Route path={'/company'} element={<CompanyPage/>}></Route>
-                        <Route path={'/review'} element={<ReviewPage/>}></Route>
-                        <Route path={'/review/write'} element={<ReviewWritePage/>}></Route>
-                        <Route path={'/login'} element={<LoginPage/>}></Route>
-                        <Route path={'/mypage'} element={<MyPage/>}></Route>
-                        <Route path={'/join'} element={<SignUpPage/>}></Route>
-                    </Route>
-                </Routes>
-            </BrowserRouter>
-            <Footer/>
-        </Provider>
-    );
+
 }
 
 export default App;
