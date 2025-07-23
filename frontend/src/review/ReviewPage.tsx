@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import apiClient from '../api/axiosInstance';
 import axios from 'axios';
-import { useNavigate, useLocation } from 'react-router-dom'; // useLocation 임포트
-import styles from './Review.module.css';
+import { useNavigate, useLocation, Link } from 'react-router-dom'; // Link 임포트
+import styles from './Review.module.css'; // Review.module.css 대신 ReviewPage.module.css 사용
 
 // 데이터 모델 정의 (DB 스키마에 맞춰 업데이트)
 interface Review {
@@ -91,17 +91,27 @@ function ReviewPage() {
             ) : (
                 <div className={styles.reviewList}>
                     {reviews.map(review => (
-                        <div key={review.reviewid} className={styles.reviewItem}> {/* reviewid 사용 */}
-                            <p><strong>제목:</strong> {review.title}</p> {/* 리뷰 제목 표시 */}
-                            <p><strong>행사:</strong> {review.contenttitle} (ID: {review.contentid})</p> {/* 행사 정보 표시 */}
+                        <div key={review.reviewid} className={styles.reviewItem}>
+                            {/* ✨ 제목에 Link 추가 */}
+                            <p className={styles.reviewTitleLink}>
+                                <Link to={`/review/detail/${review.reviewid}`}>
+                                    <strong>{review.title}</strong>
+                                </Link>
+                            </p>
                             <p><strong>작성자:</strong> {review.username}</p>
                             <p><strong>별점:</strong> {'⭐'.repeat(review.rating)}</p>
-                            <p><strong>내용:</strong> {review.content}</p>
-                            {review.visitdate && <p><strong>방문일:</strong> {review.visitdate}</p>} {/* 방문일 표시 */}
+                            {/* contenttitle과 contentid는 상세 페이지에서만 표시하도록 함 (선택 사항) */}
+                            {/* {review.contenttitle && (
+                                <p><strong>행사:</strong> {review.contenttitle}</p>
+                            )} */}
+                            {/* ✨ 리뷰 내용의 일부만 표시 */}
+                            <p className={styles.reviewContentPreview}>
+                                {review.content.length > 100 ? review.content.substring(0, 100) + '...' : review.content}
+                            </p>
                             {review.imageurl && ( // 이미지 URL이 있을 경우 이미지 표시
                                 <div className={styles.reviewImageContainer}>
                                     <img src={review.imageurl} alt={review.caption || review.title} className={styles.reviewImage} />
-                                    {review.caption && <p className={styles.imageCaption}>{review.caption}</p>} {/* 이미지 캡션 표시 */}
+                                    {review.caption && <p className={styles.imageCaption}>{review.caption}</p>}
                                 </div>
                             )}
                             <p className={styles.reviewDate}>작성일: {new Date(review.createdat).toLocaleString()}</p>
