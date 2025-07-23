@@ -2,6 +2,7 @@ package com.example.arirangtrail.controller.chat;
 
 
 import com.example.arirangtrail.data.document.ChatRoom;
+import com.example.arirangtrail.data.dto.chat.ChatRoomListDTO;
 import com.example.arirangtrail.data.dto.chat.CreateRoomDTO;
 import com.example.arirangtrail.data.dto.chat.UpdateReqDTO;
 import com.example.arirangtrail.service.chat.ChatService;
@@ -20,8 +21,8 @@ public class ChatRoomController {
     private final ChatService chatService;
 
     // 모든 채팅방 목록 반환
-    @GetMapping// 루트 생략하면 레스트매핑 그대로 "/api/chat/rooms"
-    public ResponseEntity<List<ChatRoom>> getAllRooms() {
+    @GetMapping
+    public ResponseEntity<List<ChatRoomListDTO>> getAllRooms() {
         return ResponseEntity.ok(chatService.findAllRoom());
     }
 

@@ -13,7 +13,9 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
-@Component
+
+//잠시 컴퍼넌트 꺼놓기
+//@Component
 @RequiredArgsConstructor
 public class FileStore {
 

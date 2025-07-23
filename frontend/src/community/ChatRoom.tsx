@@ -2,6 +2,8 @@ import React, { useState, useEffect, useRef, ChangeEvent } from 'react';
 import { Client } from '@stomp/stompjs';
 import SockJS from 'sockjs-client';
 import axios from 'axios';
+import { useSelector } from 'react-redux';
+import { RootState } from '../store';
 
 // 타입 정의 (변경 없음)
 interface ChatMessage {
@@ -14,7 +16,6 @@ interface ChatMessage {
 
 interface ChatRoomProps {
     roomId: string;
-    userName: string;
     onLeave: () => void;
 }
 
@@ -25,7 +26,9 @@ interface RoomInfo {
     // 참여인원은 나중에 추가
 }
 
-const ChatRoom = ({ roomId, userName, onLeave }: ChatRoomProps) => {
+const ChatRoom = ({ roomId, onLeave }: ChatRoomProps) => {
+    const userProfile = useSelector((state: RootState) => state.token.userProfile);
+    const userName = userProfile?.username;
     const [messages, setMessages] = useState<ChatMessage[]>([]);
     const [inputMessage, setInputMessage] = useState('');
     const clientRef = useRef<Client | null>(null);
@@ -40,6 +43,10 @@ const ChatRoom = ({ roomId, userName, onLeave }: ChatRoomProps) => {
     // 채팅방 정보를 담을 상태를 추가합니다.
     const [roomInfo, setRoomInfo] = useState<RoomInfo | null>(null);
 
+    const API_URL = process.env.REACT_APP_API_URL;
+
+    // ★★★ 이 한 줄을 추가해주세요! ★★★
+    // console.log("Loading API_URL:", API_URL);
 
 
     // --- 자동 스크롤 기능 ---
@@ -68,10 +75,10 @@ const ChatRoom = ({ roomId, userName, onLeave }: ChatRoomProps) => {
     // ★ --- UserChatStatus의 seq를 갱신하는 로직 ---
     const updateLastReadSequence = async () => {
         // 이제 '사진 속 값'이 아닌, '현재 값'을 사용합니다.
-        if (lastMessageSeqRef.current === 0) return;
+        if (lastMessageSeqRef.current === 0 || !userName) return; // userName 체크 추가
 
         try {
-            await axios.post('http://localhost:8080/api/chat/rooms/update-status', {
+            await axios.post(`${API_URL}/api/chat/rooms/update-status`, {
                 roomId: roomId,
                 username: userName,
                 lastReadSeq: lastMessageSeqRef.current, // ref의 현재 값을 사용
@@ -86,7 +93,7 @@ const ChatRoom = ({ roomId, userName, onLeave }: ChatRoomProps) => {
         // 채팅방 정보를 가져오는 함수를 만듭니다.
         const fetchRoomInfo = async () => {
             try {
-                const response = await axios.get<RoomInfo>(`http://localhost:8080/api/chat/rooms/${roomId}`);
+                const response = await axios.get<RoomInfo>(`${API_URL}/api/chat/rooms/${roomId}`);
                 setRoomInfo(response.data);
             } catch (error) {
                 console.error("채팅방 정보를 가져오는 데 실패했습니다.", error);
@@ -96,7 +103,7 @@ const ChatRoom = ({ roomId, userName, onLeave }: ChatRoomProps) => {
         const fetchPreviousMessages = async () => {
             try {
                 const response = await axios.get<ChatMessage[]>(
-                    `http://localhost:8080/api/chat/rooms/${roomId}/messages?size=50`
+                    `${API_URL}/api/chat/rooms/${roomId}/messages?size=50`
                 );
                 // 서버에서 받은 response.data가 정말 배열인지 확인합니다.
                 if (Array.isArray(response.data)) {
@@ -123,7 +130,7 @@ const ChatRoom = ({ roomId, userName, onLeave }: ChatRoomProps) => {
         // WebSocket 연결 로직
         const connect = () => {
             const client = new Client({
-                webSocketFactory: () => new SockJS('http://localhost:8080/ws-stomp'),//api 설정
+                webSocketFactory: () => new SockJS(`${API_URL}/ws-stomp`),//api 설정
                 reconnectDelay: 5000,
                 debug: (str) => { console.log(new Date(), str); },
                 onConnect: () => {
@@ -205,7 +212,7 @@ const ChatRoom = ({ roomId, userName, onLeave }: ChatRoomProps) => {
         try {
             // 2. 파일을 백엔드의 '/api/files/upload' API로 전송
             const response = await axios.post<{ url: string }>(
-                'http://localhost:8080/api/files/upload',
+                `${API_URL}/api/files/upload`,
                 formData,
                 { headers: { 'Content-Type': 'multipart/form-data' } }
             );
@@ -244,7 +251,7 @@ const ChatRoom = ({ roomId, userName, onLeave }: ChatRoomProps) => {
     const handleLeaveRoom = async () => {
         try {
             // 1. 백엔드에 '나가기' 요청을 보냅니다.
-            await axios.post(`http://localhost:8080/api/chat/rooms/${roomId}/leave`, {
+            await axios.post(`${API_URL}/api/chat/rooms/${roomId}/leave`, {
                 username: userName
             });
 
@@ -265,7 +272,7 @@ const ChatRoom = ({ roomId, userName, onLeave }: ChatRoomProps) => {
         }
 
         try {
-            await axios.delete(`http://localhost:8080/api/chat/rooms/${roomId}`, {
+            await axios.delete(`${API_URL}/api/chat/rooms/${roomId}`, {
                 // DELETE 요청 시 body를 보내려면 data 속성 안에 넣어야 합니다.
                 data: { username: userName }
             });
@@ -305,12 +312,26 @@ const ChatRoom = ({ roomId, userName, onLeave }: ChatRoomProps) => {
                 {messages.map((msg, index) => (
                     <div key={index} style={{ textAlign: msg.sender === userName ? 'right' : 'left', margin: '5px 0' }}>
                         <small>{msg.sender}</small>
-                        <div style={{ display: 'inline-block', padding: '8px', borderRadius: '10px', backgroundColor: msg.type === 'ENTER' ? '#FFFACD' : (msg.sender === userName ? '#DCF8C6' : '#EAEAEA') }}>
+                        <div style={{
+                            display: 'inline-block',
+                            padding: msg.type === 'IMAGE' ? '0px' : '8px', // 이미지는 패딩 없음
+                            borderRadius: '10px',
+                            // 이미지는 배경색을 투명(transparent)하게, 아니면 기존 색상 적용
+                            backgroundColor: msg.type === 'IMAGE'
+                                ? 'transparent'
+                                : (msg.type === 'ENTER' ? '#FFFACD' : (msg.sender === userName ? '#DCF8C6' : '#EAEAEA'))
+                        }}>
                             {msg.type === 'IMAGE' ? (
                                 <img
-                                    src={msg.message} // 메시지에 담긴 URL을 src로 사용
+                                    src={msg.message}
                                     alt="채팅 이미지"
-                                    style={{ maxWidth: '200px', borderRadius: '8px', cursor: 'pointer' }}
+                                    style={{
+                                        maxWidth: '200px',
+                                        borderRadius: '8px', // 이미지 자체에 borderRadius 적용
+                                        cursor: 'pointer',
+                                        // 이미지가 로드될 때 부모 div의 크기를 깨지 않도록
+                                        display: 'block'
+                                    }}
                                     onClick={() => window.open(msg.message, '_blank')}
                                 />
                             ) : (

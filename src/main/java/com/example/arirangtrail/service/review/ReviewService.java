@@ -18,7 +18,8 @@ import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-@Service
+//잠시 주석처리
+//@Service
 @RequiredArgsConstructor
 public class ReviewService {
 

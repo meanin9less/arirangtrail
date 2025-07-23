@@ -1,32 +1,34 @@
 import React, { useState, useEffect, FormEvent } from 'react';
 import axios from 'axios';
 import ChatRoom from './ChatRoom';
+import { useSelector } from 'react-redux';
+import { RootState } from '../store';
 
 // 백엔드의 ChatRoom Document와 필드를 일치시킴
 interface Room {
     id: number;
     title: string;
     creator: string;
+    participantCount: number; // ✨ 추가
 }
 
 const CommunityPage = () => {
+    const userProfile = useSelector((state: RootState) => state.token.userProfile);
+    const userName = userProfile?.username; // 옵셔널 체이닝으로 안전하게 접근
+
     const [rooms, setRooms] = useState<Room[]>([]);
     const [newRoomName, setNewRoomName] = useState('');
     const [selectedRoomId, setSelectedRoomId] = useState<string | null>(null);
-    const [userName, setUserName] = useState('');
-    // ★ 사용자가 '현재 세션에서만' 참여한 방 ID 목록
-    const [joinedRoomIds, setJoinedRoomIds] = useState<Set<string>>(new Set());
 
-    useEffect(() => {
-        fetchRooms();
-        const user = prompt("사용자 이름을 입력하세요:");
-        if (user) setUserName(user);
-    }, []); // 최초 1회만 실행
+    // ✨ 3. '내 채팅방' ID 목록을 관리할 상태를 추가합니다. (DB에서 가져온 데이터를 담을 곳)
+    const [myRoomIds, setMyRoomIds] = useState<number[]>([]);
+
+    const API_URL = process.env.REACT_APP_API_URL;
 
     const fetchRooms = async () => {
         console.log("방 목록을 새로고침합니다..."); // ★ 디버깅용 로그
         try {
-            const response = await axios.get<Room[]>('http://localhost:8080/api/chat/rooms');
+            const response = await axios.get<Room[]>(`${API_URL}/api/chat/rooms`);
             if (Array.isArray(response.data)) {
                 setRooms(response.data);
             } else {
@@ -39,6 +41,28 @@ const CommunityPage = () => {
         }
     };
 
+    // ✨ 4. '내가 참여한 방' 목록을 가져오는 API 호출 함수를 만듭니다.
+    const fetchMyRooms = async () => {
+        if (!userName) return; // userName이 없으면 함수를 실행하지 않습니다.
+        try {
+            const response = await axios.get<number[]>(`${API_URL}/api/chat/rooms/my-rooms`, {
+                params: { username: userName } // 쿼리 파라미터로 username 전달
+            });
+            setMyRoomIds(response.data);
+        } catch (error) {
+            console.error("내 채팅방 목록을 가져오는 데 실패했습니다.", error);
+        }
+    };
+
+    // ✨ 5. useEffect 로직을 개선합니다.
+    useEffect(() => {
+        // userName이 Redux 스토어로부터 성공적으로 로드되었을 때만 API를 호출합니다.
+        if (userName) {
+            fetchRooms();   // 전체 방 목록 가져오기
+            fetchMyRooms(); // 내 방 목록 가져오기
+        }
+    }, [userName]);
+
     const handleCreateRoom = async (e: FormEvent) => {
         e.preventDefault();
         if (!newRoomName.trim() || !userName) {
@@ -47,16 +71,12 @@ const CommunityPage = () => {
         }
         try {
             const response = await axios.post<Room>(
-                'http://localhost:8080/api/chat/rooms',
+                `${API_URL}/api/chat/rooms`,
                 { title: newRoomName, username: userName }
             );
             setNewRoomName('');
-            fetchRooms();
-
-            // 4. 새로 생성된 방의 ID를 '참여한 방' 목록에 추가합니다.
-            const newRoomId = response.data.id.toString();
-            setJoinedRoomIds(prev => new Set(prev).add(newRoomId));
-
+            await fetchRooms();   // ✨ 전체 방 목록 새로고침
+            await fetchMyRooms(); // ✨ 내 방 목록도 새로고침
             alert(`'${response.data.title}' 방이 생성되었습니다. 입장해주세요.`);
         } catch (error) {
             console.error("채팅방 생성에 실패했습니다.", error);
@@ -65,30 +85,39 @@ const CommunityPage = () => {
 
     const handleEnterRoom = (roomId: string) => {
         if (!userName) {
-            alert("사용자 이름이 설정되지 않았습니다. 페이지를 새로고침 해주세요.");
+            alert("사용자 정보가 없습니다. 다시 로그인해주세요.");
             return;
         }
         setSelectedRoomId(roomId);
-        setJoinedRoomIds(prev => new Set(prev).add(roomId));
+        // ✨ 방에 입장할 때 fetchMyRooms를 호출하여 '내 채팅방' 목록을 갱신합니다.
+        fetchMyRooms();
     };
 
     const handleLeaveRoom = () => {
         setSelectedRoomId(null);
+        // ✨ 채팅방에서 로비로 돌아올 때, 방 목록 상태를 최신으로 유지합니다.
         fetchRooms();
+        fetchMyRooms();
     };
 
-    const myRooms = rooms.filter(room => joinedRoomIds.has(room.id.toString()));
-    const otherRooms = rooms.filter(room => !joinedRoomIds.has(room.id.toString()));
+    const myRooms = rooms.filter(room => myRoomIds.includes(room.id));
+    const otherRooms = rooms.filter(room => !myRoomIds.includes(room.id));
 
+    //프롭스 확인
     if (selectedRoomId) {
-        return <ChatRoom roomId={selectedRoomId} userName={userName} onLeave={handleLeaveRoom} />;
+        return <ChatRoom roomId={selectedRoomId} onLeave={handleLeaveRoom} />;
+    }
+
+    // 로그인되지 않은 상태를 위한 UI
+    if (!userName) {
+        return <div>로그인 후 이용 가능합니다.</div>;
     }
 
     return (
         <div style={styles.container}>
             <header style={styles.header}>
                 <h1>아리랑 트레일 커뮤니티</h1>
-                <p><strong>{userName || "게스트"}</strong>님, 환영합니다.</p>
+                <p><strong>{userName}</strong>님, 환영합니다.</p>
             </header>
 
             <section style={styles.section}>
@@ -114,6 +143,7 @@ const CommunityPage = () => {
                             <th style={styles.th}>방 번호</th>
                             <th style={styles.th}>제목</th>
                             <th style={styles.th}>개설자</th>
+                            <th style={styles.th}>인원</th> {/* ✨ 인원 헤더 추가 */}
                             <th style={styles.th}></th>
                         </tr>
                         </thead>
@@ -123,13 +153,14 @@ const CommunityPage = () => {
                                 <td style={styles.td}>{room.id}</td>
                                 <td style={styles.td}>{room.title}</td>
                                 <td style={styles.td}>{room.creator}</td>
+                                <td style={styles.td}>{room.participantCount}</td> {/* ✨ 인원 표시 */}
                                 <td style={styles.td}><button onClick={() => handleEnterRoom(room.id.toString())} style={styles.enterButton}>입장</button></td>
                             </tr>
                         ))}
                         </tbody>
                     </table>
                 ) : (
-                    <p style={styles.emptyMessage}>아직 참여한 채팅방이 없습니다. (새로고침 시 초기화됩니다)</p>
+                    <p style={styles.emptyMessage}>참여한 채팅방이 없습니다.</p>
                 )}
             </section>
 
@@ -137,20 +168,14 @@ const CommunityPage = () => {
                 <h2>참여 가능한 채팅방</h2>
                 {otherRooms.length > 0 ? (
                     <table style={styles.roomTable}>
-                        <thead>
-                        <tr>
-                            <th style={styles.th}>방 번호</th>
-                            <th style={styles.th}>제목</th>
-                            <th style={styles.th}>개설자</th>
-                            <th style={styles.th}></th>
-                        </tr>
-                        </thead>
+                        {/* a,b,c,d */}
                         <tbody>
                         {otherRooms.map((room) => (
                             <tr key={room.id}>
                                 <td style={styles.td}>{room.id}</td>
                                 <td style={styles.td}>{room.title}</td>
                                 <td style={styles.td}>{room.creator}</td>
+                                <td style={styles.td}>{room.participantCount}</td> {/* ✨ 인원 표시 */}
                                 <td style={styles.td}><button onClick={() => handleEnterRoom(room.id.toString())} style={styles.enterButton}>입장</button></td>
                             </tr>
                         ))}

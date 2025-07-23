@@ -4,6 +4,7 @@ import com.example.arirangtrail.data.document.ChatMessage;
 import com.example.arirangtrail.data.document.ChatRoom;
 import com.example.arirangtrail.data.document.UserChatStatus;
 import com.example.arirangtrail.data.dto.chat.ChatMessageDTO;
+import com.example.arirangtrail.data.dto.chat.ChatRoomListDTO;
 import com.example.arirangtrail.data.repository.chat.ChatMessageRepository;
 import com.example.arirangtrail.data.repository.chat.ChatRoomRepository;
 import com.example.arirangtrail.data.repository.chat.UserChatStatusRepository;
@@ -22,6 +23,7 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Service
@@ -35,8 +37,18 @@ public class ChatService {
     private final MongoTemplate mongoTemplate;
 
     // 모든 채팅방 찾기
-    public List<ChatRoom> findAllRoom() {
-        return chatRoomRepository.findAll();
+    public List<ChatRoomListDTO> findAllRoom() {
+        List<ChatRoom> rooms = chatRoomRepository.findAll();
+
+        // ✨ stream을 사용하여 각 방의 정보를 DTO로 변환합니다.
+        return rooms.stream()
+                .map(room -> {
+                    // 각 방의 ID로 참여자 수를 센다.
+                    long count = userChatStatusRepository.countByRoomId(room.getId());
+                    // DTO 객체를 생성하여 반환한다.
+                    return new ChatRoomListDTO(room.getId(), room.getTitle(), room.getCreator(), count);
+                })
+                .collect(Collectors.toList());
     }
 
     // 특정 채팅방 찾기 (ID 타입을 Long으로 통일)
@@ -140,15 +152,24 @@ public class ChatService {
     // 해당 유저 방 참여를 삭제
     @Transactional
     public void leaveRoom(Long roomId, String username) {
-        // 1. 해당 유저의 참여 상태 정보를 DB에서 삭제합니다.(userchatsatus에는 해당방 번호와, 참가한 개별 유저별로 저장, lastread같이 저장)
-        userChatStatusRepository.deleteByRoomIdAndUsername(roomId, username);
+// 1. 먼저 현재 방에 몇 명이 있는지 확인합니다.
+        long totalUsersInRoom = userChatStatusRepository.countByRoomId(roomId);
 
-        // 2. (Step 2 연계) 남은 참여자가 있는지 확인합니다.
-        long remainingUsers = userChatStatusRepository.countByRoomId(roomId);
-        if (remainingUsers == 0) {
-            // 남은 사람이 없으면 방과 관련된 모든 데이터를 삭제합니다.
+        // 2. 나가려는 사용자의 참여 정보가 실제로 존재하는지 확인합니다.
+        Optional<UserChatStatus> userStatusOpt = userChatStatusRepository.findByRoomIdAndUsername(roomId, username);
+
+        // 3. 참여 정보가 존재하고, 그 사람이 유일한 참여자일 경우
+        if (userStatusOpt.isPresent() && totalUsersInRoom == 1) {
+            // 방과 관련된 모든 데이터를 삭제합니다.
             deleteRoomAndAssociatedData(roomId);
         }
+        // 4. 참여 정보는 존재하지만, 다른 참여자가 더 있는 경우
+        else if (userStatusOpt.isPresent()) {
+            // 해당 사용자의 참여 정보만 삭제합니다.
+            userChatStatusRepository.delete(userStatusOpt.get());
+        }
+        // 5. (예외 처리) 만약 참여 정보가 존재하지 않는다면 아무 작업도 하지 않습니다.
+        // 이 부분은 필요에 따라 로그를 남기는 등의 처리를 할 수 있습니다.
     }
 
     // (Step 2 & 3 연계) 방과 관련된 모든 데이터를 삭제하는 private 헬퍼 메소드
