@@ -16,6 +16,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 
 import java.util.List;
+import java.util.Map;
 
 @Controller
 @RequiredArgsConstructor
@@ -29,6 +30,7 @@ public class ChatMessageController {
         message.setMessage(message.getSender() + "님이 입장하셨습니다.");
         // DB 저장 없이, 입장 메시지만 모두에게 방송
         template.convertAndSend("/sub/chat/room/" + message.getRoomId(), message);
+        template.convertAndSend("/sub/chat/lobby", "user-entered-or-left");
     }
 
     @MessageMapping("/chat/message")
@@ -54,6 +56,13 @@ public class ChatMessageController {
             // roomId가 숫자가 아닐 경우의 예외 처리
             return ResponseEntity.badRequest().build();
         }
+    }
+
+    @GetMapping("/users/{username}/unread-count")
+    public ResponseEntity<Map<String, Long>> getTotalUnreadCount(@PathVariable String username) {
+        long count = chatService.getTotalUnreadCount(username);
+        // 프론트엔드가 사용하기 쉽게 JSON 형태로 반환합니다: { "totalUnreadCount": 5 }
+        return ResponseEntity.ok(Map.of("totalUnreadCount", count));
     }
 
 }

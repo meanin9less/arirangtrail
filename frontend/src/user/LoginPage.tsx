@@ -3,7 +3,7 @@ import { Link, useNavigate } from "react-router-dom";
 import apiClient from "../api/axiosInstance";
 import axios from 'axios';
 import { useDispatch } from 'react-redux';
-import { setToken, setUserProfile, AppDispatch } from '../store'; // setUserProfile 임포트
+import { setToken, setUserProfile, setTotalUnreadCount,AppDispatch } from '../store'; // setUserProfile 임포트
 import styles from './User.module.css'; // user.module.css로 임포트 경로 일치
 
 import arirang from '../images/arirang1.png'; // 아리랑 이미지 임포트 유지
@@ -100,6 +100,14 @@ const LoginPage = ({}: LoginProps) => {
                 };
                 dispatch(setUserProfile(userProfileData));
                 console.log('사용자 프로필 Redux Store에 저장됨:', userProfileData);
+
+                // --- ✨ 여기가 새로 추가된 로직입니다 ---
+                // 로그인 성공 직후, 방금 받은 userProfile의 username으로
+                //    총 안 읽은 메시지 개수를 요청합니다.
+                const unreadCountResponse = await axios.get(`/api/chat/users/${userProfileData.username}/unread-count`);
+
+                // 응답으로 받은 개수({ totalUnreadCount: 5 })를 Redux 스토어에 저장합니다.
+                dispatch(setTotalUnreadCount(unreadCountResponse.data.totalUnreadCount));
 
                 setModalMessage(successMessage);
                 setModalMessageType('success'); // ✨ 성공 타입 설정

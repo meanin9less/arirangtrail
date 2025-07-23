@@ -5,6 +5,7 @@ import com.example.arirangtrail.data.document.ChatRoom;
 import com.example.arirangtrail.data.document.UserChatStatus;
 import com.example.arirangtrail.data.dto.chat.ChatMessageDTO;
 import com.example.arirangtrail.data.dto.chat.ChatRoomListDTO;
+import com.example.arirangtrail.data.dto.chat.UnreadUpdateDTO;
 import com.example.arirangtrail.data.repository.chat.ChatMessageRepository;
 import com.example.arirangtrail.data.repository.chat.ChatRoomRepository;
 import com.example.arirangtrail.data.repository.chat.UserChatStatusRepository;
@@ -16,6 +17,7 @@ import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.data.mongodb.core.query.Query; // ★★★ 1. 올바른 Query 클래스를 import 합니다.
 import org.springframework.data.mongodb.core.query.Update;
+import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional; // ★★★ 2. Spring의 Transactional을 사용하는 것이 좋습니다.
 
@@ -35,6 +37,7 @@ public class ChatService {
     private final SequenceService sequenceService;
     private final UserChatStatusRepository userChatStatusRepository;
     private final MongoTemplate mongoTemplate;
+    private final SimpMessagingTemplate messagingTemplate;
 
     // 모든 채팅방 찾기
     public List<ChatRoomListDTO> findAllRoom() {
@@ -81,6 +84,9 @@ public class ChatService {
         status.setLastReadMessageSeq(0L);
         status.setLastReadAt(LocalDateTime.now());
         userChatStatusRepository.save(status);
+
+        // ✨로직이 성공적으로 끝난 후, 로비 구독자들에게 업데이트 신호를 보낸다.
+        messagingTemplate.convertAndSend("/sub/chat/lobby", "update");
 
         return newRoom;
     }
@@ -134,6 +140,21 @@ public class ChatService {
 
         // DB에 저장 (기존 문서가 있으면 덮어쓰고, 없으면 새로 삽입됨)
         userChatStatusRepository.save(userChatStatus);
+
+        // --- ✨ 여기가 새로운 실시간 동기화 로직입니다 ---
+        // 2. 해당 방의 총 메시지 개수를 가져옵니다.
+        long totalMessageCount = chatMessageRepository.countByRoomId(roomId);
+
+        // 3. 안 읽은 메시지 개수를 계산합니다.
+        long unreadCount = totalMessageCount - lastReadSeq;
+        if (unreadCount < 0) unreadCount = 0;
+
+        // 4. 이 정보를 DTO에 담습니다.
+        UnreadUpdateDTO updateInfo = new UnreadUpdateDTO(roomId, unreadCount);
+
+        // 5. '특정 유저'만 구독하는 개인 채널로 업데이트 정보를 보냅니다.
+        //    예: /sub/user/aaa  (aaa 유저만 이 메시지를 받습니다)
+        messagingTemplate.convertAndSend("/sub/user/" + username, updateInfo);
     }
 
     // 해당 방의 이전 메세지들을 가져옴
@@ -170,6 +191,8 @@ public class ChatService {
         }
         // 5. (예외 처리) 만약 참여 정보가 존재하지 않는다면 아무 작업도 하지 않습니다.
         // 이 부분은 필요에 따라 로그를 남기는 등의 처리를 할 수 있습니다.
+        // ✨로직이 성공적으로 끝난 후, 로비 구독자들에게 업데이트 신호를 보낸다.
+        messagingTemplate.convertAndSend("/sub/chat/lobby", "update");
     }
 
     // (Step 2 & 3 연계) 방과 관련된 모든 데이터를 삭제하는 private 헬퍼 메소드
@@ -195,6 +218,9 @@ public class ChatService {
 
         // 3. 방장인 것이 확인되면, 위에서 만든 헬퍼 메소드를 호출하여 모든 데이터를 삭제합니다.
         deleteRoomAndAssociatedData(roomId);
+
+        // ✨로직이 성공적으로 끝난 후, 로비 구독자들에게 업데이트 신호를 보낸다.
+        messagingTemplate.convertAndSend("/sub/chat/lobby", "update");
     }
 
     public List<Long> findMyRoomIdsByUsername(String username) {
@@ -204,5 +230,27 @@ public class ChatService {
         return statuses.stream()
                 .map(UserChatStatus::getRoomId)
                 .collect(Collectors.toList());
+    }
+    //안 읽은 메세지 로직
+    public long getTotalUnreadCount(String username) {
+        // 1. 해당 유저가 참여한 모든 방의 '참여 기록'을 가져옵니다.
+        List<UserChatStatus> statuses = userChatStatusRepository.findByUsername(username);
+
+        // 2. 참여한 방이 없으면, 안 읽은 메시지도 0개입니다.
+        if (statuses.isEmpty()) {
+            return 0;
+        }
+
+        // 3. 각 방의 안 읽은 메시지 수를 계산하여 모두 합산합니다.
+        return statuses.stream()
+                .mapToLong(status -> {
+                    // 4. 해당 방의 전체 메시지 개수를 셉니다.
+                    long totalMessages = chatMessageRepository.countByRoomId(status.getRoomId());
+                    // 5. (전체 메시지 수) - (내가 마지막으로 읽은 메시지 번호) = 이 방의 안 읽은 개수
+                    long unreadCount = totalMessages - status.getLastReadMessageSeq();
+                    // 6. 음수가 나오지 않도록 0 미만은 0으로 처리합니다.
+                    return Math.max(0, unreadCount);
+                })
+                .sum(); // 7. 모든 방의 안 읽은 개수를 더하여 최종 결과를 반환합니다.
     }
 }
