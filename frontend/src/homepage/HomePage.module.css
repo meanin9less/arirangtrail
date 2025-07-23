@@ -4,7 +4,7 @@
 .homeContainer {
     position: relative;
     width: 100vw; /* 뷰포트 너비 꽉 채우기 */
-    height: calc(100vh - 60px); /* 내비게이션 바 높이 제외 (대략 60px) */
+    height: calc(100vh - 70px); /* 내비게이션 바 높이 제외 (대략 60px) */
     overflow: hidden; /* 넘치는 부분 숨김 */
     display: flex;
     align-items: center;

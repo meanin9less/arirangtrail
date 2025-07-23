@@ -1,16 +1,33 @@
 /* NavigationBar.module.css */
 
 /* 1. 내비게이션 바 전체 스타일 */
-.navbar {
-    background-color: #333; /* 어두운 배경색 */
-    color: white;          /* 글자색 흰색 */
+.navbar.transparent {
+    z-index: 100;
+    width: 100%;
+    color: white; /* 글자색 흰색 */
+    position: fixed;
+    top: 0;
+    left: 0;
     padding: 15px 20px;
     display: flex;
     justify-content: space-between;
     align-items: center;
-    box-shadow: 0 2px 5px rgba(0,0,0,0.2);
     min-height: 60px;
     flex-wrap: wrap;
+    box-sizing: border-box;
+}
+
+.navbar.solid {
+    background-color: #2d3748;
+    text-decoration: none;
+    padding: 10px 15px;
+    position: relative;
+    overflow: hidden;
+    transition: all 0.3s ease-in-out;
+    display: flex;
+    align-items: center;
+    gap: 8px; /* 아이콘과 텍스트 사이의 간격 (홈 링크용) */
+    box-sizing: border-box;
 }
 
 /* 2. 그룹별 정렬 */
@@ -73,14 +90,12 @@
 .navLink:hover,
 .homeLink:hover {
     transform: translateY(-2px) scale(1.02);
-    background-color: rgba(255, 255, 255, 0.1); /* 배경색을 살짝 밝게 (기존 스타일) */
-    box-shadow: 0 4px 8px rgba(0,0,0,0.3);
 }
 
 .loginLinkTextOnly:hover {
     transform: translateY(-2px) scale(1.02);
     background-color: rgba(255, 255, 255, 0.1); /* ✨ 변경: 호버 시 배경색을 홈 링크와 동일하게 설정 */
-    box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
 }
 
 
@@ -95,7 +110,7 @@
     left: 0;
     width: 0;
     height: 2px;
-    background-color: rgba(0, 123, 255, 0.8);
+    background-color: rgb(255, 255, 255);
     transition: width 0.3s ease-out;
 }
 
@@ -149,7 +164,7 @@
 .userProfileButton:hover {
     transform: translateY(-2px) scale(1.02);
     background-color: rgba(255, 255, 255, 0.1); /* ✨ 변경: 호버 시 배경색을 홈 링크와 동일하게 설정 */
-    box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
 }
 
 /* ✨ 9-2. 프로필 이미지 (작은 원형) 스타일 */
@@ -182,7 +197,7 @@
     right: 0;
     background-color: #444; /* 메뉴 배경색 */
     border-radius: 5px;
-    box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
     min-width: 150px;
     display: flex;
     flex-direction: column;

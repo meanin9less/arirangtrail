@@ -1,6 +1,7 @@
-import React, { useState, useEffect } from 'react';
+import React, {useState, useEffect} from 'react';
 import axios from "axios";
-import styles from "./HomePage.module.css"; // CSS 모듈 임포트
+import styles from "./HomePage.module.css";
+import NavigationBar from "../navigation/NavigationBar";
 
 interface HomePageFestival {
     contenttypeid: string;
@@ -49,7 +50,7 @@ const HomePage = () => {
                         _type: 'json',
                         numOfRows: 50, // 충분한 이미지 확보를 위해 넉넉하게 요청
                         pageNo: 1,
-                        arrange: "B", // 조회순
+                        arrange: "A", // 조회순
                         eventStartDate: todayString, // 오늘 날짜 이후의 축제
                     }
                 });
@@ -126,14 +127,16 @@ const HomePage = () => {
 
     // 이미지가 있을 때 배경 이미지와 함께 렌더링
     return (
-        <div
-            className={styles.homeContainer}
-            style={{
-                backgroundImage: fetchedImages[currentImageIndex], // 현재 이미지 URL 적용
-                transition: 'background-image 1.5s ease-in-out', // 부드러운 전환 효과
-            }}
-        >
-            <div className={styles.overlay}></div> {/* 오버레이 (선택 사항) */}
+        <div className={styles.homePageLayout}>
+            <NavigationBar/>
+            <div
+                className={styles.homeContainer}
+                style={{
+                    backgroundImage: fetchedImages.length > 0 ? fetchedImages[currentImageIndex] : 'none',
+                }}
+            >
+                <div className={styles.overlay}></div>
+            </div>
         </div>
     );
 };
