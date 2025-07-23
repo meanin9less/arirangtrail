@@ -31,7 +31,8 @@
     color: #555;
 }
 
-.textareaField, .selectField {
+/* 텍스트 입력 필드, 날짜 입력 필드, 이미지 캡션 입력 필드 등 */
+.inputField {
     width: 100%;
     padding: 10px;
     border: 1px solid #ccc;
@@ -40,15 +41,78 @@
     font-size: 1em;
 }
 
+/* 텍스트 영역 필드 */
 .textareaField {
+    width: 100%; /* inputField와 동일하게 100% 설정 */
+    padding: 10px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    box-sizing: border-box;
+    font-size: 1em;
     resize: vertical; /* 세로 크기 조절 허용 */
     min-height: 120px; /* 최소 높이 설정 */
 }
 
+/* 셀렉트 박스 필드 */
 .selectField {
+    width: 100%; /* inputField와 동일하게 100% 설정 */
+    padding: 10px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    box-sizing: border-box;
+    font-size: 1em;
     background-color: #f8f8f8;
     cursor: pointer;
 }
+
+/* 파일 입력 필드 스타일 */
+.fileInput {
+    display: block;
+    width: 100%;
+    padding: 8px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    box-sizing: border-box;
+    font-size: 0.95em;
+    background-color: #f8f8f8;
+    cursor: pointer;
+}
+
+/* 이미지 미리보기 컨테이너 */
+.imagePreviewContainer {
+    margin-top: 15px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+    padding: 10px;
+    border: 1px dashed #ccc; /* 점선 테두리 */
+    border-radius: 8px;
+    background-color: #fafafa;
+}
+
+.imagePreview {
+    max-width: 100%; /* 컨테이너 너비에 맞게 */
+    max-height: 200px; /* 최대 높이 제한 */
+    object-fit: contain; /* 이미지 비율 유지 */
+    border-radius: 5px;
+}
+
+/* 이미지 제거 버튼 */
+.removeImageButton {
+    padding: 8px 15px;
+    background-color: #dc3545; /* 빨간색 계열 */
+    color: white;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+}
+
+.removeImageButton:hover {
+    background-color: #c82333;
+}
+
 
 .buttonContainer {
     display: flex;
@@ -91,7 +155,7 @@
     transform: translateY(-2px);
 }
 
-/* 모달 스타일 (ReviewPage와 동일하게 재사용) */
+/* 모달 스타일 */
 .modalOverlay {
     position: fixed;
     top: 0;
