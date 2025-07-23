@@ -64,18 +64,17 @@ const EditInfoPage: React.FC = () => {
 
     // 컴포넌트 마운트 시 사용자 정보 불러오기
     useEffect(() => {
-        // ✨ ✨ ✨ 복구 필요: 이 if 블록을 해제하여 로그인 여부를 다시 확인하세요. ✨ ✨ ✨
-        // if (!isLoggedIn) {
-        //     navigate('/login'); // 로그인하지 않았다면 로그인 페이지로 리디렉션
-        //     return;
-        // }
+        if (!isLoggedIn) {
+            navigate('/login'); // 로그인하지 않았다면 로그인 페이지로 리디렉션
+            return;
+        }
 
         const fetchUserProfile = async () => {
             setLoading(true);
             setError(null);
             try {
                 // ✨ ✨ ✨ 복구 필요: 실제 백엔드 API 호출을 활성화하세요. ✨ ✨ ✨
-                // const response = await apiClient.get<UserProfile>('/api/mypage/profile');
+                const response = await apiClient.get<UserProfile>('/api/mypage/profile');
                 // const profileData = response.data;
 
                 // ✨ 개발/테스트 목적으로 사용했던 임시 더미 데이터 (위의 백엔드 연동 코드 활성화 시 제거)
@@ -113,12 +112,11 @@ const EditInfoPage: React.FC = () => {
             }
         };
 
-        // ✨ ✨ ✨ 복구 필요: 이 if (isLoggedIn) 조건을 해제하여 로그인된 경우에만 정보를 불러오세요. ✨ ✨ ✨
-        // if (isLoggedIn) {
+        if (isLoggedIn) {
         fetchUserProfile();
-        // } else {
-        //     setLoading(false); // 로그인 안 된 상태면 로딩 종료 (위에 navigate 로직이 활성화되면 필요 없음)
-        // }
+        } else {
+            setLoading(false); // 로그인 안 된 상태면 로딩 종료 (위에 navigate 로직이 활성화되면 필요 없음)
+        }
     }, [isLoggedIn, navigate]); // isLoggedIn 또는 navigate 변경 시 다시 실행
 
     // 폼 입력 필드 변경 핸들러 (텍스트 필드)
@@ -220,14 +218,13 @@ const EditInfoPage: React.FC = () => {
         }
     };
 
-    // ✨ ✨ ✨ 복구 필요: 이 if 블록을 해제하여 로그인 여부를 다시 확인하세요. ✨ ✨ ✨
-    // if (!isLoggedIn) {
-    //     return (
-    //         <div className={styles.editInfoContainer}>
-    //             <p className={styles.message}>로그인이 필요합니다.</p>
-    //         </div>
-    //     );
-    // }
+    if (!isLoggedIn) {
+        return (
+            <div className={styles.editInfoContainer}>
+                <p className={styles.message}>로그인이 필요합니다.</p>
+            </div>
+        );
+    }
 
     if (loading) {
         return (
