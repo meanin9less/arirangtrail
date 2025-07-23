@@ -22,23 +22,22 @@ const MyPage: React.FC = () => {
 
     // [백엔드 연동 필요] 컴포넌트 마운트 시 사용자 정보 가져오기 (useEffect 필요)
     React.useEffect(() => {
-        // ✨ 복구 필요: 이 주석을 해제하세요.
         if (isLoggedIn) {
             // [백엔드 연동 필요] 실제로는 여기에 백엔드 API 호출 로직이 들어갑니다.
-            // 예: const fetchUserInfo = async () => {
-            //     try {
-            //         setLoadingUserInfo(true);
-            //         const response = await apiClient.get('/api/mypage/profile'); // 백엔드 API 호출
-            //         setUserName(response.data.nickname || response.data.username);
-            //         setUserEmail(response.data.email);
-            //         setLoadingUserInfo(false);
-            //     } catch (error) {
-            //         console.error('사용자 정보 불러오기 오류:', error);
-            //         setUserInfoError('사용자 정보를 불러오는 데 실패했습니다.');
-            //         setLoadingUserInfo(false);
-            //     }
-            // };
-            // fetchUserInfo();
+            예: const fetchUserInfo = async () => {
+                try {
+                    setLoadingUserInfo(true);
+                    const response = await apiClient.get('/api/mypage/profile'); // 백엔드 API 호출
+                    setUserName(response.data.nickname || response.data.username);
+                    setUserEmail(response.data.email);
+                    setLoadingUserInfo(false);
+                } catch (error) {
+                    console.error('사용자 정보 불러오기 오류:', error);
+                    setUserInfoError('사용자 정보를 불러오는 데 실패했습니다.');
+                    setLoadingUserInfo(false);
+                }
+            };
+            fetchUserInfo();
 
             // ✨ 개발/테스트 목적으로 사용했던 임시 더미 데이터 (위의 백엔드 연동 코드 활성화 시 제거)
             setUserName("준홍님"); // 임시 더미 데이터

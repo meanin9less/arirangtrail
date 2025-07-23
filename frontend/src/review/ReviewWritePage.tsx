@@ -8,8 +8,6 @@ import styles from './ReviewWrite.module.css'; // CSS 모듈 임포트 경로 �
 interface Review {
     reviewid: string; // DB의 reviewid (bigint)
     username: string; // DB의 username
-    // contentid: string; // 제거
-    // contenttitle: string; // 제거
     title: string; // DB의 title
     content: string; // DB의 content
     rating: number; // DB의 rating (decimal 2,1)
@@ -23,12 +21,9 @@ interface Review {
 interface ReviewFormData {
     // FormData로 보낼 필드들 (텍스트 데이터 - 불필요한 필드 제거)
     username: string; // 작성자 ID (현재는 임시, 실제로는 백엔드에서 인증된 사용자 ID 사용)
-    // contentid: string; // 제거
-    // contenttitle: string; // 제거
     title: string;
     content: string;
     rating: number;
-    // visitdate?: string; // ✨ 제거
     caption?: string; // 이미지 캡션 (선택 사항)
 }
 
@@ -42,11 +37,8 @@ function ReviewWritePage() {
 
     // 상태 관리 (DB 스키마 필드에 맞춰 추가 - 불필요한 필드 제거)
     const [reviewTitle, setReviewTitle] = useState<string>(''); // 리뷰 제목
-    // const [eventContentId, setEventContentId] = useState<string>(''); // 제거
-    // const [eventContentTitle, setEventContentTitle] = useState<string>(''); // 제거
     const [newReviewContent, setNewReviewContent] = useState<string>(''); // 리뷰 내용
     const [newReviewRating, setNewReviewRating] = useState<number>(5); // 별점
-    // const [visitDate, setVisitDate] = useState<string>(''); // ✨ 제거
     const [imageCaption, setImageCaption] = useState<string>(''); // 이미지 캡션
 
     const [loading, setLoading] = useState<boolean>(false);
@@ -62,15 +54,12 @@ function ReviewWritePage() {
     const handleTitleChange = (e: ChangeEvent<HTMLInputElement>) => {
         setReviewTitle(e.target.value);
     };
-    // const handleContentIdChange = (e: ChangeEvent<HTMLInputElement>) => { /* 제거 */ };
-    // const handleContentTitleChange = (e: ChangeEvent<HTMLInputElement>) => { /* 제거 */ };
     const handleContentChange = (e: ChangeEvent<HTMLTextAreaElement>) => {
         setNewReviewContent(e.target.value);
     };
     const handleRatingChange = (e: ChangeEvent<HTMLSelectElement>) => {
         setNewReviewRating(Number(e.target.value));
     };
-    // const handleVisitDateChange = (e: ChangeEvent<HTMLInputElement>) => { /* ✨ 제거 */ };
     const handleImageCaptionChange = (e: ChangeEvent<HTMLInputElement>) => {
         setImageCaption(e.target.value);
     };
@@ -124,14 +113,9 @@ function ReviewWritePage() {
         const formDataToSend = new FormData();
         // [백엔드 연동 필요] username은 실제 로그인된 사용자 ID를 사용해야 합니다.
         formDataToSend.append('username', 'currentLoggedInUser'); // 임시 사용자 이름
-        // formDataToSend.append('contentid', eventContentId); // 제거
-        // formDataToSend.append('contenttitle', eventContentTitle); // 제거
         formDataToSend.append('title', reviewTitle);
         formDataToSend.append('content', newReviewContent);
         formDataToSend.append('rating', newReviewRating.toString());
-        // if (visitDate) { /* ✨ 제거 */
-        //     formDataToSend.append('visitdate', visitDate); /* ✨ 제거 */
-        // } /* ✨ 제거 */
         if (selectedFile) {
             formDataToSend.append('image', selectedFile); // 'image'는 백엔드에서 파일을 받을 때 사용할 필드 이름
             if (imageCaption) {
@@ -156,11 +140,8 @@ function ReviewWritePage() {
 
             // 폼 초기화
             setReviewTitle('');
-            // setEventContentId(''); // 제거
-            // setEventContentTitle(''); // 제거
             setNewReviewContent('');
             setNewReviewRating(5);
-            // setVisitDate(''); // ✨ 제거
             setImageCaption('');
             setSelectedFile(null);
             setImagePreviewUrl(null);
@@ -233,18 +214,6 @@ function ReviewWritePage() {
                         ))}
                     </select>
                 </div>
-
-                {/* ✨ 방문 일자 필드 제거 */}
-                {/* <div className={styles.formGroup}>
-                    <label htmlFor="visitDate">방문 일자 (선택 사항):</label>
-                    <input
-                        type="date"
-                        id="visitDate"
-                        value={visitDate}
-                        onChange={handleVisitDateChange}
-                        className={styles.inputField}
-                    />
-                </div> */}
 
                 {/* 이미지 첨부 필드 */}
                 <div className={styles.formGroup}>
