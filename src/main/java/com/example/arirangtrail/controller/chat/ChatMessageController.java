@@ -13,17 +13,18 @@ import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestMapping;
 
 import java.util.List;
 
 @Controller
 @RequiredArgsConstructor
+@RequestMapping("/api/chat")
 public class ChatMessageController {
     private final SimpMessagingTemplate template;
     private final ChatService chatService;
 
-
-    @MessageMapping("/chat/enter") // ★ 목적지를 /chat/enter로 변경
+    @MessageMapping("/chat/enter") // ★ 메세지 매핑은 리퀘스트 매핑에 영향을 받지 않는 웹소켓 전용창구이므로 분리해서 생각!
     public void enter(ChatMessageDTO message) {
         message.setMessage(message.getSender() + "님이 입장하셨습니다.");
         // DB 저장 없이, 입장 메시지만 모두에게 방송
@@ -39,14 +40,7 @@ public class ChatMessageController {
         template.convertAndSend("/sub/chat/room/" + savedMessage.getRoomId(), savedMessage);
     }
 
-//        @GetMapping("/rooms/{roomId}/messages")
-//        public ResponseEntity<List<ChatMessage>> getPreviousMessages(
-//                @PathVariable Long roomId,
-//                @PageableDefault(size = 50, sort = "messageSeq", direction = Sort.Direction.DESC) Pageable pageable) {
-//            List<ChatMessage> messages = chatService.getPreviousMessages(roomId, pageable);
-//            return ResponseEntity.ok(messages);
-//        }
-
+    // api. 기본적으로 전에 메세지들을 가져온다. 기본설정 가장 최근 메세지 50개
     @GetMapping("/rooms/{roomId}/messages")
     public ResponseEntity<List<ChatMessage>> getPreviousMessages(
             @PathVariable String roomId,
@@ -61,7 +55,5 @@ public class ChatMessageController {
             return ResponseEntity.badRequest().build();
         }
     }
-
-
 
 }

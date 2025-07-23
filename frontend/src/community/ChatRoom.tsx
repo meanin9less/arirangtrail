@@ -31,8 +31,10 @@ const ChatRoom = ({ roomId, userName, onLeave }: ChatRoomProps) => {
     const clientRef = useRef<Client | null>(null);
     const [lastMessageSeq, setLastMessageSeq] = useState<number>(0);
     const fileInputRef = useRef<HTMLInputElement>(null);
-    // ★ 자동 스크롤을 위한 ref 추가
+    // ★ 자동 스크롤을 위한 ref 추가/1,2
     const messagesEndRef = useRef<HTMLDivElement>(null);
+    const messageContainerRef = useRef<HTMLDivElement>(null);
+
     // 이 ref는 항상 최신 lastMessageSeq 값을 담고 있을 것입니다.
     const lastMessageSeqRef = useRef(lastMessageSeq);
     // 채팅방 정보를 담을 상태를 추가합니다.
@@ -42,7 +44,11 @@ const ChatRoom = ({ roomId, userName, onLeave }: ChatRoomProps) => {
 
     // --- 자동 스크롤 기능 ---
     const scrollToBottom = () => {
-        messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+        if (messageContainerRef.current) {
+            // messageContainer의 스크롤 위치를, 컨테이너의 전체 높이로 설정합니다.
+            // 이렇게 하면 항상 스크롤이 해당 div의 맨 아래로 이동합니다.
+            messageContainerRef.current.scrollTop = messageContainerRef.current.scrollHeight;
+        }
     };
 
     useEffect(() => {
@@ -189,21 +195,104 @@ const ChatRoom = ({ roomId, userName, onLeave }: ChatRoomProps) => {
     };
 
     const handleFileChange = async (e: ChangeEvent<HTMLInputElement>) => {
-        // (기존 코드와 동일)
+        const file = e.target.files?.[0];
+        if (!file) return;
+
+        // 1. FormData 객체 생성
+        const formData = new FormData();
+        formData.append('file', file); // 'file'이라는 키는 컨트롤러의 파라미터 이름과 일치해야 함
+
+        try {
+            // 2. 파일을 백엔드의 '/api/files/upload' API로 전송
+            const response = await axios.post<{ url: string }>(
+                'http://localhost:8080/api/files/upload',
+                formData,
+                { headers: { 'Content-Type': 'multipart/form-data' } }
+            );
+
+            // 3. 성공적으로 업로드 후, 응답으로 받은 이미지 URL 추출
+            const imageUrl = response.data.url;
+
+            // 4. WebSocket을 통해 이미지 URL을 메시지로 전송
+            if (clientRef.current?.connected) {
+                clientRef.current.publish({
+                    destination: '/api/pub/chat/message',
+                    body: JSON.stringify({
+                        roomId,
+                        sender: userName,
+                        message: imageUrl, // ★ 메시지 내용에 URL을 담음
+                        type: 'IMAGE',     // ★ 타입을 'IMAGE'로 지정
+                    }),
+                });
+            }
+        } catch (error) {
+            console.error("이미지 업로드에 실패했습니다.", error);
+            alert("이미지 전송에 실패했습니다.");
+        }
+
+        // 파일 선택 후 입력창 초기화
+        if (e.target) {
+            e.target.value = '';
+        }
     };
 
     const handleImageIconClick = () => {
         fileInputRef.current?.click();
     };
 
+    // ★★★ 채팅방 나가기 버튼 핸들러 함수 ★★★
+    const handleLeaveRoom = async () => {
+        try {
+            // 1. 백엔드에 '나가기' 요청을 보냅니다.
+            await axios.post(`http://localhost:8080/api/chat/rooms/${roomId}/leave`, {
+                username: userName
+            });
+
+            // 2. 요청 성공 시, 부모 컴포넌트가 전달해준 onLeave 함수를 호출하여 페이지를 닫습니다.
+            onLeave();
+
+        } catch (error) {
+            console.error("채팅방 나가기에 실패했습니다.", error);
+            // 실패하더라도 일단 방을 나가게 할지, 아니면 사용자에게 알릴지 결정
+            alert("채팅방을 나가는 중 오류가 발생했습니다.");
+        }
+    };
+
+
+    const handleDeleteRoom = async () => {
+        if (!window.confirm("정말로 이 방을 삭제하시겠습니까? 모든 대화 내용이 사라집니다.")) {
+            return;
+        }
+
+        try {
+            await axios.delete(`http://localhost:8080/api/chat/rooms/${roomId}`, {
+                // DELETE 요청 시 body를 보내려면 data 속성 안에 넣어야 합니다.
+                data: { username: userName }
+            });
+            alert("채팅방이 삭제되었습니다.");
+            onLeave(); // 방이 사라졌으므로 로비로 이동
+        } catch (error) {
+            console.error("방 삭제에 실패했습니다.", error);
+            alert("방을 삭제하는 중 오류가 발생했습니다.");
+        }
+    };
+
     return (
         <div style={{ padding: '20px', border: '1px solid #ccc', borderRadius: '8px', display: 'flex', flexDirection: 'column', height: '90vh' }}>
             <div>
                 <button onClick={onLeave}>← 로비로 돌아가기</button>
+                <button onClick={handleLeaveRoom}>← 채팅방에서 나가기</button>
                 {roomInfo ? (
                     <div>
                         <h2>{roomInfo.title} (#{roomInfo.id})</h2>
                         <p>개설자: {roomInfo.creator}</p>
+
+                        {/* ★★★ 방장에게만 보이는 삭제 버튼 ★★★ */}
+                        {userName === roomInfo.creator && (
+                            <button onClick={handleDeleteRoom}>
+                                방 삭제
+                            </button>
+                        )}
                     </div>
                 ) : (
                     <h2>채팅방 정보 로딩 중...</h2>
@@ -211,31 +300,35 @@ const ChatRoom = ({ roomId, userName, onLeave }: ChatRoomProps) => {
             </div>
 
             {/* ★ 메시지 목록 UI 변경: flex-grow를 사용하여 남은 공간을 모두 차지하도록 함 */}
-            <div style={{ flexGrow: 1, overflowY: 'auto', border: '1px solid #eee', padding: '10px', marginBottom: '10px' }}>
+            <div ref={messageContainerRef}
+                 style={{ flexGrow: 1, overflowY: 'auto', border: '1px solid #eee', padding: '10px', marginBottom: '10px' }}>
                 {messages.map((msg, index) => (
                     <div key={index} style={{ textAlign: msg.sender === userName ? 'right' : 'left', margin: '5px 0' }}>
                         <small>{msg.sender}</small>
                         <div style={{ display: 'inline-block', padding: '8px', borderRadius: '10px', backgroundColor: msg.type === 'ENTER' ? '#FFFACD' : (msg.sender === userName ? '#DCF8C6' : '#EAEAEA') }}>
                             {msg.type === 'IMAGE' ? (
-                                <img src={msg.message} alt="채팅 이미지" style={{ maxWidth: '200px', borderRadius: '8px', cursor: 'pointer' }} onClick={() => window.open(msg.message, '_blank')} />
+                                <img
+                                    src={msg.message} // 메시지에 담긴 URL을 src로 사용
+                                    alt="채팅 이미지"
+                                    style={{ maxWidth: '200px', borderRadius: '8px', cursor: 'pointer' }}
+                                    onClick={() => window.open(msg.message, '_blank')}
+                                />
                             ) : (
                                 <span>{msg.message}</span>
                             )}
                         </div>
                     </div>
                 ))}
-                {/* ★ 스크롤의 기준점이 될 div */}
                 <div ref={messagesEndRef} />
             </div>
 
-            {/* 메시지 입력창 (변경 없음) */}
             <div style={{ display: 'flex' }}>
                 <input
                     type="file"
                     ref={fileInputRef}
-                    onChange={handleFileChange}
+                    onChange={handleFileChange} // ★ 완성된 함수 연결
                     style={{ display: 'none' }}
-                    accept="image/*"
+                    accept="image/*" // 이미지 파일만 선택하도록 제한
                 />
                 <button onClick={handleImageIconClick} style={{ marginRight: '5px' }}>🖼️</button>
                 <input
