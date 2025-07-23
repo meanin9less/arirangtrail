@@ -21,15 +21,31 @@ const MyPage: React.FC = () => {
     const [userInfoError, setUserInfoError] = useState<string | null>(null);
 
     // [백엔드 연동 필요] 컴포넌트 마운트 시 사용자 정보 가져오기 (useEffect 필요)
-    // 현재는 더미 데이터로 즉시 설정
     React.useEffect(() => {
+        // ✨ 복구 필요: 이 주석을 해제하세요.
         if (isLoggedIn) {
-            // 실제로는 여기에 백엔드 API 호출 로직이 들어갑니다.
-            // 예: const fetchUserInfo = async () => { ... }; fetchUserInfo();
+            // [백엔드 연동 필요] 실제로는 여기에 백엔드 API 호출 로직이 들어갑니다.
+            // 예: const fetchUserInfo = async () => {
+            //     try {
+            //         setLoadingUserInfo(true);
+            //         const response = await apiClient.get('/api/mypage/profile'); // 백엔드 API 호출
+            //         setUserName(response.data.nickname || response.data.username);
+            //         setUserEmail(response.data.email);
+            //         setLoadingUserInfo(false);
+            //     } catch (error) {
+            //         console.error('사용자 정보 불러오기 오류:', error);
+            //         setUserInfoError('사용자 정보를 불러오는 데 실패했습니다.');
+            //         setLoadingUserInfo(false);
+            //     }
+            // };
+            // fetchUserInfo();
+
+            // ✨ 개발/테스트 목적으로 사용했던 임시 더미 데이터 (위의 백엔드 연동 코드 활성화 시 제거)
             setUserName("준홍님"); // 임시 더미 데이터
             setUserEmail("junhong@example.com"); // 임시 더미 데이터
             setLoadingUserInfo(false);
         } else {
+            // ✨ 복구 필요: 이 주석을 해제하세요.
             setLoadingUserInfo(false); // 로그인 안 된 상태면 로딩 종료
         }
     }, [isLoggedIn]); // 로그인 상태 변경 시 실행
@@ -61,8 +77,20 @@ const MyPage: React.FC = () => {
         setAuthMessage(null); // 메시지 초기화
 
         // [백엔드 연동 필요] 이 부분은 실제 백엔드 API 호출로 대체해야 합니다.
-        // 현재는 임시로 0.5초 지연 후 '1234'와 비교합니다.
-        // 예: try { const response = await apiClient.post('/auth/reverify-password', { password: currentPassword }); ... }
+        // 예: try {
+        //         const response = await apiClient.post('/api/mypage/verify-password', { password: currentPassword });
+        //         setAuthMessage(response.data.message);
+        //         if (response.status === 200) {
+        //             navigate('/mypage/editinfo');
+        //         }
+        //     } catch (error) {
+        //         console.error('비밀번호 인증 오류:', error);
+        //         let msg = '비밀번호 인증 실패: 네트워크 오류';
+        //         if (axios.isAxiosError(error) && error.response) {
+        //             msg = error.response.data?.message || '비밀번호가 올바르지 않습니다.';
+        //         }
+        //         setAuthMessage(msg);
+        //     }
         // 비밀번호는 절대 클라이언트에서 하드코딩하거나 비교해서는 안 됩니다.
         await new Promise(resolve => setTimeout(resolve, 500)); // API 호출 지연 시뮬레이션
 
@@ -74,6 +102,7 @@ const MyPage: React.FC = () => {
         }
         setAuthLoading(false); // 로딩 종료
     };
+
 
     if (!isLoggedIn) {
         return (
