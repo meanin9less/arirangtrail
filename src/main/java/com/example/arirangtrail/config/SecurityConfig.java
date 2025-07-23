@@ -6,6 +6,7 @@ import com.example.arirangtrail.jwt.JwtUtil;
 import com.example.arirangtrail.service.Oauth2.CustomOAuth2UserService;
 import com.example.arirangtrail.service.Oauth2.OAuth2SuccessHandler;
 import lombok.RequiredArgsConstructor;
+import org.springframework.boot.autoconfigure.security.servlet.PathRequest;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -52,13 +53,33 @@ public class SecurityConfig {
                 .formLogin(formLogin->formLogin.disable())
                 .httpBasic(httpBasic->httpBasic.disable())
 
-                .authorizeHttpRequests(authorizeHttpRequests->{
-                    authorizeHttpRequests.requestMatchers("/", "/api/join", "/api/login", "/api/reissue", "/api/naver", "/api/kakao",
-                            "/api/login/oauth2/code/*", "/api/redis/**", "/api/reviews", "/api/reviews/", "/api/**").permitAll();
-                    authorizeHttpRequests.requestMatchers("/", "/api/join", "/api/login", "/api/reissue", "/api/naver", "/api/kakao", "/api/login/oauth2/code/*","/api/chat/**", "/ws-stomp/**").permitAll();
-                    authorizeHttpRequests.requestMatchers("/api/admin").hasRole("ADMIN");
-//                    authorizeHttpRequests.anyRequest().authenticated();
-                })
+                .authorizeHttpRequests(auth -> auth
+                        // ★ 2. 정적 리소스에 대한 요청은 모두 허용합니다.
+                        //    CSS, JS, 이미지 파일 등에 대한 보안 검사를 아예 수행하지 않습니다.
+                        .requestMatchers(PathRequest.toStaticResources().atCommonLocations()).permitAll()
+
+                        // ★ 3. 우리가 직접 업로드한 이미지 파일 경로도 명시적으로 모두 허용합니다.
+                        .requestMatchers("/uploads/**").permitAll()
+
+                        // 1. 가장 구체적인 규칙부터 (관리자)
+                        .requestMatchers("/api/admin/**").hasRole("ADMIN")
+
+                        // 2. 인증 없이 허용할 모든 경로 (문제의 /api/** 제거!)
+                        .requestMatchers(
+                                "/", "/api/join", "/api/login", "/api/reissue",
+                                "/api/naver", "/api/kakao", "/login/oauth2/code/**",
+                                "/api/redis/**", "/api/reviews/**", // **를 붙여 하위 경로 모두 포함
+                                "/api/chat/**",      // 채팅 API 경로
+                                "/api/chat/rooms/**",      // 채팅 API 경로
+                                "/ws-stomp/**",
+                                "/api/files/upload", // ★ 파일 업로드 API 경로 추가
+                                "/uploads/**"        // ★ 업로드된 파일에 접근하는 경로 추가// 웹소켓 경로
+//                                "/api/**"// 점진적으로 제거
+                        ).permitAll()
+
+                        // 3. 위에서 지정한 것 외 나머지는 모두 인증 요구
+                        .anyRequest().authenticated()
+                )
 
                 .cors(cors->cors.configurationSource(request -> {
                     CorsConfiguration corsConfiguration = new CorsConfiguration();

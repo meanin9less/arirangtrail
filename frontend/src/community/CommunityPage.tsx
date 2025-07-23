@@ -14,21 +14,17 @@ const CommunityPage = () => {
     const [newRoomName, setNewRoomName] = useState('');
     const [selectedRoomId, setSelectedRoomId] = useState<string | null>(null);
     const [userName, setUserName] = useState('');
+    // ★ 사용자가 '현재 세션에서만' 참여한 방 ID 목록
     const [joinedRoomIds, setJoinedRoomIds] = useState<Set<string>>(new Set());
 
-    // ★ 1단계: 최초 로딩 시 localStorage에서 데이터 불러오기
     useEffect(() => {
-        const savedRooms = localStorage.getItem('joinedRooms');
-        if (savedRooms) {
-            setJoinedRoomIds(new Set(JSON.parse(savedRooms)));
-        }
-
         fetchRooms();
         const user = prompt("사용자 이름을 입력하세요:");
         if (user) setUserName(user);
     }, []); // 최초 1회만 실행
 
     const fetchRooms = async () => {
+        console.log("방 목록을 새로고침합니다..."); // ★ 디버깅용 로그
         try {
             const response = await axios.get<Room[]>('http://localhost:8080/api/chat/rooms');
             if (Array.isArray(response.data)) {
@@ -56,30 +52,31 @@ const CommunityPage = () => {
             );
             setNewRoomName('');
             fetchRooms();
+
+            // 4. 새로 생성된 방의 ID를 '참여한 방' 목록에 추가합니다.
+            const newRoomId = response.data.id.toString();
+            setJoinedRoomIds(prev => new Set(prev).add(newRoomId));
+
             alert(`'${response.data.title}' 방이 생성되었습니다. 입장해주세요.`);
         } catch (error) {
             console.error("채팅방 생성에 실패했습니다.", error);
         }
     };
 
-    // ★ 2단계: 입장 시 localStorage에 데이터 저장
     const handleEnterRoom = (roomId: string) => {
         if (!userName) {
             alert("사용자 이름이 설정되지 않았습니다. 페이지를 새로고침 해주세요.");
             return;
         }
         setSelectedRoomId(roomId);
-
-        const newJoinedRoomIds = new Set(joinedRoomIds).add(roomId);
-        setJoinedRoomIds(newJoinedRoomIds);
-        localStorage.setItem('joinedRooms', JSON.stringify(Array.from(newJoinedRoomIds)));
+        setJoinedRoomIds(prev => new Set(prev).add(roomId));
     };
 
     const handleLeaveRoom = () => {
         setSelectedRoomId(null);
+        fetchRooms();
     };
 
-    // ★ 3단계: 필터링 로직 (타입 일치)
     const myRooms = rooms.filter(room => joinedRoomIds.has(room.id.toString()));
     const otherRooms = rooms.filter(room => !joinedRoomIds.has(room.id.toString()));
 
@@ -87,7 +84,6 @@ const CommunityPage = () => {
         return <ChatRoom roomId={selectedRoomId} userName={userName} onLeave={handleLeaveRoom} />;
     }
 
-    // ★★★★★ 4단계: JSX 렌더링 부분을 테이블로 변경 ★★★★★
     return (
         <div style={styles.container}>
             <header style={styles.header}>
@@ -109,7 +105,6 @@ const CommunityPage = () => {
                 </form>
             </section>
 
-            {/* --- 내 채팅방 섹션 (테이블 UI) --- */}
             <section style={styles.section}>
                 <h2>내 채팅방</h2>
                 {myRooms.length > 0 ? (
@@ -128,17 +123,16 @@ const CommunityPage = () => {
                                 <td style={styles.td}>{room.id}</td>
                                 <td style={styles.td}>{room.title}</td>
                                 <td style={styles.td}>{room.creator}</td>
-                                <td style={styles.td}><button onClick={() => handleEnterRoom(room.id.toString())} style={styles.enterButton}>재입장</button></td>
+                                <td style={styles.td}><button onClick={() => handleEnterRoom(room.id.toString())} style={styles.enterButton}>입장</button></td>
                             </tr>
                         ))}
                         </tbody>
                     </table>
                 ) : (
-                    <p style={styles.emptyMessage}>아직 참여한 채팅방이 없습니다.</p>
+                    <p style={styles.emptyMessage}>아직 참여한 채팅방이 없습니다. (새로고침 시 초기화됩니다)</p>
                 )}
             </section>
 
-            {/* --- 참여 가능한 채팅방 섹션 (테이블 UI) --- */}
             <section style={styles.section}>
                 <h2>참여 가능한 채팅방</h2>
                 {otherRooms.length > 0 ? (
@@ -170,7 +164,7 @@ const CommunityPage = () => {
     );
 };
 
-// --- 가독성을 위한 스타일 객체 ---
+// --- 스타일 객체 ---
 const styles: { [key: string]: React.CSSProperties } = {
     container: { padding: '20px', maxWidth: '800px', margin: '0 auto', fontFamily: 'sans-serif' },
     header: { borderBottom: '2px solid #eee', paddingBottom: '10px', marginBottom: '20px' },
