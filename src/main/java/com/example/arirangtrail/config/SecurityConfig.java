@@ -18,6 +18,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.web.cors.CorsConfiguration;
+import org.springframework.web.filter.ForwardedHeaderFilter;
 
 import java.util.List;
 
@@ -41,6 +42,11 @@ public class SecurityConfig {
     }
 
     @Bean
+    public ForwardedHeaderFilter forwardedHeaderFilter() {
+        return new ForwardedHeaderFilter();
+    }
+
+    @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http.csrf(csrf->csrf.disable())
                 .formLogin(formLogin->formLogin.disable())
@@ -61,8 +67,7 @@ public class SecurityConfig {
                     corsConfiguration.setExposedHeaders(List.of("Authorization")); //서버가 응답을 보낼때 브라우저가 접근할수 있는 헤더
                     corsConfiguration.addAllowedMethod("*");
                     corsConfiguration.addAllowedOrigin("http://localhost:3000");
-                    corsConfiguration.addAllowedOrigin("http://52.78.46.203");
-//                    corsConfiguration.addAllowedOrigin("http://52.78.46.203:3000");
+                    corsConfiguration.addAllowedOrigin("http://arirangtrail.duckdns.org");
                     return corsConfiguration;
                 }))
 
@@ -75,6 +80,9 @@ public class SecurityConfig {
 
                 .oauth2Login(oauth2->
                         oauth2
+                                .redirectionEndpoint(endpoint ->
+                                        endpoint.baseUri("/api/login/oauth2/code")
+                                )
                                 .userInfoEndpoint(userInfo->{
                                     userInfo.userService(customOAuth2UserService);
                                 })

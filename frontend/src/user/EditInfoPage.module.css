@@ -1,9 +1,9 @@
-/* src/review/ReviewWritePage.module.css */
+/* src/user/EditInfoPage.module.css */
 
-.reviewWriteContainer {
-    padding: 30px;
-    max-width: 600px; /* 작성 폼이 너무 넓어지지 않도록 너비 제한 */
+.editInfoContainer {
+    max-width: 700px;
     margin: 50px auto;
+    padding: 30px;
     border: 1px solid #ddd;
     border-radius: 10px;
     box-shadow: 0 4px 12px rgba(0,0,0,0.1);
@@ -11,14 +11,26 @@
     box-sizing: border-box;
 }
 
-.reviewWriteContainer h2 {
+.pageTitle {
     text-align: center;
     color: #333;
     margin-bottom: 30px;
     font-size: 2em;
+    font-weight: bold;
 }
 
-.reviewForm {
+.message {
+    text-align: center;
+    color: #666;
+    margin-bottom: 10px;
+}
+
+.errorMessage {
+    color: red;
+    font-weight: bold;
+}
+
+.editForm {
     display: flex;
     flex-direction: column;
     gap: 20px; /* 폼 그룹 간의 간격 */
@@ -31,7 +43,6 @@
     color: #555;
 }
 
-/* 텍스트 입력 필드, 날짜 입력 필드, 이미지 캡션 입력 필드 등 */
 .inputField {
     width: 100%;
     padding: 10px;
@@ -41,84 +52,39 @@
     font-size: 1em;
 }
 
-/* 텍스트 영역 필드 */
-.textareaField {
-    width: 100%; /* inputField와 동일하게 100% 설정 */
-    padding: 10px;
-    border: 1px solid #ccc;
-    border-radius: 5px;
-    box-sizing: border-box;
-    font-size: 1em;
-    resize: vertical; /* 세로 크기 조절 허용 */
-    min-height: 120px; /* 최소 높이 설정 */
+.inputField:disabled {
+    background-color: #e9e9e9;
+    color: #888;
+    cursor: not-allowed;
 }
 
-/* 셀렉트 박스 필드 */
-.selectField {
-    width: 100%; /* inputField와 동일하게 100% 설정 */
-    padding: 10px;
-    border: 1px solid #ccc;
-    border-radius: 5px;
-    box-sizing: border-box;
-    font-size: 1em;
-    background-color: #f8f8f8;
-    cursor: pointer;
+.helpText {
+    font-size: 0.85em;
+    color: #777;
+    margin-top: 5px;
+    margin-bottom: 0;
 }
 
-/* 파일 입력 필드 스타일 */
-.fileInput {
-    display: block;
-    width: 100%;
-    padding: 8px;
-    border: 1px solid #ccc;
-    border-radius: 5px;
-    box-sizing: border-box;
-    font-size: 0.95em;
-    background-color: #f8f8f8;
-    cursor: pointer;
-}
-
-/* 이미지 미리보기 컨테이너 */
+/* 프로필 이미지 미리보기 */
 .imagePreviewContainer {
-    margin-top: 15px;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 10px;
-    padding: 10px;
-    border: 1px dashed #ccc; /* 점선 테두리 */
-    border-radius: 8px;
-    background-color: #fafafa;
+    margin-top: 10px;
+    text-align: center;
 }
 
-.imagePreview {
-    max-width: 100%; /* 컨테이너 너비에 맞게 */
-    max-height: 200px; /* 최대 높이 제한 */
-    object-fit: contain; /* 이미지 비율 유지 */
-    border-radius: 5px;
+.profileImagePreview {
+    width: 120px;
+    height: 120px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 2px solid #007bff;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.2);
 }
-
-/* 이미지 제거 버튼 */
-.removeImageButton {
-    padding: 8px 15px;
-    background-color: #dc3545; /* 빨간색 계열 */
-    color: white;
-    border: none;
-    border-radius: 5px;
-    cursor: pointer;
-    transition: background-color 0.3s ease;
-}
-
-.removeImageButton:hover {
-    background-color: #c82333;
-}
-
 
 .buttonContainer {
     display: flex;
     justify-content: flex-end; /* 버튼을 오른쪽 정렬 */
     gap: 15px; /* 버튼들 사이의 간격 */
-    margin-top: 20px;
+    margin-top: 30px;
 }
 
 .submitButton, .cancelButton {
@@ -155,7 +121,7 @@
     transform: translateY(-2px);
 }
 
-/* 모달 스타일 */
+/* 모달 스타일 (재사용) */
 .modalOverlay {
     position: fixed;
     top: 0;
@@ -193,32 +159,32 @@
     background-color: #0056b3;
 }
 
-.successMessage { /* 모달 내부 메시지 스타일 */
+.successMessage {
     color: green;
     font-weight: bold;
 }
 
-.errorMessage { /* 모달 내부 메시지 스타일 */
+.errorMessage {
     color: red;
     font-weight: bold;
 }
 
 /* 모바일 반응형 */
 @media (max-width: 768px) {
-    .reviewWriteContainer {
+    .editInfoContainer {
         padding: 20px;
         margin: 20px auto;
     }
-    .reviewWriteContainer h2 {
+    .pageTitle {
         font-size: 1.8em;
     }
     .buttonContainer {
-        flex-direction: column; /* 모바일에서 버튼 세로로 쌓기 */
+        flex-direction: column;
         align-items: center;
         gap: 10px;
     }
     .submitButton, .cancelButton {
-        width: 100%; /* 모바일에서 버튼 너비 꽉 채우기 */
+        width: 100%;
         max-width: 250px;
     }
 }

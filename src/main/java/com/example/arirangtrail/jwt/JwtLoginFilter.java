@@ -70,7 +70,8 @@ public class JwtLoginFilter extends UsernamePasswordAuthenticationFilter {
     @Override
     public void unsuccessfulAuthentication(HttpServletRequest request, HttpServletResponse response, AuthenticationException failed) throws IOException {
         Map<String, Object> responseData = new HashMap<>();
-        responseData.put("error", "로그인 실패");
+        // ✨ 변경된 부분: failed.getMessage()를 사용하여 구체적인 오류 메시지 전달
+        responseData.put("error", "로그인 실패: " + failed.getMessage());
 
         ObjectMapper objectMapper = new ObjectMapper();
         String jsonmessage = objectMapper.writeValueAsString(responseData);
