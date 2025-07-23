@@ -19,6 +19,7 @@ import TranslateWidget from "./TranslateWiget";
 import LogoutPage from "./user/LogoutPage";
 import JoinPage from "./user/JoinPage";
 import EditInfoPage from "./user/EditInfoPage";
+import ReviewDetailPage from './review/ReviewDetailPage';
 
 
 function App() {
@@ -35,6 +36,7 @@ function App() {
                 <Route path={'/company'} element={<CompanyPage/>}></Route>
                 <Route path={'/review'} element={<ReviewPage/>}></Route>
                 <Route path={'/review/write'} element={<ReviewWritePage/>}></Route>
+                <Route path={'/review/detail/:reviewId'} element={<ReviewDetailPage/>}></Route>
                 <Route path={'/search'} element={<SearchPage/>}></Route>
                 <Route path={'/login'} element={<LoginPage/>}></Route>
                 <Route path={'/mypage'} element={<MyPage/>}></Route>
