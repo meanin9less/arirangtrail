@@ -1,5 +1,6 @@
 package com.example.arirangtrail.data.document;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
 import lombok.Getter;
@@ -17,6 +18,7 @@ public class ChatMessage {
     private Long messageSeq;
     private String sender;
     private String message;
+    @JsonProperty("type")
     private String messageType;
 
     private LocalDateTime timestamp;

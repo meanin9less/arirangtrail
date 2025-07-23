@@ -22,6 +22,7 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -109,6 +110,7 @@ public class ChatService {
         return updatedRoom.getLastMessageSeq();
     }
 
+    // userchatsatus의 seq를 변경
     @Transactional
     public void updateUserChatStatus(Long roomId, String username, long lastReadSeq) {
         // roomId와 username으로 기존 상태를 찾는다.
@@ -122,6 +124,7 @@ public class ChatService {
         userChatStatusRepository.save(userChatStatus);
     }
 
+    // 해당 방의 이전 메세지들을 가져옴
     public List<ChatMessage> getPreviousMessages(Long roomId, Pageable pageable) {
         // Repository를 호출하여 페이징된 결과를 가져옵니다.
         Page<ChatMessage> messagePage = chatMessageRepository.findByRoomIdOrderByMessageSeqDesc(roomId, pageable);
@@ -132,5 +135,53 @@ public class ChatService {
         Collections.reverse(messages);
 
         return messages;
+    }
+
+    // 해당 유저 방 참여를 삭제
+    @Transactional
+    public void leaveRoom(Long roomId, String username) {
+        // 1. 해당 유저의 참여 상태 정보를 DB에서 삭제합니다.(userchatsatus에는 해당방 번호와, 참가한 개별 유저별로 저장, lastread같이 저장)
+        userChatStatusRepository.deleteByRoomIdAndUsername(roomId, username);
+
+        // 2. (Step 2 연계) 남은 참여자가 있는지 확인합니다.
+        long remainingUsers = userChatStatusRepository.countByRoomId(roomId);
+        if (remainingUsers == 0) {
+            // 남은 사람이 없으면 방과 관련된 모든 데이터를 삭제합니다.
+            deleteRoomAndAssociatedData(roomId);
+        }
+    }
+
+    // (Step 2 & 3 연계) 방과 관련된 모든 데이터를 삭제하는 private 헬퍼 메소드
+    private void deleteRoomAndAssociatedData(Long roomId) {
+        // 1. 해당 방의 모든 채팅 메시지를 삭제합니다.->chat_messages
+        chatMessageRepository.deleteByRoomId(roomId);
+        // 2. 해당 방의 모든 참여자 상태 정보를 삭제합니다. (이미 0명이겠지만, 안전을 위해)
+        userChatStatusRepository.deleteByRoomId(roomId);
+        // 3. 채팅방 자체를 삭제합니다.(chatrooms(방장, 제목)다음 룸 번호는 계속 증가하여 저장시키므로 룸이 겹칠 일은 없음)
+        chatRoomRepository.deleteById(roomId);
+    }
+
+    @Transactional
+    public void deleteRoomByCreator(Long roomId, String username) {
+        // 1. 채팅방 정보를 가져옵니다.
+        ChatRoom room = chatRoomRepository.findById(roomId)
+                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 채팅방입니다."));
+
+        // 2. 요청한 유저가 방장인지 확인합니다. (매우 중요!)
+        if (!room.getCreator().equals(username)) {
+            throw new SecurityException("방을 삭제할 권한이 없습니다."); // 혹은 다른 권한 예외
+        }
+
+        // 3. 방장인 것이 확인되면, 위에서 만든 헬퍼 메소드를 호출하여 모든 데이터를 삭제합니다.
+        deleteRoomAndAssociatedData(roomId);
+    }
+
+    public List<Long> findMyRoomIdsByUsername(String username) {
+        // 1. 특정 유저의 모든 참여 상태를 조회
+        List<UserChatStatus> statuses = userChatStatusRepository.findByUsername(username);
+        // 2. 참여 상태 목록에서 roomId만 추출하여 리스트로 만듦
+        return statuses.stream()
+                .map(UserChatStatus::getRoomId)
+                .collect(Collectors.toList());
     }
 }
