@@ -1,0 +1,113 @@
+/* src/review/ReviewDetailPage.module.css */
+
+.detailContainer {
+    max-width: 800px;
+    margin: 50px auto;
+    padding: 30px;
+    border: 1px solid #ddd;
+    border-radius: 10px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    background-color: #fff;
+    box-sizing: border-box;
+}
+
+.reviewTitle {
+    font-size: 2.2em;
+    color: #333;
+    margin-bottom: 15px;
+    text-align: center;
+    border-bottom: 2px solid #eee;
+    padding-bottom: 10px;
+}
+
+.reviewMeta {
+    font-size: 0.95em;
+    color: #666;
+    margin-bottom: 8px;
+    text-align: center;
+}
+
+.reviewContent {
+    margin-top: 25px;
+    margin-bottom: 25px;
+    padding: 20px;
+    background-color: #f9f9f9;
+    border: 1px solid #eee;
+    border-radius: 8px;
+    line-height: 1.8;
+    color: #444;
+    font-size: 1.1em;
+    white-space: pre-wrap; /* 줄바꿈 유지 */
+}
+
+.reviewImageContainer {
+    margin-top: 20px;
+    margin-bottom: 20px;
+    text-align: center;
+}
+
+.reviewImage {
+    max-width: 100%;
+    max-height: 400px; /* 상세 페이지에서는 이미지 크기를 더 크게 허용 */
+    object-fit: contain;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+}
+
+.imageCaption {
+    font-size: 0.9em;
+    color: #777;
+    margin-top: 10px;
+}
+
+.reviewDate {
+    font-size: 0.85em;
+    color: #888;
+    text-align: right;
+    margin-top: 5px;
+}
+
+.backButton {
+    display: block;
+    width: 150px;
+    padding: 10px 15px;
+    background-color: #6c757d;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    font-size: 1em;
+    cursor: pointer;
+    margin: 30px auto 0 auto; /* 중앙 정렬 */
+    transition: background-color 0.3s ease, transform 0.2s ease;
+}
+
+.backButton:hover {
+    background-color: #5a6268;
+    transform: translateY(-2px);
+}
+
+.errorMessage {
+    color: red;
+    font-weight: bold;
+    text-align: center;
+    margin-bottom: 20px;
+}
+
+/* 모바일 반응형 */
+@media (max-width: 768px) {
+    .detailContainer {
+        margin: 20px auto;
+        padding: 20px;
+    }
+    .reviewTitle {
+        font-size: 1.8em;
+    }
+    .reviewContent {
+        font-size: 1em;
+        padding: 15px;
+    }
+    .backButton {
+        width: 100%;
+        max-width: 200px;
+    }
+}
