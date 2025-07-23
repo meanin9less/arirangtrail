@@ -80,10 +80,10 @@ const SearchPage = () => {
                         arrange: 'B',
                     }
                 });
-                console.log(response.data);
                 const items = response.data.response.body.items?.item || [];
                 setFestivals(items);
                 setFilterFestivals(items);
+
             } catch (e) {
                 console.error("지역별 검색 실패:", e);
             } finally {
@@ -154,13 +154,13 @@ const SearchPage = () => {
                                 <li key={festival.contentid} className="festival-search-item">
                                     <Link to={`/calender/${festival.contentid}`} className="festival-search-link">
                                         <img
-                                            src={festival.firstimage || 'https://via.placeholder.com/130x100.png?text=No+Image'}
+                                            src={festival.firstimage || 'https://placehold.co/130x100?text=No+Image'}
                                             alt={festival.title}
                                             className="festival-search-image"
                                         />
                                         <div className="festival-search-info">
                                             <h3 className="festival-search-title">
-                                                <span>{festival.title}</span> {/* 제목을 span으로 감싸기 */}
+                                                <span>{festival.title}</span>
                                                 {isOngoing && <span className="ongoing-badge">진행중</span>}
                                             </h3>
                                             <div className="festival-search-meta">

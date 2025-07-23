@@ -7,7 +7,7 @@ import {
     IoLink, IoLocationOutline,
     IoPin,
     IoPricetagOutline,
-    IoTimeOutline, IoWalkOutline
+    IoTimeOutline,
 } from "react-icons/io5";
 import React, {useEffect, useState} from "react";
 import axios from "axios";
@@ -18,6 +18,7 @@ import 'swiper/css';
 import 'swiper/css/navigation';
 import 'swiper/css/pagination';
 import "./detail.css"
+import WeatherWidget from "../WeatherWidget";
 
 // 구글맵 API 타입 선언
 declare global {
@@ -81,6 +82,12 @@ const DetailPage = () => {
     const [isLoading, setIsLoading] = useState<boolean>(true);
     const [information, setInformation] = useState<AddInformation | null>(null);
     const [foodList, setFoodList] = useState<FoodSearchList[]>([]);
+    const [isModalOpen, setIsModalOpen] = useState(false); // 모달이 열렸는지 여부
+    const [selectedDestination, setSelectedDestination] = useState<{
+        mapy: string;
+        mapx: string;
+        title: string;
+    } | null>(null); // 선택된 목적지 정보
 
     useEffect(() => {
         if (festivalId) {
@@ -162,12 +169,19 @@ const DetailPage = () => {
                         mapX: festival.mapx, // 축제 장소의 X좌표
                         mapY: festival.mapy, // 축제 장소의 Y좌표
                         radius: 3000, // 3km 반경
-                        numOfRows: 6,
+                        numOfRows: 30,
                         pageNo: 1,
                         contentTypeId: 39, // 39 = 음식점
                     }
                 });
-                setFoodList(response.data.response.body.items.item || []);
+
+                console.log(response.data);
+                // API 응답 데이터에 타입을 명시적으로 지정 (ts.타입)
+                const items: FoodSearchList[] = response.data.response.body.items.item || [];
+                // 받아온 데이터에서 firstimage가 있는 아이템만 필터링
+                const filteredFoodList = items.filter(food => food.firstimage && food.firstimage.trim() !== '');
+                // 필터링된 리스트에서 최대 6개만 잘라서 상태에 저장
+                setFoodList(filteredFoodList.slice(0, 6));
             } catch (e) {
                 console.error("주변 맛집 데이터 로딩 실패:", e);
             }
@@ -179,7 +193,6 @@ const DetailPage = () => {
     useEffect(() => {
         // festival 데이터나 '구글맵' API(window.google)가 준비되지 않았으면 실행하지 않음
         if (!festival || !festival.mapy || !festival.mapx || !window.google) return;
-
         const mapContainer = document.getElementById('map');
         if (!mapContainer) return;
 
@@ -233,6 +246,18 @@ const DetailPage = () => {
         );
     };
 
+    // 모달을 여는 함수
+    const openDirectionsModal = (destination: { mapy: string; mapx: string; title: string; }) => {
+        setSelectedDestination(destination); // 어떤 장소인지 기억
+        setIsModalOpen(true); // 모달 열기
+    };
+
+    // 모달을 닫는 함수
+    const closeDirectionsModal = () => {
+        setIsModalOpen(false);
+        setSelectedDestination(null); // 선택 초기화
+    };
+
     if (isLoading) {
         return <div className="loading-overlay"><span>축제 정보를 불러오는 중...</span></div>;
     }
@@ -243,26 +268,28 @@ const DetailPage = () => {
     return (
         <div className="festival-detail-container">
             <div className="hero-section">
+                {festival && (
+                    <div
+                        className="hero-background-blur"
+                        style={{
+                            backgroundImage: `url(${festival.firstimage})`
+                        }}
+                    />
+                )}
                 <Swiper
                     modules={[Navigation, Pagination]}
-                    spaceBetween={0}
-                    slidesPerView={1}
                     navigation
                     pagination={{clickable: true}}
                     className="hero-swiper"
                 >
-                    {festival.firstimage &&
+                    {festival.firstimage && (
                         <SwiperSlide key={festival.contentid}>
-                            <div className="image-title-wrapper">
-                                <img src={festival.firstimage} alt={festival.title} className="hero-image"/>
-                            </div>
+                            <img src={festival.firstimage} alt={festival.title} className="hero-image"/>
                         </SwiperSlide>
-                    }
+                    )}
                     {images.map(image => (
                         <SwiperSlide key={image.serialnum}>
-                            <div className="image-title-wrapper">
-                                <img src={image.originimgurl} alt={image.imgname} className="hero-image"/>
-                            </div>
+                            <img src={image.originimgurl} alt={image.imgname} className="hero-image"/>
                         </SwiperSlide>
                     ))}
                 </Swiper>
@@ -350,6 +377,8 @@ const DetailPage = () => {
                 </div>
                 <aside className="sidebar">
                     <div className="sidebar-section">
+                        {/*날씨 위젯*/}
+                        {festival && <WeatherWidget lat={festival.mapy} lon={festival.mapx}/>}
                         <h3 className="sidebar-title"><IoPin/> 오시는 길</h3>
                         <p className="address-text">{festival.addr1}</p>
                         <div id="map" style={{width: '100%', height: '250px', borderRadius: '12px'}}></div>
@@ -357,8 +386,8 @@ const DetailPage = () => {
                     <div className="sidebar-section">
                         <h3 className="sidebar-title">길찾기</h3>
                         <p className="sidebar-description">축제 여행을 계획해보세요.</p>
-                        <button onClick={handleRouteFromCurrentLocation} className="primary-button">
-                            내 위치에서의 경로 검색
+                        <button onClick={() => openDirectionsModal(festival)} className="primary-button">
+                            축제 장소 길찾기
                         </button>
                         <div className="external-links">
                             <a href="https://www.kobus.co.kr/main.do" target="_blank" rel="noopener noreferrer">
@@ -370,11 +399,10 @@ const DetailPage = () => {
                 </aside>
                 {foodList.length > 0 && (
                     <div className="nearby-food-section">
-                        <h2 className="section-title"><IoFastFoodOutline/> 이 축제 어때? 주변 맛집도 좋아!</h2>
-                        <ul className="food-grid-list">  {/* 이 클래스 이름이 중요! */}
+                        <h2 className="section-title"><IoFastFoodOutline/> 축제 주변 / 추천 맛집 리스트!</h2>
+                        <ul className="food-grid-list">
                             {foodList.map(food => (
                                 <li key={food.contentid} className="food-card">
-                                    {/* 카드 내용은 이전 제안과 동일 */}
                                     <div className="food-card-image-wrapper">
                                         {food.firstimage ? (
                                             <img src={food.firstimage} alt={food.title} className="food-card-image"/>
@@ -391,16 +419,42 @@ const DetailPage = () => {
                                         <div className="food-card-footer">
                                             <span
                                                 className="food-card-dist">약 {Math.round(Number(food.dist) / 1000 * 10) / 10} km</span>
-                                            <a href={`https://map.kakao.com/link/to/${food.title},${food.mapy},${food.mapx}`}
-                                               target="_blank" rel="noopener noreferrer"
-                                               className="food-card-route-button">
+                                            <button onClick={() => openDirectionsModal(food)}
+                                                    className="food-card-route-button">
                                                 길찾기
-                                            </a>
+                                            </button>
                                         </div>
                                     </div>
                                 </li>
                             ))}
                         </ul>
+                    </div>
+                )}
+                {isModalOpen && selectedDestination && (
+                    <div className="directions-modal-overlay" onClick={closeDirectionsModal}>
+                        <div className="directions-modal-content" onClick={(e) => e.stopPropagation()}>
+                            <h3>어떤 지도로 길을 찾으시겠어요?</h3>
+                            <p className="modal-destination-title">{selectedDestination.title}</p>
+                            <div className="modal-buttons">
+                                <a
+                                    href={`https://map.kakao.com/link/to/${selectedDestination.title},${selectedDestination.mapy},${selectedDestination.mapx}`}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="modal-button kakao"
+                                >
+                                    카카오맵으로 길찾기
+                                </a>
+                                <a
+                                    href={`https://www.google.com/maps/dir/?api=1&destination=${selectedDestination.mapy},${selectedDestination.mapx}`}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="modal-button google"
+                                >
+                                    구글맵으로 길찾기
+                                </a>
+                            </div>
+                            <button onClick={closeDirectionsModal} className="modal-close-button">닫기</button>
+                        </div>
                     </div>
                 )}
             </div>
