@@ -160,7 +160,7 @@ const SearchPage = () => {
                                         />
                                         <div className="festival-search-info">
                                             <h3 className="festival-search-title">
-                                                <span>{festival.title}</span> {/* 제목을 span으로 감싸기 */}
+                                                <span>{festival.title}</span>
                                                 {isOngoing && <span className="ongoing-badge">진행중</span>}
                                             </h3>
                                             <div className="festival-search-meta">
