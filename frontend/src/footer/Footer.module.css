@@ -7,7 +7,6 @@
     text-align: center; /* 텍스트 중앙 정렬 */
     font-size: 0.9em; /* 글자 크기 약간 작게 */
     line-height: 1.6; /* 줄 간격 조절 */
-    margin-top: 50px; /* 위쪽 콘텐츠와의 간격 */
     box-shadow: 0 -2px 5px rgba(0,0,0,0.1); /* 상단에 그림자 효과 */
 }
 
