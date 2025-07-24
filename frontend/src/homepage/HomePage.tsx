@@ -128,7 +128,6 @@ const HomePage = () => {
     // 이미지가 있을 때 배경 이미지와 함께 렌더링
     return (
         <div className={styles.homePageLayout}>
-            <NavigationBar/>
             <div
                 className={styles.homeContainer}
                 style={{
