@@ -30,11 +30,13 @@ public class OAuth2SuccessHandler implements AuthenticationSuccessHandler {
         // CustomOAuth2UserService에서 반환한 CustomOAuth2User 객체를 가져옴
         CustomOAuth2User oAuth2User = (CustomOAuth2User) authentication.getPrincipal();
 
-        String name = oAuth2User.getName();
-        String role = oAuth2User.getUserDTO().getRole();
-        String email = oAuth2User.getUserDTO().getEmail();
+        String name = oAuth2User.getUserName();
+        String role = oAuth2User.getRole();
+        String email = oAuth2User.getEmail();
 
-        System.out.printf("onAuthenticationSuccess !!!!!!!!!!!!!");
+        System.out.printf(name+" onAuthenticationSuccess !!!!!!!!!!!!!");
+        System.out.printf(role+" onAuthenticationSuccess !!!!!!!!!!!!!");
+        System.out.printf(email+" onAuthenticationSuccess !!!!!!!!!!!!!");
 
         // JWT 생성
         String access = jwtUtil.createToken("access", name, role, 60 * 10 * 1000L);

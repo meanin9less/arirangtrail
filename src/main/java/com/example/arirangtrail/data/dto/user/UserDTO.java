@@ -1,4 +1,4 @@
-package com.example.arirangtrail.data.dto;
+package com.example.arirangtrail.data.dto.user;
 
 import lombok.Data;
 
