@@ -1,46 +1,31 @@
+// src/main/java/com/example/arirangtrail/data/entity/ReviewphotoEntity.java
 package com.example.arirangtrail.data.entity;
 
 import jakarta.persistence.*;
-import jakarta.validation.constraints.NotNull;
-import jakarta.validation.constraints.Size;
 import lombok.Getter;
 import lombok.Setter;
-import org.hibernate.annotations.ColumnDefault;
-import org.hibernate.annotations.OnDelete;
-import org.hibernate.annotations.OnDeleteAction;
 
-import java.time.Instant;
-
+/**
+ * 리뷰 사진 정보를 데이터베이스에 매핑하는 엔티티입니다.
+ * ReviewEntity와 다대일 관계를 가집니다.
+ */
 @Getter
 @Setter
 @Entity
-@Table(name = "reviewphotos")
+@Table(name = "review_photos") // 실제 데이터베이스 테이블명에 맞춰주세요.
 public class ReviewphotoEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "photoid", nullable = false)
-    private Long id;
+    private Long id; // 사진 ID
 
-    @NotNull
-    // ⭐ 중요: optional=false는 reviewid가 '절대' null이 될 수 없다는 강력한 제약입니다.
-    // 객체 생성 시점 등을 고려해 optional = true가 더 유연할 수 있습니다. 여기서는 그대로 둡니다.
-    @ManyToOne(fetch = FetchType.LAZY, optional = false)
-    @OnDelete(action = OnDeleteAction.CASCADE) // DB 레벨에서의 CASCADE 설정
-    @JoinColumn(name = "reviewid", nullable = false)
-    private ReviewEntity reviewid; // User가 제공한 필드명 그대로 사용
+    @ManyToOne(fetch = FetchType.LAZY) // ReviewEntity와의 다대일 관계를 정의합니다.
+    @JoinColumn(name = "reviewid", nullable = false) // 외래키 컬럼명을 지정합니다. (ReviewEntity의 reviewid와 연결)
+    private ReviewEntity reviewid; // 부모 ReviewEntity
 
-    @Size(max = 255)
-    @NotNull
     @Column(name = "imageurl", nullable = false)
-    private String imageurl;
+    private String imageurl; // 이미지 URL
 
-    @Size(max = 255)
     @Column(name = "caption")
-    private String caption;
-
-    @NotNull
-    @ColumnDefault("CURRENT_TIMESTAMP")
-    @Column(name = "createdat", nullable = false)
-    private Instant createdat;
-
+    private String caption; // 이미지 캡션 (선택 사항)
 }
