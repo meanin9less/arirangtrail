@@ -3,6 +3,7 @@ package com.example.arirangtrail.service.review;
 import com.example.arirangtrail.component.review.FileStore;
 import com.example.arirangtrail.data.dto.review.ReviewCreateRequestDto;
 import com.example.arirangtrail.data.dto.review.ReviewResponseDto; // ✨ 추가: ReviewResponseDto 임포트
+import com.example.arirangtrail.data.dto.review.ReviewPhotoResponseDto; // ReviewPhotoResponseDto 임포트
 import com.example.arirangtrail.data.dto.review.ReviewUpdateRequestDto;
 import com.example.arirangtrail.data.entity.ReviewEntity;
 import com.example.arirangtrail.data.entity.ReviewphotoEntity;
@@ -47,7 +48,6 @@ public class ReviewService {
                     .map(url -> {
                         ReviewphotoEntity newPhoto = new ReviewphotoEntity();
                         newPhoto.setImageurl(url);
-                        newPhoto.setCreatedat(Instant.now());
                         return newPhoto;
                     })
                     .collect(Collectors.toList());
@@ -80,7 +80,6 @@ public class ReviewService {
                     .map(url -> {
                         ReviewphotoEntity newPhoto = new ReviewphotoEntity();
                         newPhoto.setImageurl(url);
-                        newPhoto.setCreatedat(Instant.now());
                         return newPhoto;
                     })
                     .collect(Collectors.toList());
@@ -104,16 +103,51 @@ public class ReviewService {
 
     // ✨ ✨ ✨ 추가: 모든 리뷰 조회 메서드 ✨ ✨ ✨
     public List<ReviewResponseDto> getAllReviews() {
-        // 모든 리뷰 엔티티를 조회하고, 각 엔티티를 DTO로 변환합니다.
-        return reviewRepository.findAll().stream()
-                .map(ReviewResponseDto::fromEntity)
-                .collect(Collectors.toList());
+        List<ReviewEntity> reviews = reviewRepository.findAll(); // 모든 ReviewEntity 조회
+        return reviews.stream()
+                .map(this::convertToDto) // 각 Entity를 DTO로 변환
+                .collect(Collectors.toList()); // DTO 목록으로 수집
     }
 
-    // ✨ ✨ ✨ 추가: 단일 리뷰 조회 메서드 (reviewId로) ✨ ✨ ✨
+    /**
+     * 특정 ID를 가진 리뷰를 조회하여 DTO 형태로 반환합니다.
+     * @param reviewId 조회할 리뷰의 ID (Long 타입)
+     * @return 해당 ID에 해당하는 ReviewResponseDto
+     * @throws RuntimeException 리뷰를 찾을 수 없을 경우 발생
+     */
     public ReviewResponseDto getReviewById(Long reviewId) {
-        ReviewEntity reviewEntity = reviewRepository.findById(reviewId)
-                .orElseThrow(() -> new EntityNotFoundException("리뷰를 찾을 수 없습니다. ID: " + reviewId));
-        return ReviewResponseDto.fromEntity(reviewEntity);
+        ReviewEntity reviewEntity = reviewRepository.findById(reviewId) // ID로 ReviewEntity 조회
+                .orElseThrow(() -> new RuntimeException("Review not found with ID: " + reviewId)); // 없으면 예외 발생
+        return convertToDto(reviewEntity); // 조회된 Entity를 DTO로 변환
+    }
+
+    /**
+     * ReviewEntity를 ReviewResponseDto로 변환하는 헬퍼 메서드입니다.
+     * 엔티티의 필드 타입에 맞춰 DTO 필드에 값을 매핑합니다.
+     * @param entity 변환할 ReviewEntity
+     * @return 변환된 ReviewResponseDto
+     */
+    private ReviewResponseDto convertToDto(ReviewEntity entity) {
+        // ReviewphotoEntity 목록을 ReviewPhotoResponseDto 목록으로 변환합니다.
+        List<ReviewPhotoResponseDto> photos = entity.getReviewphotos().stream()
+                .map(photoEntity -> ReviewPhotoResponseDto.builder()
+                        .photoId(photoEntity.getId())
+                        .photoUrl(photoEntity.getImageurl())
+                        .build())
+                .collect(Collectors.toList());
+
+        return ReviewResponseDto.builder()
+                .reviewId(entity.getId()) // Long 타입
+                .username(entity.getUsername())
+                .contentId(entity.getContentid()) // Long 타입
+                .contentTitle(entity.getContenttitle())
+                .title(entity.getTitle())
+                .content(entity.getContent())
+                .rating(entity.getRating()) // BigDecimal 타입
+                .visitDate(entity.getVisitdate()) // LocalDate 타입
+                .createdAt(entity.getCreatedat()) // Instant 타입
+                .updatedAt(entity.getUpdatedat()) // Instant 타입
+                .photos(photos) // 변환된 사진 목록 추가
+                .build();
     }
 }

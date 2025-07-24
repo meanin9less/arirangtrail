@@ -23,6 +23,7 @@ interface LoginResponseData {
 }
 
 const LoginPage = ({}: LoginProps) => {
+    const API_URL = process.env.REACT_APP_API_URL;
 
     const navigate = useNavigate();
     const dispatch: AppDispatch = useDispatch();
@@ -191,13 +192,13 @@ const LoginPage = ({}: LoginProps) => {
             </div>
 
             <div className={styles.oauthButtonsContainer}>
-                <a href={`/oauth2/authorization/naver`} className={styles.oauthButtonNaver}>
+                <a href={`${API_URL}/oauth2/authorization/naver`} className={styles.oauthButtonNaver}>
                     네이버 로그인
                 </a>
-                <a href={`/oauth2/authorization/kakao`} className={styles.oauthButtonKakao}>
+                <a href={`${API_URL}/oauth2/authorization/kakao`} className={styles.oauthButtonKakao}>
                     카카오 로그인
                 </a>
-                <a href={`/oauth2/authorization/google`} className={styles.oauthButtonGoogle}>
+                <a href={`${API_URL}/oauth2/authorization/google`} className={styles.oauthButtonGoogle}>
                     구글 로그인
                 </a>
             </div>
