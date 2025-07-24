@@ -31,8 +31,8 @@ public class OAuth2SuccessHandler implements AuthenticationSuccessHandler {
         CustomOAuth2User oAuth2User = (CustomOAuth2User) authentication.getPrincipal();
 
         String name = oAuth2User.getName();
-        String role = oAuth2User.getRole();
-        String email = oAuth2User.getEmail();
+        String role = oAuth2User.getUserDTO().getRole();
+        String email = oAuth2User.getUserDTO().getEmail();
 
         System.out.printf("onAuthenticationSuccess !!!!!!!!!!!!!");
 
