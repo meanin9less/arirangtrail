@@ -11,7 +11,6 @@ function GlobalLayout() {
         <>
             {/* 1.이 컴포넌트는 화면에 보이지 않지만, 웹소켓 연결을 관리합니다. */}
             <WebSocketManager />
-
             {/* 2.여기부터는 화면에 보이는 공통 UI 입니다. */}
             <TranslateWidget />
             <NavigationBar />

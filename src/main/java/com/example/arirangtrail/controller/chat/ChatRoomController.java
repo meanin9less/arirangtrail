@@ -7,12 +7,14 @@ import com.example.arirangtrail.data.dto.chat.CreateRoomDTO;
 import com.example.arirangtrail.data.dto.chat.UpdateReqDTO;
 import com.example.arirangtrail.service.chat.ChatService;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 import java.util.Map;
 
+@Slf4j
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/chat/rooms")
@@ -63,6 +65,14 @@ public class ChatRoomController {
             @RequestBody Map<String, String> payload) { // 프론트에서 { "username": "..." } 형태로 보낼 것을 가정
 
         String username = payload.get("username");
+
+        // ✨ --- 디버깅을 위한 로그 추가 --- ✨
+        log.info(">>>>> [채팅방 나가기 요청 수신] Room ID: {}, Username: {}", roomId, username);
+        if (username == null) {
+            log.error(">>>>> [오류] 페이로드에서 username을 찾을 수 없습니다! payload: {}", payload);
+            return ResponseEntity.badRequest().build(); // 잘못된 요청이므로 400 에러 반환
+        }
+
         chatService.leaveRoom(roomId, username);
         return ResponseEntity.ok().build();
     }

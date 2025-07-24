@@ -10,6 +10,7 @@ import com.example.arirangtrail.data.repository.chat.ChatMessageRepository;
 import com.example.arirangtrail.data.repository.chat.ChatRoomRepository;
 import com.example.arirangtrail.data.repository.chat.UserChatStatusRepository;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.mongodb.core.FindAndModifyOptions;
@@ -28,6 +29,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class ChatService {
@@ -131,30 +133,49 @@ public class ChatService {
     // userchatsatus의 seq를 변경
     @Transactional
     public void updateUserChatStatus(Long roomId, String username, long lastReadSeq) {
-        // roomId와 username으로 기존 상태를 찾는다.
-        UserChatStatus userChatStatus = userChatStatusRepository.findByRoomIdAndUsername(roomId, username)
-                .orElse(new UserChatStatus(roomId, username));
+//        // roomId와 username으로 기존 상태를 찾는다.
+//        UserChatStatus userChatStatus = userChatStatusRepository.findByRoomIdAndUsername(roomId, username)
+//                .orElse(new UserChatStatus(roomId, username));
+//
+//        // 받은 seq로 업데이트
+//        userChatStatus.setLastReadMessageSeq(lastReadSeq);
+//
+//        // DB에 저장 (기존 문서가 있으면 덮어쓰고, 없으면 새로 삽입됨)
+//        userChatStatusRepository.save(userChatStatus);
+        // --- Upsert를 이용한 원자적 상태 업데이트 ---
+        // '찾아서 없으면 생성, 있으면 업데이트'를 DB가 한 번에 처리하도록 합니다.
+        Query query = new Query(Criteria.where("roomId").is(roomId).and("username").is(username));
+        Update update = new Update()
+                .set("lastReadMessageSeq", lastReadSeq)
+                .set("lastReadAt", LocalDateTime.now())
+                .setOnInsert("roomId", roomId) // 새로 생성될 때만 적용
+                .setOnInsert("username", username); // 새로 생성될 때만 적용
 
-        // 받은 seq로 업데이트
-        userChatStatus.setLastReadMessageSeq(lastReadSeq);
+        mongoTemplate.upsert(query, update, UserChatStatus.class);
 
-        // DB에 저장 (기존 문서가 있으면 덮어쓰고, 없으면 새로 삽입됨)
-        userChatStatusRepository.save(userChatStatus);
 
-        // --- ✨ 여기가 새로운 실시간 동기화 로직입니다 ---
-        // 2. 해당 방의 총 메시지 개수를 가져옵니다.
+        // --- ✨ 2. 기존의 안 읽은 메시지 개수 계산 및 전송 로직은 그대로 유지합니다 ---
         long totalMessageCount = chatMessageRepository.countByRoomId(roomId);
-
-        // 3. 안 읽은 메시지 개수를 계산합니다.
         long unreadCount = totalMessageCount - lastReadSeq;
         if (unreadCount < 0) unreadCount = 0;
 
-        // 4. 이 정보를 DTO에 담습니다.
         UnreadUpdateDTO updateInfo = new UnreadUpdateDTO(roomId, unreadCount);
-
-        // 5. '특정 유저'만 구독하는 개인 채널로 업데이트 정보를 보냅니다.
-        //    예: /sub/user/aaa  (aaa 유저만 이 메시지를 받습니다)
         messagingTemplate.convertAndSend("/sub/user/" + username, updateInfo);
+
+//        // --- ✨ 여기가 새로운 실시간 동기화 로직입니다 ---
+//        // 2. 해당 방의 총 메시지 개수를 가져옵니다.
+//        long totalMessageCount = chatMessageRepository.countByRoomId(roomId);
+//
+//        // 3. 안 읽은 메시지 개수를 계산합니다.
+//        long unreadCount = totalMessageCount - lastReadSeq;
+//        if (unreadCount < 0) unreadCount = 0;
+//
+//        // 4. 이 정보를 DTO에 담습니다.
+//        UnreadUpdateDTO updateInfo = new UnreadUpdateDTO(roomId, unreadCount);
+//
+//        // 5. '특정 유저'만 구독하는 개인 채널로 업데이트 정보를 보냅니다.
+//        //    예: /sub/user/aaa  (aaa 유저만 이 메시지를 받습니다)
+//        messagingTemplate.convertAndSend("/sub/user/" + username, updateInfo);
     }
 
     // 해당 방의 이전 메세지들을 가져옴
@@ -170,28 +191,37 @@ public class ChatService {
         return messages;
     }
 
-    // 해당 유저 방 참여를 삭제
+    // ChatService.java
+
     @Transactional
     public void leaveRoom(Long roomId, String username) {
-// 1. 먼저 현재 방에 몇 명이 있는지 확인합니다.
-        long totalUsersInRoom = userChatStatusRepository.countByRoomId(roomId);
-
-        // 2. 나가려는 사용자의 참여 정보가 실제로 존재하는지 확인합니다.
+        // 1. 나가려는 사용자의 참여 정보가 실제로 존재하는지 확인합니다.
         Optional<UserChatStatus> userStatusOpt = userChatStatusRepository.findByRoomIdAndUsername(roomId, username);
 
-        // 3. 참여 정보가 존재하고, 그 사람이 유일한 참여자일 경우
-        if (userStatusOpt.isPresent() && totalUsersInRoom == 1) {
-            // 방과 관련된 모든 데이터를 삭제합니다.
+        // 2. 만약 참여 정보가 없다면, 아무 작업도 하지 않고 로그만 남기고 종료합니다.
+        if (userStatusOpt.isEmpty()) {
+            log.warn(">>>>> [채팅방 나가기 실패] User: {}는 Room: {}에 참여하고 있지 않습니다.", username, roomId);
+            return;
+        }
+
+        // 3. 참여 정보가 존재하면, 현재 방에 몇 명이 있는지 확인합니다.
+        long totalUsersInRoom = userChatStatusRepository.countByRoomId(roomId);
+
+        // 4. 그 사람이 유일한 참여자일 경우 (1명일 때)
+        if (totalUsersInRoom == 1) {
+            log.info(">>>>> [마지막 참여자 퇴장] User: {}가 마지막 참여자이므로 Room: {}와 모든 관련 데이터를 삭제합니다.", username, roomId);
+            // 방과 관련된 모든 데이터를 삭제하는 헬퍼 메소드 호출
             deleteRoomAndAssociatedData(roomId);
         }
-        // 4. 참여 정보는 존재하지만, 다른 참여자가 더 있는 경우
-        else if (userStatusOpt.isPresent()) {
+        // 5. 다른 참여자가 더 있는 경우
+        else {
+            log.info(">>>>> [일반 참여자 퇴장] User: {}의 참여 정보만 Room: {}에서 삭제합니다.", username, roomId);
             // 해당 사용자의 참여 정보만 삭제합니다.
             userChatStatusRepository.delete(userStatusOpt.get());
         }
-        // 5. (예외 처리) 만약 참여 정보가 존재하지 않는다면 아무 작업도 하지 않습니다.
-        // 이 부분은 필요에 따라 로그를 남기는 등의 처리를 할 수 있습니다.
-        // ✨로직이 성공적으로 끝난 후, 로비 구독자들에게 업데이트 신호를 보낸다.
+
+        // 6. ✨ 모든 로직이 성공적으로 끝난 후, 로비 구독자들에게 업데이트 신호를 보냅니다.
+        log.info(">>>>> [로비 업데이트] Room: {}의 정보 변경 신호를 /sub/chat/lobby로 전송합니다.", roomId);
         messagingTemplate.convertAndSend("/sub/chat/lobby", "update");
     }
 

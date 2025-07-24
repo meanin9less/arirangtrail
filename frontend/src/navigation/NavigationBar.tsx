@@ -126,7 +126,7 @@ const NavigationBar = ({}: NaviProps) => {
                     )}
                 </div>
             </nav>
-            <Outlet />
+            {/*<Outlet />*/}
         </>
     );
 }

@@ -126,11 +126,9 @@ const ChatRoom = ({ roomId, onLeave }: ChatRoomProps) => {
 
         initializeAndConnect();
 
-        // 4. 컴포넌트가 언마운트될 때 실행될 정리(cleanup) 함수
+        // 컴포넌트가 사라질 때는 웹소켓 연결만 깔끔하게 끊어줍니다.
         return () => {
             if (clientRef.current?.connected) {
-                // 떠나기 전, 마지막으로 본 메시지 번호를 한 번 더 기록하여 정확도를 높입니다.
-                updateLastReadSequence(lastMessageSeqRef.current);
                 clientRef.current.deactivate();
                 console.log('STOMP 연결이 비활성화되었습니다.');
             }
