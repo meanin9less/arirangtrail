@@ -74,14 +74,10 @@ public class SecurityConfig {
                 .formLogin(formLogin->formLogin.disable())
                 .httpBasic(httpBasic->httpBasic.disable())
 
-                .authorizeHttpRequests(auth -> auth
-                        // ★ 2. 정적 리소스에 대한 요청은 모두 허용합니다.
-                        //    CSS, JS, 이미지 파일 등에 대한 보안 검사를 아예 수행하지 않습니다.
-                        .requestMatchers(PathRequest.toStaticResources().atCommonLocations()).permitAll()
+                .authorizeHttpRequests(authorizeHttpRequests->{
 
-                        // ★ 3. 우리가 직접 업로드한 이미지 파일 경로도 명시적으로 모두 허용합니다.
-                        .requestMatchers("/**").permitAll()
-                )
+                    authorizeHttpRequests.anyRequest().permitAll();
+                })
 
                 .cors(cors->cors.configurationSource(request -> {
                     CorsConfiguration corsConfiguration = new CorsConfiguration();
