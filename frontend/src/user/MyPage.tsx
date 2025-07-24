@@ -49,7 +49,7 @@ const MyPage: React.FC = () => {
                     setLoadingUserInfo(true);
                     setUserInfoError(null); // 새로운 요청 전에 에러 초기화
                     // ✨ UserProfileResponseDto 타입을 명시하여 response.data의 구조를 TypeScript에 알립니다.
-                    const response = await apiClient.get<UserProfileResponseDto>('/api/mypage/profile');
+                    const response = await apiClient.get<UserProfileResponseDto>('/mypage/profile');
 
                     // 백엔드에서 받은 실제 데이터를 상태에 저장
                     setUserName(response.data.nickname || response.data.username);
@@ -113,7 +113,7 @@ const MyPage: React.FC = () => {
         try {
             // ✨ 백엔드 API 호출로 대체합니다.
             const requestBody: PasswordVerificationRequestDto = { password: currentPassword };
-            const response = await apiClient.post<PasswordVerificationResponseDto>('/api/mypage/verify-password', requestBody);
+            const response = await apiClient.post<PasswordVerificationResponseDto>('/mypage/verify-password', requestBody);
 
             setAuthMessage(response.data.message);
 
