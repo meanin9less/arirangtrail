@@ -60,7 +60,7 @@ function ReviewPage() {
         setFetchingReviews(true);
         try {
             // 모든 리뷰 조회 엔드포인트 호출
-            const response = await apiClient.get<GetReviewsResponse>('/api/reviews'); // ✨ API 경로 확인: /api/reviews
+            const response = await apiClient.get<GetReviewsResponse>('/reviews'); // ✨ API 경로 확인: /api/reviews
             setReviews(response.data.reviews || []);
             setMessage('리뷰를 성공적으로 가져왔습니다.');
         } catch (error: any) {
@@ -130,7 +130,7 @@ function ReviewPage() {
 
         try {
             // 리뷰 작성 엔드포인트 호출
-            const response = await apiClient.post<PostReviewResponse>('/api/reviews', reviewData); // ✨ API 경로 확인: /api/reviews
+            const response = await apiClient.post<PostReviewResponse>('/reviews', reviewData); // ✨ API 경로 확인: /api/reviews
 
             const successMsg = response.data.message || '리뷰가 성공적으로 작성되었습니다!';
             setMessage(successMsg);
