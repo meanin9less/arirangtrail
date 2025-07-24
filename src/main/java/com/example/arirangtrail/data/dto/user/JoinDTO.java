@@ -21,3 +21,4 @@ public class JoinDTO {
     private LocalDate birthdate;
     private String nickname;
 }
+//
