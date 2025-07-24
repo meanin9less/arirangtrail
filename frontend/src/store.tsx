@@ -9,6 +9,7 @@ interface TokenState {
         username: string;
         nickname?: string; // 닉네임은 선택 사항일 수 있습니다.
         imageUrl?: string; // 프로필 이미지 URL은 선택 사항일 수 있습니다.
+        email?: string; // ✨ 추가: 이메일은 선택 사항일 수 있습니다.
     } | null; // 사용자 프로필 객체이거나 없을 수 있습니다.
 }
 
