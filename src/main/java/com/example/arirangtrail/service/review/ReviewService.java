@@ -1,7 +1,7 @@
 // src/main/java/com/example/arirangtrail/service/ReviewService.java
 package com.example.arirangtrail.service;
 
-import com.example.arirangtrail.data.dto.ReviewPhotoResponseDto; // ReviewPhotoResponseDto 임포트
+import com.example.arirangtrail.data.dto.review.ReviewPhotoResponseDto; // ReviewPhotoResponseDto 임포트
 import com.example.arirangtrail.data.dto.ReviewResponseDto;
 import com.example.arirangtrail.data.entity.ReviewEntity;
 import com.example.arirangtrail.data.repository.ReviewRepository;
