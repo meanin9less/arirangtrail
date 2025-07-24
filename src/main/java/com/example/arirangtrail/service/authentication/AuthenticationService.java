@@ -13,8 +13,8 @@ import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
 import java.util.List;
-
-@Service
+//커스텀 유저 디테일을 위해서 미사용해야함
+//@Service
 @RequiredArgsConstructor
 public class AuthenticationService implements UserDetailsService {
     private final UserDAO userDAO;

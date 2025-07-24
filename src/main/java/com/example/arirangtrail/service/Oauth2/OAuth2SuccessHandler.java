@@ -1,8 +1,6 @@
 package com.example.arirangtrail.service.Oauth2;
 
-import com.example.arirangtrail.data.dto.Ouath2.CustomOAuth2User;
-import com.example.arirangtrail.data.entity.UserEntity;
-import com.example.arirangtrail.data.repository.UserRepository;
+import com.example.arirangtrail.data.dto.oauth2.CustomOAuth2User;
 import com.example.arirangtrail.jwt.JwtUtil;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.servlet.ServletException;
@@ -19,7 +17,6 @@ import org.springframework.stereotype.Component;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Optional;
 
 @Component
 @RequiredArgsConstructor
@@ -27,7 +24,6 @@ public class OAuth2SuccessHandler implements AuthenticationSuccessHandler {
 
     private final JwtUtil jwtUtil;
     private final ObjectMapper objectMapper = new ObjectMapper();
-    private final UserRepository userRepository;
 
     @Override
     public void onAuthenticationSuccess(HttpServletRequest request, HttpServletResponse response, Authentication authentication) throws IOException, ServletException {
@@ -35,10 +31,10 @@ public class OAuth2SuccessHandler implements AuthenticationSuccessHandler {
         CustomOAuth2User oAuth2User = (CustomOAuth2User) authentication.getPrincipal();
 
         String name = oAuth2User.getName();
-        String role = oAuth2User.getRole();
-        String email = oAuth2User.getEmail();
+        String role = oAuth2User.getUserDTO().getRole();
+        String email = oAuth2User.getUserDTO().getEmail();
 
-        Optional<UserEntity> optionalUser = this.userRepository.findByEmail(email);
+        System.out.printf("onAuthenticationSuccess !!!!!!!!!!!!!");
 
         // JWT 생성
         String access = jwtUtil.createToken("access", name, role, 60 * 10 * 1000L);
@@ -68,7 +64,8 @@ public class OAuth2SuccessHandler implements AuthenticationSuccessHandler {
                     .build();
 
             response.addHeader(HttpHeaders.SET_COOKIE, cookie.toString());
-            response.sendRedirect("/test"); // 원하는 페이지로 리다이렉트
+//            response.sendRedirect("http://localhost:3000/test"); // 원하는 페이지로 리다이렉트
+            response.sendRedirect("http://arirangtrail.duckdns.org/reissue"); // 원하는 페이지로 리다이렉트
         }
     }
 }
