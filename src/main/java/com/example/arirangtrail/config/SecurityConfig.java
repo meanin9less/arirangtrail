@@ -8,6 +8,7 @@ import com.example.arirangtrail.service.Oauth2.OAuth2SuccessHandler;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.RequestEntity;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -15,11 +16,18 @@ import org.springframework.security.config.annotation.web.configuration.EnableWe
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.oauth2.client.endpoint.DefaultAuthorizationCodeTokenResponseClient;
+import org.springframework.security.oauth2.client.endpoint.OAuth2AccessTokenResponseClient;
+import org.springframework.security.oauth2.client.endpoint.OAuth2AuthorizationCodeGrantRequest;
+import org.springframework.security.oauth2.client.endpoint.OAuth2AuthorizationCodeGrantRequestEntityConverter;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.util.MultiValueMap;
+import org.springframework.web.client.RestTemplate;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.filter.ForwardedHeaderFilter;
 
+import java.util.Collections;
 import java.util.List;
 
 @Configuration
@@ -46,6 +54,8 @@ public class SecurityConfig {
         return new ForwardedHeaderFilter();
     }
 
+
+
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http.csrf(csrf->csrf.disable())
@@ -53,11 +63,7 @@ public class SecurityConfig {
                 .httpBasic(httpBasic->httpBasic.disable())
 
                 .authorizeHttpRequests(authorizeHttpRequests->{
-                    authorizeHttpRequests.requestMatchers("/", "/api/join", "/api/login", "/api/reissue", "/api/naver", "/api/kakao",
-                            "/api/login/oauth2/code/*", "/api/redis/**", "/api/reviews", "/api/reviews/", "/api/**").permitAll();
-                    authorizeHttpRequests.requestMatchers("/", "/api/join", "/api/login", "/api/reissue", "/api/naver", "/api/kakao", "/api/login/oauth2/code/*","/api/chat/**", "/ws-stomp/**").permitAll();
-                    authorizeHttpRequests.requestMatchers("/api/admin").hasRole("ADMIN");
-//                    authorizeHttpRequests.anyRequest().authenticated();
+                    authorizeHttpRequests.anyRequest().permitAll();
                 })
 
                 .cors(cors->cors.configurationSource(request -> {
@@ -80,9 +86,6 @@ public class SecurityConfig {
 
                 .oauth2Login(oauth2->
                         oauth2
-                                .redirectionEndpoint(endpoint ->
-                                        endpoint.baseUri("/api/login/oauth2/code")
-                                )
                                 .userInfoEndpoint(userInfo->{
                                     userInfo.userService(customOAuth2UserService);
                                 })
