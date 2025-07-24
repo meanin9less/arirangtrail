@@ -1,10 +1,28 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import styles from './MyPage.module.css'; // 마이페이지 스타일 임포트
 import { useSelector } from 'react-redux';
 import { RootState } from '../store'; // Redux RootState 임포트
 import { useNavigate } from 'react-router-dom'; // useNavigate 훅 임포트
-import apiClient from '../api/axiosInstance'; // API 클라이언트 임포트 (추가)
-import axios from 'axios'; // axios.isAxiosError를 위해 (추가)
+import apiClient from '../api/axiosInstance'; // API 클라이언트 임포트
+import axios from 'axios'; // axios.isAxiosError를 위해
+
+// ✨ 1. 백엔드 API 응답 및 요청에 사용할 DTO 인터페이스 정의
+interface UserProfileResponseDto {
+    username: string;
+    email: string;
+    firstname: string;
+    lastname: string;
+    nickname: string;
+    imageUrl?: string;
+}
+
+interface PasswordVerificationRequestDto {
+    password: string;
+}
+
+interface PasswordVerificationResponseDto {
+    message: string;
+}
 
 const MyPage: React.FC = () => {
     const navigate = useNavigate();
@@ -12,27 +30,53 @@ const MyPage: React.FC = () => {
     // Redux store에서 JWT 토큰 가져오기 (로그인 여부 확인용)
     const jwtToken = useSelector((state: RootState) => state.token.token);
     const isLoggedIn = !!jwtToken;
+    // Redux store에서 사용자 프로필 정보 가져오기 (초기 로딩 시 활용)
+    const storedUserProfile = useSelector((state: RootState) => state.token.userProfile);
 
-    // 사용자 정보는 백엔드에서 가져와야 합니다.
-    // [백엔드 연동 필요] 실제 사용자 정보를 저장할 상태 (초기값은 null 또는 빈 객체)
-    const [userName, setUserName] = useState<string | null>(null);
-    const [userEmail, setUserEmail] = useState<string | null>(null);
+    // 사용자 정보 상태
+    const [userName, setUserName] = useState<string | null>(storedUserProfile?.nickname || storedUserProfile?.username || null);
+    const [userEmail, setUserEmail] = useState<string | null>(storedUserProfile?.email || null); // email은 UserProfileResponseDto에 있으므로 추가
+    const [userProfileImage, setUserProfileImage] = useState<string | null>(storedUserProfile?.imageUrl || null); // 프로필 이미지 URL 추가
+
     const [loadingUserInfo, setLoadingUserInfo] = useState<boolean>(true);
     const [userInfoError, setUserInfoError] = useState<string | null>(null);
 
-    // [백엔드 연동 필요] 컴포넌트 마운트 시 사용자 정보 가져오기 (useEffect 필요)
-    // 현재는 더미 데이터로 즉시 설정
-    React.useEffect(() => {
+    // 컴포넌트 마운트 시 또는 로그인 상태 변경 시 사용자 정보 가져오기
+    useEffect(() => {
         if (isLoggedIn) {
-            // 실제로는 여기에 백엔드 API 호출 로직이 들어갑니다.
-            // 예: const fetchUserInfo = async () => { ... }; fetchUserInfo();
-            setUserName("준홍님"); // 임시 더미 데이터
-            setUserEmail("junhong@example.com"); // 임시 더미 데이터
-            setLoadingUserInfo(false);
+            const fetchUserInfo = async () => {
+                try {
+                    setLoadingUserInfo(true);
+                    setUserInfoError(null); // 새로운 요청 전에 에러 초기화
+                    // ✨ UserProfileResponseDto 타입을 명시하여 response.data의 구조를 TypeScript에 알립니다.
+                    const response = await apiClient.get<UserProfileResponseDto>('/api/mypage/profile');
+
+                    // 백엔드에서 받은 실제 데이터를 상태에 저장
+                    setUserName(response.data.nickname || response.data.username);
+                    setUserEmail(response.data.email);
+                    setUserProfileImage(response.data.imageUrl || 'https://placehold.co/100x100/cccccc/ffffff?text=User'); // 기본 이미지 폴백
+
+                    setLoadingUserInfo(false);
+                } catch (error: any) {
+                    console.error('사용자 정보 불러오기 오류:', error);
+                    let errorMessage = '사용자 정보를 불러오는 데 실패했습니다: 네트워크 오류 또는 알 수 없는 오류';
+                    if (axios.isAxiosError(error) && error.response) {
+                        errorMessage = error.response.data?.message || '사용자 정보를 불러오는 데 실패했습니다: 서버 오류';
+                    }
+                    setUserInfoError(errorMessage);
+                    setLoadingUserInfo(false);
+                }
+            };
+            fetchUserInfo();
         } else {
-            setLoadingUserInfo(false); // 로그인 안 된 상태면 로딩 종료
+            // 로그인 안 된 상태면 로딩 종료 및 정보 초기화
+            setUserName(null);
+            setUserEmail(null);
+            setUserProfileImage(null);
+            setLoadingUserInfo(false);
+            setUserInfoError(null);
         }
-    }, [isLoggedIn]); // 로그인 상태 변경 시 실행
+    }, [isLoggedIn, storedUserProfile]); // isLoggedIn과 storedUserProfile 변경 시 실행
 
     // 비밀번호 인증 섹션 표시 여부
     const [showPasswordAuth, setShowPasswordAuth] = useState(false);
@@ -60,21 +104,40 @@ const MyPage: React.FC = () => {
         setAuthLoading(true); // 로딩 시작
         setAuthMessage(null); // 메시지 초기화
 
-        // [백엔드 연동 필요] 이 부분은 실제 백엔드 API 호출로 대체해야 합니다.
-        // 현재는 임시로 0.5초 지연 후 '1234'와 비교합니다.
-        // 예: try { const response = await apiClient.post('/auth/reverify-password', { password: currentPassword }); ... }
-        // 비밀번호는 절대 클라이언트에서 하드코딩하거나 비교해서는 안 됩니다.
-        await new Promise(resolve => setTimeout(resolve, 500)); // API 호출 지연 시뮬레이션
-
-        if (currentPassword === '1234') { // 임시 비밀번호 '1234' (실제로는 서버에서 검증)
-            setAuthMessage('인증 성공! 정보 수정 페이지로 이동합니다.');
-            navigate('/mypage/editinfo');
-        } else {
-            setAuthMessage('비밀번호가 올바르지 않습니다.');
+        if (!currentPassword.trim()) {
+            setAuthMessage('비밀번호를 입력해주세요.');
+            setAuthLoading(false);
+            return;
         }
-        setAuthLoading(false); // 로딩 종료
+
+        try {
+            // ✨ 백엔드 API 호출로 대체합니다.
+            const requestBody: PasswordVerificationRequestDto = { password: currentPassword };
+            const response = await apiClient.post<PasswordVerificationResponseDto>('/api/mypage/verify-password', requestBody);
+
+            setAuthMessage(response.data.message);
+
+            // 백엔드에서 200 OK와 함께 성공 메시지를 보낼 경우
+            if (response.status === 200 && response.data.message.includes('일치')) {
+                navigate('/mypage/editinfo'); // 인증 성공 시 정보 수정 페이지로 이동
+            } else {
+                // 백엔드에서 200 OK를 보냈지만 메시지가 '일치하지 않음'일 경우
+                setAuthMessage(response.data.message);
+            }
+        } catch (error: any) {
+            console.error('비밀번호 인증 오류:', error);
+            let msg = '비밀번호 인증 실패: 네트워크 오류 또는 알 수 없는 오류';
+            if (axios.isAxiosError(error) && error.response) {
+                // 백엔드에서 401 Unauthorized와 함께 메시지를 보낼 경우
+                msg = error.response.data?.message || '비밀번호가 올바르지 않습니다.';
+            }
+            setAuthMessage(msg);
+        } finally {
+            setAuthLoading(false); // 로딩 종료
+        }
     };
 
+    // 로그인되지 않은 경우
     if (!isLoggedIn) {
         return (
             <div className={styles.myPageContainer}>
@@ -85,7 +148,7 @@ const MyPage: React.FC = () => {
         );
     }
 
-    // [백엔드 연동 필요] 사용자 정보 로딩 중일 때 표시
+    // 사용자 정보 로딩 중일 때 표시
     if (loadingUserInfo) {
         return (
             <div className={styles.myPageContainer}>
@@ -95,7 +158,7 @@ const MyPage: React.FC = () => {
         );
     }
 
-    // [백엔드 연동 필요] 사용자 정보 로딩 에러 발생 시 표시
+    // 사용자 정보 로딩 에러 발생 시 표시
     if (userInfoError) {
         return (
             <div className={styles.myPageContainer}>
@@ -109,9 +172,19 @@ const MyPage: React.FC = () => {
         <div className={styles.myPageContainer}>
             <h2 className={styles.pageTitle}>마이페이지</h2>
             <div className={styles.userInfoSection}>
-                <p><strong>환영합니다, {userName || '사용자'}!</strong></p> {/* userName 상태 사용 */}
-                <p>이메일: {userEmail || '정보 없음'}</p> {/* userEmail 상태 사용 */}
-                {/* [백엔드 연동 필요] 실제 사용자 정보는 여기에 표시됩니다. */}
+                {/* 프로필 이미지 표시 (없으면 기본 플레이스홀더) */}
+                <img
+                    src={userProfileImage || 'https://placehold.co/100x100/cccccc/ffffff?text=User'}
+                    alt="프로필 이미지"
+                    className={styles.profileImage}
+                    onError={(e) => {
+                        const target = e.target as HTMLImageElement;
+                        target.onerror = null; // 무한 루프 방지
+                        target.src = 'https://placehold.co/100x100/cccccc/ffffff?text=User'; // 이미지 로드 실패 시 기본 이미지
+                    }}
+                />
+                <p><strong>환영합니다, {userName || '사용자'}!</strong></p>
+                <p>이메일: {userEmail || '정보 없음'}</p>
             </div>
 
             <div className={styles.menuSection}>
@@ -140,7 +213,7 @@ const MyPage: React.FC = () => {
                                 {authLoading ? '인증 중...' : '간편 인증'}
                             </button>
                             {authMessage && (
-                                <p className={authMessage.includes('성공') ? styles.authSuccessMessage : styles.authErrorMessage}>
+                                <p className={authMessage.includes('성공') || authMessage.includes('일치') ? styles.authSuccessMessage : styles.authErrorMessage}>
                                     {authMessage}
                                 </p>
                             )}

@@ -1,4 +1,4 @@
-/* src/review/ReviewPage.module.css */
+/* src/pages/ReviewPage.module.css */
 
 .reviewContainer {
     padding: 20px;
@@ -8,13 +8,6 @@
     border-radius: 8px;
     box-shadow: 0 2px 4px rgba(0,0,0,0.1);
     box-sizing: border-box;
-}
-
-.reviewContainer h2 { /* ✨ 추가: H2 스타일 */
-    text-align: center;
-    color: #333;
-    margin-bottom: 30px;
-    font-size: 2em;
 }
 
 .successMessage {
@@ -32,31 +25,6 @@
     margin-bottom: 15px;
     color: #333;
 }
-
-/* ✨ 글쓰기 버튼 컨테이너 */
-.writeButtonContainer {
-    display: flex;
-    justify-content: flex-end; /* 오른쪽 정렬 */
-    margin-bottom: 20px; /* 아래 여백 */
-}
-
-/* ✨ 글쓰기 버튼 스타일 */
-.writeReviewButton {
-    padding: 10px 20px;
-    background-color: #007bff; /* 청색 계열 */
-    color: white;
-    border: none;
-    border-radius: 5px;
-    font-size: 1em;
-    cursor: pointer;
-    transition: background-color 0.3s ease, transform 0.2s ease;
-}
-
-.writeReviewButton:hover {
-    background-color: #0056b3;
-    transform: translateY(-2px);
-}
-
 
 .reviewList {
     max-height: 400px;
@@ -78,6 +46,24 @@
     margin-bottom: 0;
 }
 
+/* ✨ 리뷰 아이템 제목 스타일 */
+.reviewItemTitle {
+    font-size: 1.2em;
+    margin-top: 0;
+    margin-bottom: 5px;
+}
+
+.reviewItemTitle a {
+    color: #007bff;
+    text-decoration: none;
+    transition: color 0.2s ease;
+}
+
+.reviewItemTitle a:hover {
+    color: #0056b3;
+    text-decoration: underline;
+}
+
 .reviewItem p {
     margin: 5px 0;
     line-height: 1.5;
@@ -88,14 +74,54 @@
     color: #666;
 }
 
-/* ✨ 새 리뷰 작성 폼 관련 스타일 제거됨 */
-/* .reviewForm { ... } */
-/* .textareaField, .selectField { ... } */
-/* .textareaField { ... } */
-/* .submitButton { ... } */
-/* .submitButton:hover { ... } */
-/* .submitButton:disabled { ... } */
+/* ✨ 리뷰 썸네일 이미지 스타일 */
+.reviewThumbnail {
+    max-width: 150px; /* 썸네일 최대 너비 */
+    height: auto;
+    border-radius: 5px;
+    margin-top: 10px;
+    display: block; /* 이미지 아래 여백을 위해 블록 요소로 */
+}
 
+
+.reviewForm {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+/* ✨ inputField 스타일 추가 (제목 입력 필드용) */
+.inputField, .textareaField, .selectField {
+    width: 100%;
+    padding: 8px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    box-sizing: border-box;
+}
+
+.textareaField {
+    resize: vertical;
+}
+
+.submitButton {
+    padding: 10px 15px;
+    background-color: #28a745;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    align-self: flex-start;
+    transition: background-color 0.3s ease;
+}
+
+.submitButton:hover {
+    background-color: #218838;
+}
+
+.submitButton:disabled {
+    background-color: #cccccc;
+    cursor: not-allowed;
+}
 
 /* 모달 스타일 (LoginPage와 동일하게 재사용) */
 .modalOverlay {
@@ -133,37 +159,4 @@
 
 .modalButton:hover {
     background-color: #0056b3;
-}
-
-/* ✨ 모달 내부 메시지 스타일 (ReviewWritePage에서도 사용) */
-.modalContent .successMessage {
-    color: green;
-    font-weight: bold;
-}
-
-.modalContent .errorMessage {
-    color: red;
-    font-weight: bold;
-}
-
-/* 모바일 반응형 */
-@media (max-width: 768px) {
-    .reviewContainer {
-        padding: 15px;
-        margin: 20px auto;
-    }
-    .reviewContainer h2 {
-        font-size: 1.8em;
-    }
-    .writeReviewButton {
-        width: 100%;
-        max-width: 200px;
-        margin: 0 auto;
-    }
-    .writeButtonContainer {
-        justify-content: center;
-    }
-    .sectionTitle {
-        font-size: 1.3em;
-    }
 }

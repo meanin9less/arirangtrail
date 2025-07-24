@@ -1,23 +1,19 @@
 /* --- 기본 & 전체 레이아웃 --- */
-
-/* 페이지 전체에 부드러운 배경색과 기본 폰트 설정 */
 body {
-    background-color: #f8f9fa; /* 매우 연한 회색 배경 */
+    background-color: #f8f9fa;
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-    color: #212529; /* 기본 텍스트 색상 (진한 회색) */
+    color: #212529;
 }
 
-/* 캘린더를 감싸는 흰색 카드 컨테이너 */
 .festival-calendar-container {
     max-width: 900px;
     margin: 50px auto;
     padding: 40px;
     background-color: #ffffff;
-    border-radius: 16px; /* 부드러운 모서리 */
-    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.08); /* 은은하고 깊이감 있는 그림자 */
+    border-radius: 16px;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.08);
 }
 
-/* '월별 축제 달력' 헤더 */
 .custom-header {
     text-align: center;
     margin-bottom: 40px;
@@ -27,16 +23,14 @@ body {
     font-size: 32px;
     font-weight: 700;
     color: #343a40;
-    letter-spacing: -1px; /* 자간을 살짝 좁혀 세련되게 */
+    letter-spacing: -1px;
 }
 
 /* --- FullCalendar 커스텀 스타일 --- */
-
 .fc {
-    border: none; /* 캘린더 자체의 테두리 제거 */
+    border: none;
 }
 
-/* 툴바 (이전/다음 버튼, 월 제목) */
 .fc .fc-toolbar.fc-header-toolbar {
     margin-bottom: 2em;
 }
@@ -47,10 +41,9 @@ body {
     color: #343a40;
 }
 
-/* 이전/다음 버튼 */
 .fc .fc-button {
     background: #ffffff;
-    border: 1px solid #dee2e6; /* 연한 회색 테두리 */
+    border: 1px solid #dee2e6;
     color: #495057;
     box-shadow: none;
     transition: all 0.2s ease-in-out;
@@ -61,40 +54,36 @@ body {
     border-color: #ced4da;
 }
 
-/* 요일 헤더 (일, 월, 화...) */
 .fc .fc-col-header-cell {
     background: none;
     border: none;
     padding: 18px 0;
     font-weight: 500;
-    color: #6c757d; /* 회색 톤으로 부드럽게 */
+    color: #6c757d;
 }
 
 .fc .fc-col-header-cell.fc-day-sun {
-    color: #e63946; /* 일요일은 빨간색 */
+    color: #e63946;
 }
 
 .fc .fc-col-header-cell.fc-day-sat {
-    color: #1e90ff; /* 토요일은 파란색 */
+    color: #1e90ff;
 }
 
-/* 날짜 칸(셀) 기본 스타일 */
 .fc .fc-daygrid-day {
-    border: 1px solid #f1f3f5; /* 셀 구분선을 매우 연하게 */
-    transition: background-color 0.3s ease; /* 부드러운 색상 전환 효과 */
+    border: 1px solid #f1f3f5;
+    transition: background-color 0.3s ease;
 }
 
-/* 날짜 칸 안의 컨텐츠 래퍼 */
 .day-content-wrapper {
     display: flex;
     flex-direction: column;
     height: 100%;
     padding: 8px;
     cursor: pointer;
-    align-items: flex-start; /* 숫자를 왼쪽 상단으로 */
+    align-items: flex-start;
 }
 
-/* 날짜 숫자 */
 .day-number {
     font-size: 14px;
     font-weight: 500;
@@ -110,7 +99,7 @@ body {
     color: #1e90ff;
 }
 
-.fc-day-today .day-number { /* '오늘' 날짜는 강조 */
+.fc-day-today .day-number {
     background-color: #7c3aed;
     color: white;
     border-radius: 50%;
@@ -121,112 +110,50 @@ body {
     justify-content: center;
 }
 
-/* 축제 개수 표시 */
 .day-event-count {
     font-size: 12px;
     font-weight: 700;
-    color: #7c3aed; /* 포인트 컬러 */
-    background-color: #f3eefc; /* 포인트 컬러의 아주 연한 버전 */
+    color: #7c3aed;
+    background-color: #f3eefc;
     padding: 2px 6px;
     border-radius: 10px;
 }
 
-/* 사용자가 날짜를 클릭했을 때 적용될 스타일 */
 .selected-date {
-    background-color: #f3eefc !important; /* 연한 보라색 배경 */
+    background-color: #f3eefc !important;
     border: 1px solid #c0a2f0;
 }
 
-/* --- 날짜 클릭 시 나타나는 축제 목록 --- */
+/* [추가됨] 과거 날짜 스타일 */
+.past-date .day-number {
+    color: #ccc;
+}
 
-/* 축제 목록 전체 컨테이너 */
+.past-date {
+    cursor: default; /* 과거 날짜는 클릭 안되는 것처럼 보이게 */
+}
+
+
+/* --- 날짜 클릭 시 나타나는 축제 목록 --- */
 .festival-list-container {
     margin-top: 40px;
     padding: 30px;
-    background-color: #f8f9fa; /* 기본 배경색과 동일하게 */
+    background-color: #f8f9fa;
     border-radius: 12px;
 }
 
-.festival-list-container h3 {
+.festivals-list-title {
     font-size: 22px;
     font-weight: 600;
     color: #343a40;
     margin-top: 0;
     margin-bottom: 25px;
-}
-
-/* 목록 ul 태그 (Grid 레이아웃 적용) */
-.festival-list-container ul {
-    list-style: none;
-    padding: 0;
-    margin: 0;
-    display: grid;
-    grid-template-columns: repeat(2, 1fr); /* 한 줄에 2개씩 */
-    gap: 25px; /* 카드 사이의 간격 */
-}
-
-/* 축제 아이템 카드 (li 태그) */
-.festival-item {
-    display: flex;
-    flex-direction: column;
-    background-color: #ffffff;
-    border-radius: 12px;
-    border: 1px solid #e9ecef;
-    overflow: hidden;
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.04);
-    transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
-    cursor: pointer;
-}
-
-.festival-item:hover {
-    transform: translateY(-5px);
-    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.08);
-}
-
-/* 축제 대표 이미지 */
-.festival-image {
-    width: 100%;
-    height: 250px; /* 모든 카드의 이미지 높이를 통일 */
-    object-fit: cover; /* 이미지가 잘리더라도 비율을 유지하며 꽉 채움 */
-}
-
-/* 텍스트 정보를 담는 영역 */
-.festival-details {
-    padding: 20px;
-    flex-grow: 1; /* 내용이 적어도 카드의 높이를 채우도록 함 */
-    display: flex;
-    flex-direction: column;
-}
-
-.festival-details strong {
-    font-size: 17px;
-    font-weight: 600;
-    color: #212529;
-    margin-bottom: 8px;
-}
-
-.festival-details p {
-    font-size: 14px;
-    color: #6c757d;
-    margin: 2px 0;
-    line-height: 1.5;
-}
-
-/* 목록이 없을 때 메시지 */
-.festival-list-container > p {
-    text-align: center;
-    padding: 40px;
-    color: #6c757d;
-}
-
-.festivals-list-title {
-    display: flex;
-    justify-content: center;
+    text-align: center; /* 제목을 가운데 정렬 */
 }
 
 .sort-buttons-container {
     display: flex;
-    justify-content: end;
+    justify-content: flex-end; /* 오른쪽 정렬 */
     gap: 7px;
     margin-bottom: 30px;
 }
@@ -247,12 +174,102 @@ body {
     border-color: #ced4da;
 }
 
-/* 현재 선택된 버튼 스타일 */
 .sort-button.active {
-    background-color: #7c3aed; /* 포인트 컬러 */
+    background-color: #7c3aed;
     color: #ffffff;
     border-color: #7c3aed;
     font-weight: 600;
+}
+
+.festival-list-container ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 25px;
+}
+
+.festival-item {
+    display: flex;
+    flex-direction: column;
+    background-color: #ffffff;
+    border-radius: 12px;
+    border: 1px solid #e9ecef;
+    overflow: hidden;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.04);
+    transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+    cursor: pointer;
+}
+
+.festival-item:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.08);
+}
+
+.festival-image {
+    width: 100%;
+    height: 180px;
+    object-fit: cover;
+}
+
+.festival-details {
+    padding: 20px;
+    flex-grow: 1;
+    display: flex;
+    flex-direction: column;
+}
+
+.festival-card-title {
+    font-size: 18px;
+    font-weight: 600;
+    color: #212529;
+    margin: 0 0 12px 0;
+    line-height: 1.4;
+    display: flex;
+
+    align-items: flex-start;
+    justify-content: space-between;
+}
+
+.ongoing-badge {
+    display: inline-block;
+    margin-left: 10px;
+    padding: 4px 10px;
+    border-radius: 6px;
+    background-color: #E53E3E;
+    color: white;
+    font-size: 13px;
+    font-weight: 700;
+    vertical-align: middle;
+    flex-shrink: 0;
+}
+
+.festival-meta {
+    margin-top: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.meta-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 14px;
+    color: #6c757d;
+}
+
+.meta-item svg {
+    font-size: 1.1em;
+    flex-shrink: 0;
+    color: #868e96;
+}
+
+.festival-list-container > p {
+    text-align: center;
+    padding: 40px;
+    color: #6c757d;
 }
 
 .loading-overlay {
