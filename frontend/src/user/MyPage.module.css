@@ -1,124 +1,169 @@
-/* src/HomePage.module.css */
+/* src/user/MyPage.module.css */
 
-/* 메인 컨테이너 스타일 */
-.homeContainer {
-    position: relative;
-    width: 100vw; /* 뷰포트 너비 꽉 채우기 */
-    height: calc(100vh - 60px); /* 내비게이션 바 높이 제외 (대략 60px) */
-    overflow: hidden; /* 넘치는 부분 숨김 */
-    display: flex;
-    align-items: center;
-    justify-content: center;
-
-    background-size: cover; /* 배경 이미지가 요소를 꽉 채우도록 */
-    background-position: center center; /* 배경 이미지 중앙 정렬 */
-    background-repeat: no-repeat; /* 배경 이미지 반복 없음 */
-
-    /* ✨ 배경 이미지 전환 효과 변경: 0.5초 동안 ease 효과 적용 */
-    transition: background-image 0.5s ease;
-    cursor: grab; /* 드래그 가능한 커서 */
+.myPageContainer {
+    max-width: 800px;
+    margin: 50px auto;
+    padding: 30px;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    background-color: #fff;
+    box-sizing: border-box;
 }
 
-/* 배경 이미지 위에 어두운 오버레이 */
-.overlay {
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background-color: rgba(0, 0, 0, 0.5); /* 검은색 50% 투명도 오버레이 */
-    z-index: 1; /* 콘텐츠보다 아래에 위치 */
-}
-
-/* 로딩 및 오류 메시지 스타일 */
-.messageContainer {
-    background-color: #f0f0f0;
+.pageTitle {
+    text-align: center;
     color: #333;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    width: 100vw;
-    height: calc(100vh - 60px);
-    font-size: 1.2em;
+    margin-bottom: 30px;
+    font-size: 2em;
     font-weight: bold;
 }
 
-.errorMessage {
-    color: red;
+.message {
+    text-align: center;
+    color: #666;
+    margin-bottom: 10px;
 }
 
-/* ✨ 스와이프 탐색 버튼 (좌우 화살표) */
-.navButton {
-    position: absolute;
-    top: 50%;
-    transform: translateY(-50%);
-    background-color: rgba(0, 0, 0, 0.5);
+.userInfoSection, .menuSection {
+    margin-bottom: 30px;
+    padding: 20px;
+    background-color: #f9f9f9;
+    border-radius: 5px;
+    border: 1px solid #eee;
+}
+
+/* 프로필 이미지 스타일 */
+.profileImage {
+    width: 100px; /* 원하는 크기로 조절 */
+    height: 100px; /* 원하는 크기로 조절 */
+    border-radius: 50%; /* 원형으로 만들기 */
+    object-fit: cover; /* 이미지가 잘리지 않고 채워지도록 */
+    margin: 0 auto 15px auto; /* 중앙 정렬 및 하단 여백 */
+    display: block; /* 중앙 정렬을 위해 블록 요소로 */
+    border: 2px solid #007bff; /* 테두리 추가 */
+    box-shadow: 0 2px 4px rgba(0,0,0,0.2); /* 그림자 효과 */
+}
+
+
+.sectionTitle {
+    color: #555;
+    margin-bottom: 15px;
+    font-size: 1.5em;
+    border-bottom: 1px solid #eee;
+    padding-bottom: 10px;
+}
+
+.menuList {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.menuList li {
+    margin-bottom: 10px;
+}
+
+.menuButton {
+    width: 100%;
+    padding: 12px 15px;
+    background-color: #007bff;
     color: white;
     border: none;
-    padding: 15px 10px;
-    cursor: pointer;
-    font-size: 2em;
-    z-index: 10;
     border-radius: 5px;
-    transition: background-color 0.3s ease;
-    user-select: none; /* 텍스트 선택 방지 */
-    -webkit-user-select: none; /* Safari */
-    -moz-user-select: none; /* Firefox */
-    -ms-user-select: none; /* IE 10+ */
-}
-
-.navButton:hover {
-    background-color: rgba(0, 0, 0, 0.7);
-}
-
-.navButtonLeft {
-    left: 10px;
-}
-
-.navButtonRight {
-    right: 10px;
-}
-
-/* ✨ 탐색 점 (페이지네이션 인디케이터) */
-.dotsContainer {
-    position: absolute;
-    bottom: 20px;
-    left: 50%;
-    transform: translateX(-50%);
-    display: flex;
-    gap: 10px;
-    z-index: 10;
-}
-
-.dot {
-    width: 12px;
-    height: 12px;
-    background-color: rgba(255, 255, 255, 0.5);
-    border-radius: 50%;
+    font-size: 1em;
     cursor: pointer;
-    transition: background-color 0.3s ease, transform 0.2s ease;
+    transition: background-color 0.3s ease;
+    text-align: left;
 }
 
-.dot.active {
-    background-color: white;
-    transform: scale(1.2);
+.menuButton:hover {
+    background-color: #0056b3;
 }
+
+/* Simple Authentication Section Styles */
+.authSection {
+    margin-top: 15px;
+    padding-top: 15px;
+    border-top: 1px solid #eee;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    align-items: center;
+    background-color: #f0f0f0;
+    border-radius: 5px;
+    padding-bottom: 15px;
+}
+
+.authPrompt {
+    font-size: 0.95em;
+    color: #555;
+    text-align: center;
+    margin-bottom: 5px;
+}
+
+.authInputField {
+    width: 80%;
+    max-width: 250px;
+    padding: 8px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    box-sizing: border-box;
+    text-align: center;
+}
+
+.authButton {
+    width: 60%;
+    max-width: 150px;
+    padding: 10px;
+    background-color: #28a745;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+}
+
+.authButton:hover {
+    background-color: #218838;
+}
+
+.authButton:disabled {
+    background-color: #cccccc;
+    cursor: not-allowed;
+}
+
+.authSuccessMessage {
+    color: green;
+    font-weight: bold;
+    text-align: center;
+    margin-top: 5px;
+}
+
+.authErrorMessage {
+    color: red;
+    font-weight: bold;
+    text-align: center;
+    margin-top: 5px;
+}
+
 
 /* 모바일 반응형 */
 @media (max-width: 768px) {
-    .homeContainer, .messageContainer {
-        height: calc(100vh - 50px); /* 모바일 내비게이션 바 높이 조정 */
+    .myPageContainer {
+        margin: 20px auto;
+        padding: 20px;
     }
-    .navButton {
-        padding: 10px 5px;
-        font-size: 1.5em;
+
+    .pageTitle {
+        font-size: 1.8em;
     }
-    .dotsContainer {
-        bottom: 10px;
-        gap: 8px;
+
+    .sectionTitle {
+        font-size: 1.3em;
     }
-    .dot {
-        width: 10px;
-        height: 10px;
+    .profileImage {
+        width: 80px;
+        height: 80px;
     }
 }
