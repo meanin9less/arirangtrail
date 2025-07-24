@@ -8,6 +8,7 @@ import {
     IoPin,
     IoPricetagOutline,
     IoTimeOutline,
+    IoShareSocialOutline,
 } from "react-icons/io5";
 import React, {useEffect, useState} from "react";
 import axios from "axios";
@@ -19,6 +20,7 @@ import 'swiper/css/navigation';
 import 'swiper/css/pagination';
 import "./detail.css"
 import WeatherWidget from "../WeatherWidget";
+import ShareApi from "../ShareApi";
 
 // 구글맵 API 타입 선언
 declare global {
@@ -230,21 +232,21 @@ const DetailPage = () => {
         });
     }, [festival]);
 
-    // 현재 위치로 길찾기 함수
-    const handleRouteFromCurrentLocation = () => {
-        if (!festival) return;
-        navigator.geolocation.getCurrentPosition(
-            (position) => {
-                const {latitude, longitude} = position.coords;
-                const url = `https://www.google.com/maps/dir/?api=1&origin=${latitude},${longitude}&destination=${festival.mapy},${festival.mapx}`;
-                window.open(url, '_blank');
-            },
-            (error) => {
-                alert("위치 정보를 가져오는 데 실패했습니다. 브라우저 설정을 확인해주세요.");
-                console.error("Geolocation Error:", error);
-            }
-        );
-    };
+    // // 현재 위치로 길찾기 함수
+    // const handleRouteFromCurrentLocation = () => {
+    //     if (!festival) return;
+    //     navigator.geolocation.getCurrentPosition(
+    //         (position) => {
+    //             const {latitude, longitude} = position.coords;
+    //             const url = `https://www.google.com/maps/dir/?api=1&origin=${latitude},${longitude}&destination=${festival.mapy},${festival.mapx}`;
+    //             window.open(url, '_blank');
+    //         },
+    //         (error) => {
+    //             alert("위치 정보를 가져오는 데 실패했습니다. 브라우저 설정을 확인해주세요.");
+    //             console.error("Geolocation Error:", error);
+    //         }
+    //     );
+    // };
 
     // 모달을 여는 함수
     const openDirectionsModal = (destination: { mapy: string; mapx: string; title: string; }) => {
@@ -257,6 +259,7 @@ const DetailPage = () => {
         setIsModalOpen(false);
         setSelectedDestination(null); // 선택 초기화
     };
+
 
     if (isLoading) {
         return <div className="loading-overlay"><span>축제 정보를 불러오는 중...</span></div>;
@@ -302,7 +305,20 @@ const DetailPage = () => {
             <div className="detail-content-wrapper">
                 <div className="main-content">
                     <div className="info-section">
-                        <h2 className="section-title"><IoInformationCircleOutline/>소개</h2>
+                        <div className={"info-section2"}>
+                            <h2 className="section-title"><IoInformationCircleOutline/>소개</h2>
+                            <ShareApi
+                                shareData={{
+                                    title: `[축제 정보] ${festival.title}`,
+                                    text: festival.overview.replace(/<[^>]+>/g, ''),
+                                    url: window.location.href,
+                                    imageUrl: festival.firstimage, // 카카오톡 공유에 사용할 대표 이미지 전달
+                                }}
+                                className="icon-button"
+                            >
+                                <IoShareSocialOutline size={22}/> {/* 아이콘 컴포넌트를 자식으로 전달 */}
+                            </ShareApi>
+                        </div>
                         <div className="info-content overview-content"
                              dangerouslySetInnerHTML={{__html: festival.overview}}/>
                     </div>
@@ -390,10 +406,11 @@ const DetailPage = () => {
                             축제 장소 길찾기
                         </button>
                         <div className="external-links">
+                            <br/>
                             <a href="https://www.kobus.co.kr/main.do" target="_blank" rel="noopener noreferrer">
-                                고속버스 예약 →</a>
+                                → 고속버스 예약 바로가기</a><br/>
                             <a href="https://www.letskorail.com/" target="_blank" rel="noopener noreferrer">
-                                기차 예약 (Korail) →</a>
+                                → 기차 예약 바로가기</a>
                         </div>
                     </div>
                 </aside>

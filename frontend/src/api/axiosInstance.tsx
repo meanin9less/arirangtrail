@@ -19,7 +19,7 @@ declare module 'axios' {
 const apiClient: AxiosInstance = axios.create({
     // ✨ 변경할 부분: 여기에 백엔드 서버의 실제 주소를 입력하세요.
     // 예: "http://52.78.46.203:8080" 또는 "https://api.yourdomain.com"
-    baseURL: "/api", // 현재는 localhost:8080
+    baseURL: "http://localhost:8080/api", // 현재는 localhost:8080
     headers: {
         "Content-Type": "application/json",
     },

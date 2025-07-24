@@ -152,8 +152,12 @@ body {
     margin-bottom: 40px;
 }
 
-.section-title {
+.info-section2{
     display: flex;
+    justify-content: space-between;
+}
+
+.section-title {
     align-items: center;
     gap: 12px;
     font-size: 1.5rem;
@@ -162,6 +166,7 @@ body {
     margin: 0 0 24px 0;
     padding-bottom: 16px;
     border-bottom: 1px solid #e9ecef;
+    display: flex;
 }
 
 .overview-content {
@@ -478,6 +483,132 @@ body {
     color: #3b6b98;
     text-transform: capitalize;
     font-weight: 500;
+}
+
+/* 길찾기, 공유 버튼 등을 묶는 컨테이너 */
+.button-horizontal-group {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+}
+
+/* 길찾기 버튼이 공간을 차지하도록 */
+.primary-button {
+    flex-grow: 1;
+}
+
+/* 공유 아이콘 버튼과 드롭다운 메뉴를 모두 감싸는 컨테이너 */
+.share-wrapper {
+    position: relative;
+    display: inline-block;
+}
+
+/* 공유하기 아이콘 버튼 자체의 스타일 */
+.icon-button {
+    width: 48px;
+    height: 48px;
+    padding: 0;
+    flex-shrink: 0;
+    background-color: #ffffff; /* ✨ 배경을 흰색으로 변경 */
+    color: #495057; /* ✨ 아이콘 색상을 어두운 회색으로 */
+    border: 1px solid #dee2e6; /* ✨ 옅은 테두리 추가 */
+    border-radius: 12px;
+    cursor: pointer;
+    transition: all 0.2s cubic-bezier(0.22, 1, 0.36, 1); /* ✨ 전환 효과를 더 부드럽게 */
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.04); /* ✨ 기본 그림자 추가 */
+}
+
+/* 아이콘 버튼에 마우스를 올렸을 때 */
+.icon-button:hover {
+    background-color: #f8f9fa;
+    color: #007bff; /* ✨ 호버 시 아이콘 색상을 파란색으로 */
+    transform: translateY(-3px) scale(1.05); /* ✨ 더 역동적인 움직임 */
+    box-shadow: 0 8px 16px rgba(0, 123, 255, 0.15); /* ✨ 파란색 그림자 효과 */
+}
+
+
+/* --- 드롭다운 메뉴 스타일 (Upgraded) --- */
+
+/* 드롭다운 메뉴 컨테이너 */
+.share-options-menu {
+    /* 위치 및 크기 */
+    position: absolute;
+    top: calc(100% + 12px); /* 버튼과의 간격을 살짝 더 줌 */
+    right: 0;
+    z-index: 1000;
+    width: 220px; /* ✨ 너비를 살짝 넓혀서 여유있게 */
+
+    /* 디자인 */
+    background-color: #ffffff;
+    border-radius: 16px; /* ✨ 더 둥글게 */
+    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.12); /* ✨ 그림자를 더 풍부하게 */
+    border: 1px solid #f0f0f0;
+    overflow: hidden;
+    padding: 8px; /* ✨ 내부 여백 추가 */
+
+    /* 애니메이션 */
+    animation: fadeInScaleUp 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+/* 드롭다운 메뉴 안의 각 버튼 (카카오톡, URL 복사 등) */
+.share-option-button {
+    /* 배치 및 크기 */
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    width: 100%;
+    padding: 12px;
+    box-sizing: border-box;
+
+    /* 디자인 */
+    background-color: transparent;
+    border: none;
+    border-radius: 10px; /* ✨ 각 버튼도 둥글게 */
+    font-size: 1rem; /* ✨ 폰트 크기 살짝 키움 */
+    font-weight: 500; /* ✨ 폰트 두께 조정 */
+    font-family: 'Inter', sans-serif;
+    color: #343a40;
+
+    /* 인터랙션 */
+    cursor: pointer;
+    text-align: left;
+    transition: background-color 0.2s ease, transform 0.2s ease;
+}
+
+/* 각 버튼에 마우스를 올렸을 때 */
+.share-option-button:hover {
+    background-color: #f1f3f5; /* ✨ 더 눈에 띄는 호버 색상 */
+    color: #007bff; /* ✨ 텍스트 색상도 변경 */
+    transform: translateX(5px); /* ✨ 오른쪽으로 살짝 움직이는 효과 */
+}
+
+/* ✨ + 아이콘을 추가할 경우를 위한 스타일 (선택사항) */
+.share-option-button::before {
+    /*
+      여기에 react-icons 같은 아이콘 컴포넌트를 넣으면 자동으로 스타일이 적용됩니다.
+      예: <button><IoLogoKakao /> 카카오톡 공유</button>
+    */
+    font-size: 1.2em;
+    flex-shrink: 0;
+}
+
+
+/* ✨ 경계선 스타일 변경 */
+/* 모든 버튼에 경계선을 없애고, 버튼 간 간격으로 구분 (더 모던한 방식) */
+.share-option-button + .share-option-button {
+    border-top: none; /* 기존 경계선 제거 */
+}
+
+/* 업그레이드된 등장 애니메이션 */
+@keyframes fadeInScaleUp {
+    from {
+        opacity: 0;
+        transform: translateY(-10px) scale(0.9);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
 }
 
 /* ==========================================================================

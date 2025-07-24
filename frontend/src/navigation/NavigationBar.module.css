@@ -1,28 +1,11 @@
 /* NavigationBar.module.css */
 
 /* 1. 내비게이션 바 전체 스타일 */
-.navbar.transparent {
-    z-index: 100;
-    width: 100%;
-    color: white; /* 글자색 흰색 */
-    position: fixed;
-    top: 0;
-    left: 0;
-    padding: 15px 20px;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    min-height: 60px;
-    flex-wrap: wrap;
-    box-sizing: border-box;
-}
-
-.navbar.solid {
+.navbar {
     background-color: #2d3748;
     text-decoration: none;
     padding: 10px 15px;
     position: relative;
-    overflow: hidden;
     transition: all 0.3s ease-in-out;
     display: flex;
     align-items: center;
@@ -136,9 +119,9 @@
 
 /* 아리랑 아이콘 전용 스타일 추가 */
 .arirangicon {
-    height: 70px;
-    width: 80px;
     object-fit: contain;
+    height: 100px;
+    width: 120px;
     filter: invert(100%);
 }
 
@@ -198,7 +181,6 @@
     background-color: #444; /* 메뉴 배경색 */
     border-radius: 5px;
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
-    min-width: 150px;
     display: flex;
     flex-direction: column;
     padding: 10px 0;
@@ -210,13 +192,20 @@
 .dropdownItem {
     color: white;
     text-decoration: none;
-    padding: 10px 15px;
-    text-align: left;
+    padding: 10px;
+    text-align: center;
     transition: background-color 0.2s ease;
     border: none;
     background: none;
-    width: 100%;
+    width: 130px;
     cursor: pointer;
+
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 15px;
+    line-height: 1;
+    box-sizing: border-box;
 }
 
 .dropdownItem:hover {
