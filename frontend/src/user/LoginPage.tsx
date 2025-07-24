@@ -104,7 +104,7 @@ const LoginPage = ({}: LoginProps) => {
                 // --- ✨ 여기가 새로 추가된 로직입니다 ---
                 // 로그인 성공 직후, 방금 받은 userProfile의 username으로
                 //    총 안 읽은 메시지 개수를 요청합니다.
-                const unreadCountResponse = await axios.get(`/api/chat/users/${userProfileData.username}/unread-count`);
+                const unreadCountResponse = await apiClient.get(`/chat/users/${userProfileData.username}/unread-count`);
 
                 // 응답으로 받은 개수({ totalUnreadCount: 5 })를 Redux 스토어에 저장합니다.
                 dispatch(setTotalUnreadCount(unreadCountResponse.data.totalUnreadCount));
