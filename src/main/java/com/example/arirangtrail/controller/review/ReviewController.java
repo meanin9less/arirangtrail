@@ -1,7 +1,7 @@
 package com.example.arirangtrail.controller.review;
 
-
 import com.example.arirangtrail.data.dto.review.ReviewCreateRequestDto;
+import com.example.arirangtrail.data.dto.review.ReviewResponseDto; // ✨ 추가: ReviewResponseDto 임포트
 import com.example.arirangtrail.data.dto.review.ReviewUpdateRequestDto;
 import com.example.arirangtrail.data.entity.ReviewEntity;
 import com.example.arirangtrail.service.review.ReviewService;
@@ -15,6 +15,8 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
 import java.util.List;
+import java.util.Map; // Map 임포트
+
 //잠시 꺼놓기
 //@RestController
 @RequiredArgsConstructor
@@ -36,15 +38,12 @@ public class ReviewController {
         }
     }
 
-
-    // PUT 또는 PATCH 사용 가능
     @PutMapping(consumes = {MediaType.APPLICATION_JSON_VALUE, MediaType.MULTIPART_FORM_DATA_VALUE})
     public ResponseEntity<String> updateReview(
             @RequestPart("updateRequest") ReviewUpdateRequestDto updateDto,
             @RequestPart(value = "photos", required = false) List<MultipartFile> newPhotoFiles) {
 
         try {
-            // ⭐ 서비스 호출 시 DTO만 전달
             reviewService.updateReview(updateDto, newPhotoFiles);
             return ResponseEntity.ok("리뷰가 성공적으로 수정되었습니다.");
         } catch (EntityNotFoundException e) {
@@ -57,19 +56,31 @@ public class ReviewController {
     @DeleteMapping("/{reviewId}")
     public ResponseEntity<String> deleteReview(@PathVariable Long reviewId) {
         try {
-            // (보안 참고) 실제 애플리케이션에서는 이 리뷰를 삭제할 권한이
-            // 현재 로그인한 사용에게 있는지 확인하는 로직이 반드시 필요합니다.
-
             reviewService.deleteReview(reviewId);
-            // 성공 시 200 OK와 함께 메시지를 반환하거나,
-            // return ResponseEntity.noContent().build(); 처럼 204 No Content를 반환할 수 있습니다.
             return ResponseEntity.ok("리뷰(ID: " + reviewId + ")가 성공적으로 삭제되었습니다.");
         } catch (EntityNotFoundException e) {
             return ResponseEntity.status(404).body(e.getMessage());
         } catch (Exception e) {
-            // 그 외 예상치 못한 에러 처리
             return ResponseEntity.internalServerError().body("리뷰 삭제 중 오류가 발생했습니다: " + e.getMessage());
         }
     }
 
+    // ✨ ✨ ✨ 추가: 모든 리뷰 조회 엔드포인트 ✨ ✨ ✨
+    @GetMapping
+    public ResponseEntity<Map<String, List<ReviewResponseDto>>> getAllReviews() {
+        List<ReviewResponseDto> reviews = reviewService.getAllReviews();
+        // 프론트엔드의 GetReviewsResponse 인터페이스에 맞춰 "reviews" 키로 묶어서 반환
+        return ResponseEntity.ok(Map.of("reviews", reviews));
+    }
+
+    // ✨ ✨ ✨ 추가: 단일 리뷰 조회 엔드포인트 ✨ ✨ ✨
+    @GetMapping("/{reviewId}")
+    public ResponseEntity<ReviewResponseDto> getReviewById(@PathVariable Long reviewId) {
+        try {
+            ReviewResponseDto review = reviewService.getReviewById(reviewId);
+            return ResponseEntity.ok(review);
+        } catch (EntityNotFoundException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(null); // 404 Not Found
+        }
+    }
 }

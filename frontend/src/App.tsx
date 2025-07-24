@@ -38,8 +38,7 @@ function App() {
                         <Route path="calender/:festivalId" element={<DetailPage />} />
                         <Route path="community" element={<CommunityPage />} />
                         <Route path="company" element={<CompanyPage />} />
-                        <Route path="review"
-                               element={<ReviewPage />} />
+                        <Route path="review"  element={<ReviewPage />} />
                         <Route path="review/write" element={<ReviewWritePage />} />
                         <Route path="review/detail/:reviewId" element={<ReviewDetailPage />} />
                         <Route path="search" element={<SearchPage />} />

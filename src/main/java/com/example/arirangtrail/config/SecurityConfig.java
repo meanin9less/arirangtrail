@@ -9,6 +9,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.boot.autoconfigure.security.servlet.PathRequest;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.RequestEntity;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -16,11 +17,18 @@ import org.springframework.security.config.annotation.web.configuration.EnableWe
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.oauth2.client.endpoint.DefaultAuthorizationCodeTokenResponseClient;
+import org.springframework.security.oauth2.client.endpoint.OAuth2AccessTokenResponseClient;
+import org.springframework.security.oauth2.client.endpoint.OAuth2AuthorizationCodeGrantRequest;
+import org.springframework.security.oauth2.client.endpoint.OAuth2AuthorizationCodeGrantRequestEntityConverter;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.util.MultiValueMap;
+import org.springframework.web.client.RestTemplate;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.filter.ForwardedHeaderFilter;
 
+import java.util.Collections;
 import java.util.List;
 
 @Configuration
@@ -47,6 +55,8 @@ public class SecurityConfig {
         return new ForwardedHeaderFilter();
     }
 
+
+
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
 
@@ -72,26 +82,7 @@ public class SecurityConfig {
                         .requestMatchers(PathRequest.toStaticResources().atCommonLocations()).permitAll()
 
                         // ★ 3. 우리가 직접 업로드한 이미지 파일 경로도 명시적으로 모두 허용합니다.
-                        .requestMatchers("/uploads/**").permitAll()
-
-                        // 1. 가장 구체적인 규칙부터 (관리자)
-                        .requestMatchers("/api/admin/**").hasRole("ADMIN")
-
-                        // 2. 인증 없이 허용할 모든 경로 (문제의 /api/** 제거!)
-                        .requestMatchers(
-                                "/", "/api/join", "/api/login", "/api/reissue",
-                                "/api/naver", "/api/kakao", "/login/oauth2/code/**",
-                                "/api/redis/**", "/api/reviews/**", // **를 붙여 하위 경로 모두 포함
-                                "/api/chat/**",      // 채팅 API 경로
-                                "/api/chat/rooms/**",      // 채팅 API 경로
-                                "/ws-stomp/**",
-                                "/api/files/upload", // ★ 파일 업로드 API 경로 추가
-                                "/uploads/**"        // ★ 업로드된 파일에 접근하는 경로 추가// 웹소켓 경로
-//                                "/api/**"// 점진적으로 제거
-                        ).permitAll()
-
-                        // 3. 위에서 지정한 것 외 나머지는 모두 인증 요구
-                        .anyRequest().authenticated()
+                        .requestMatchers("/**").permitAll()
                 )
 
                 .cors(cors->cors.configurationSource(request -> {
@@ -117,9 +108,6 @@ public class SecurityConfig {
 
                 .oauth2Login(oauth2->
                         oauth2
-                                .redirectionEndpoint(endpoint ->
-                                        endpoint.baseUri("/api/login/oauth2/code")
-                                )
                                 .userInfoEndpoint(userInfo->{
                                     userInfo.userService(customOAuth2UserService);
                                 })

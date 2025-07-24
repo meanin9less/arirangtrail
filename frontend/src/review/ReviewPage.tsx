@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import apiClient from '../api/axiosInstance';
 import axios from 'axios';
-import { useNavigate, useLocation, Link } from 'react-router-dom'; // Link 임포트
-import styles from './Review.module.css'; // Review.module.css 대신 ReviewPage.module.css 사용
+import { useNavigate, useLocation, Link } from 'react-router-dom';
+// ✨ CSS 모듈 임포트 경로 수정: ReviewPage.module.css를 사용하도록 명확히 합니다.
+import styles from './Review.module.css';
 
 // 데이터 모델 정의 (DB 스키마에 맞춰 업데이트)
 interface Review {
@@ -27,7 +28,7 @@ interface GetReviewsResponse {
 
 function ReviewPage() {
     const navigate = useNavigate();
-    const location = useLocation(); // useLocation 훅 사용
+    const location = useLocation();
 
     // 상태 관리
     const [reviews, setReviews] = useState<Review[]>([]);
@@ -44,14 +45,17 @@ function ReviewPage() {
         setFetchingReviews(true);
         try {
             // [백엔드 연동 필요] 실제 API 엔드포인트
+            // 백엔드에서 /reviews GET 요청 시 Review[] 배열을 포함하는 JSON을 반환해야 합니다.
             const response = await apiClient.get<GetReviewsResponse>('/reviews');
-            setReviews(response.data.reviews || []);
+            setReviews(response.data.reviews || []); // reviews 배열이 없으면 빈 배열로 설정
             setMessage('리뷰를 성공적으로 가져왔습니다.');
             console.log("Reviews fetched successfully:", response.data.reviews); // 디버그 로그
         } catch (error: any) {
             console.error('리뷰 가져오기 오류:', error);
             let errorMessage = '리뷰를 가져오는 데 실패했습니다: 네트워크 오류 또는 알 수 없는 오류';
             if (axios.isAxiosError(error) && error.response) {
+                // 백엔드에서 보낸 구체적인 에러 메시지 확인
+                console.error("Backend error response:", error.response.data);
                 errorMessage = error.response.data?.message || '리뷰 가져오기 실패: 서버 오류';
             }
             setMessage(errorMessage);
@@ -92,7 +96,7 @@ function ReviewPage() {
                 <div className={styles.reviewList}>
                     {reviews.map(review => (
                         <div key={review.reviewid} className={styles.reviewItem}>
-                            {/* ✨ 제목에 Link 추가 */}
+                            {/* 제목에 Link 추가 */}
                             <p className={styles.reviewTitleLink}>
                                 <Link to={`/review/detail/${review.reviewid}`}>
                                     <strong>{review.title}</strong>
@@ -100,11 +104,7 @@ function ReviewPage() {
                             </p>
                             <p><strong>작성자:</strong> {review.username}</p>
                             <p><strong>별점:</strong> {'⭐'.repeat(review.rating)}</p>
-                            {/* contenttitle과 contentid는 상세 페이지에서만 표시하도록 함 (선택 사항) */}
-                            {/* {review.contenttitle && (
-                                <p><strong>행사:</strong> {review.contenttitle}</p>
-                            )} */}
-                            {/* ✨ 리뷰 내용의 일부만 표시 */}
+                            {/* 리뷰 내용의 일부만 표시 */}
                             <p className={styles.reviewContentPreview}>
                                 {review.content.length > 100 ? review.content.substring(0, 100) + '...' : review.content}
                             </p>
