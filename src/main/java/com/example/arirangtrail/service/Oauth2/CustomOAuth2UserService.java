@@ -1,10 +1,7 @@
 package com.example.arirangtrail.service.Oauth2;
 
-import com.example.arirangtrail.data.dto.UserDTO;
-import com.example.arirangtrail.data.dto.oauth2.GoogleOAuth2Response;
-import com.example.arirangtrail.data.dto.oauth2.NaverOAuth2Response;
-import com.example.arirangtrail.data.dto.oauth2.OAuth2Response;
-import com.example.arirangtrail.data.dto.oauth2.CustomOAuth2User;
+import com.example.arirangtrail.data.dto.user.UserDTO;
+import com.example.arirangtrail.data.dto.oauth2.*;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.oauth2.client.userinfo.DefaultOAuth2UserService;
 import org.springframework.security.oauth2.client.userinfo.OAuth2UserRequest;
@@ -34,6 +31,8 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
             auth2Response=new NaverOAuth2Response(attributes);
         }else if(registrationId.equals("google")){
             auth2Response=new GoogleOAuth2Response(attributes);
+        }else if(registrationId.equals("kakao")){
+            auth2Response=new KakaoOAuth2Response(attributes);
         }
         else{
             return null;
