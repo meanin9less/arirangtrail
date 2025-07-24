@@ -1,6 +1,6 @@
 package com.example.arirangtrail.data.dto.oauth2;
 
-import com.example.arirangtrail.data.dto.UserDTO;
+import com.example.arirangtrail.data.dto.user.UserDTO;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.GrantedAuthority;
