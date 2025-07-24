@@ -63,6 +63,7 @@ public class SecurityConfig {
                 .httpBasic(httpBasic->httpBasic.disable())
 
                 .authorizeHttpRequests(authorizeHttpRequests->{
+
                     authorizeHttpRequests.anyRequest().permitAll();
                 })
 
