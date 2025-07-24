@@ -33,6 +33,19 @@
     border: 1px solid #eee;
 }
 
+/* 프로필 이미지 스타일 */
+.profileImage {
+    width: 100px; /* 원하는 크기로 조절 */
+    height: 100px; /* 원하는 크기로 조절 */
+    border-radius: 50%; /* 원형으로 만들기 */
+    object-fit: cover; /* 이미지가 잘리지 않고 채워지도록 */
+    margin: 0 auto 15px auto; /* 중앙 정렬 및 하단 여백 */
+    display: block; /* 중앙 정렬을 위해 블록 요소로 */
+    border: 2px solid #007bff; /* 테두리 추가 */
+    box-shadow: 0 2px 4px rgba(0,0,0,0.2); /* 그림자 효과 */
+}
+
+
 .sectionTitle {
     color: #555;
     margin-bottom: 15px;
@@ -68,18 +81,18 @@
     background-color: #0056b3;
 }
 
-/* ✨ Simple Authentication Section Styles */
+/* Simple Authentication Section Styles */
 .authSection {
     margin-top: 15px;
     padding-top: 15px;
     border-top: 1px solid #eee;
     display: flex;
     flex-direction: column;
-    gap: 10px; /* 요소들 사이의 간격 */
-    align-items: center; /* 자식 요소들을 가로 중앙 정렬 */
-    background-color: #f0f0f0; /* 배경색으로 구분 */
+    gap: 10px;
+    align-items: center;
+    background-color: #f0f0f0;
     border-radius: 5px;
-    padding-bottom: 15px; /* 하단 패딩 */
+    padding-bottom: 15px;
 }
 
 .authPrompt {
@@ -90,20 +103,20 @@
 }
 
 .authInputField {
-    width: 80%; /* 입력 필드 너비 조정 */
-    max-width: 250px; /* 최대 너비 제한 */
+    width: 80%;
+    max-width: 250px;
     padding: 8px;
     border: 1px solid #ccc;
     border-radius: 4px;
     box-sizing: border-box;
-    text-align: center; /* 입력 텍스트 중앙 정렬 */
+    text-align: center;
 }
 
 .authButton {
-    width: 60%; /* 버튼 너비 조정 */
-    max-width: 150px; /* 최대 너비 제한 */
+    width: 60%;
+    max-width: 150px;
     padding: 10px;
-    background-color: #28a745; /* 녹색 계열 (인증 버튼) */
+    background-color: #28a745;
     color: white;
     border: none;
     border-radius: 5px;
@@ -148,5 +161,9 @@
 
     .sectionTitle {
         font-size: 1.3em;
+    }
+    .profileImage {
+        width: 80px;
+        height: 80px;
     }
 }

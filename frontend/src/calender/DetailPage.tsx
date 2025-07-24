@@ -1,3 +1,14 @@
+import {
+    IoBusiness,
+    IoCalendarOutline,
+    IoCall,
+    IoFastFoodOutline,
+    IoInformationCircleOutline,
+    IoLink, IoLocationOutline,
+    IoPin,
+    IoPricetagOutline,
+    IoTimeOutline,
+} from "react-icons/io5";
 import React, {useEffect, useState} from "react";
 import axios from "axios";
 import {useParams} from "react-router-dom";
@@ -7,6 +18,7 @@ import 'swiper/css';
 import 'swiper/css/navigation';
 import 'swiper/css/pagination';
 import "./detail.css"
+import WeatherWidget from "../WeatherWidget";
 
 // 구글맵 API 타입 선언
 declare global {
@@ -30,16 +42,37 @@ interface FestivalDetail {
     overview: string;
 }
 
-// API 요청 추가이미지 정보 데이터
+// API 요청 추가이미지 데이터
 interface ImageItem {
     contentid: string;
     imgname: string;
     originimgurl: string;
     serialnum: string;
     smallimageurl: string;
-
 }
 
+//API 요청 추가정보 데이터
+interface AddInformation {
+    playtime?: string; // 공연시간
+    usetimefestival?: string; // 이용요금
+    sponsor1?: string; // 주최자 정보
+    eventstartdate: string;
+    eventenddate: string;
+}
+
+interface FoodSearchList {
+    contentid: string;
+    addr1: string;
+    addr2: string;
+    title: string;
+    tel: string;
+    firstimage: string;
+    firstimage2: string;
+    mapx: string;
+    mapy: string;
+    dist: string;
+
+}
 
 const DetailPage = () => {
     const SERVICE_KEY = "WCIc8hzzBS3Jdod%2BVa357JmB%2FOS0n4D2qPHaP9PkN4bXIfcryZyg4iaZeTj1fEYJ%2B8q2Ol8FIGe3RkW3d72FHA%3D%3D";
@@ -47,7 +80,14 @@ const DetailPage = () => {
     const [festival, setFestival] = useState<FestivalDetail | null>(null);
     const [images, setImages] = useState<ImageItem[]>([]);
     const [isLoading, setIsLoading] = useState<boolean>(true);
-    const [userLocation, setUserLocation] = useState<{ lat: number; lng: number } | null>(null); // 사용자 현재 위치를 저장할 공간.
+    const [information, setInformation] = useState<AddInformation | null>(null);
+    const [foodList, setFoodList] = useState<FoodSearchList[]>([]);
+    const [isModalOpen, setIsModalOpen] = useState(false); // 모달이 열렸는지 여부
+    const [selectedDestination, setSelectedDestination] = useState<{
+        mapy: string;
+        mapx: string;
+        title: string;
+    } | null>(null); // 선택된 목적지 정보
 
     useEffect(() => {
         if (festivalId) {
@@ -62,22 +102,10 @@ const DetailPage = () => {
                             contentId: festivalId, // contentId 요청보낼때는 id 대문자로, 받을때는 소문자로
                         }
                     });
-                    console.log(response.data);
 
                     const item = response.data.response.body.items.item[0];
-                    setFestival({
-                        title: item.title,
-                        contentid: item.contentid,
-                        addr1: item.addr1,
-                        addr2: item.addr2,
-                        homepage: item.homepage,
-                        firstimage: item.firstimage,
-                        firstimage2: item.firstimage2,
-                        mapx: item.mapx,
-                        mapy: item.mapy,
-                        tel: item.tel,
-                        overview: item.overview
-                    });
+                    setFestival(item);
+
                 } catch (e) {
                     console.error("상세 정보 로딩 실패:", e);
                 } finally {
@@ -90,43 +118,87 @@ const DetailPage = () => {
 
     useEffect(() => {
         if (festivalId) {
-            const fetchImages = async () => {
-                const API_URL =
+            const fetchInformation = async () => {
+                const IMAGES_URL =
                     `https://apis.data.go.kr/B551011/KorService2/detailImage2?serviceKey=${SERVICE_KEY}&MobileApp=AppTest&MobileOS=ETC&_type=json`;
+                const Information_URL =
+                    `https://apis.data.go.kr/B551011/KorService2/detailIntro2?serviceKey=${SERVICE_KEY}&MobileApp=AppTest&MobileOS=ETC&_type=json`;
                 try {
-                    const response = await axios.get(API_URL, {
-                        params: {
-                            numOfRows: 50,
-                            pageNo: 1,
-                            contentId: festivalId,
-                            imageYN: 'Y',
-                        }
-                    });
-                    console.log(response.data);
-
-                    const imageList = response.data.response.body.items.item || [];
+                    const [imagesResponse, informationResponse] = await Promise.all([
+                        axios.get(IMAGES_URL, {
+                            params: {
+                                numOfRows: 50,
+                                pageNo: 1,
+                                contentId: festivalId,
+                                imageYN: 'Y',
+                            }
+                        }),
+                        axios.get(Information_URL, {
+                            params: {
+                                numOfRows: 50,
+                                pageNo: 1,
+                                contentId: festivalId,
+                                contentTypeId: 15,
+                            }
+                        }),
+                    ]);
+                    const imageList = imagesResponse.data.response.body.items.item || [];
                     setImages(imageList);
+                    const infoData = informationResponse.data.response.body.items.item[0] || null;
+                    setInformation(infoData);
 
                 } catch (e) {
-                    console.error("추가 이미지 로딩 실패:", e);
+                    console.error("데이터 로딩 실패:", e);
                 } finally {
                     setIsLoading(false); // 요청이 성공하든 실패하든 로딩 상태를 false로 변경
                 }
             };
-            fetchImages();
+            fetchInformation();
         }
     }, [festivalId]);
 
     useEffect(() => {
+        // 좌표값이 없으면 실행하지 않음
+        if (!festival || !festival.mapx || !festival.mapy) return;
+
+        const fetchFoodList = async () => {
+            const API_URL = `https://apis.data.go.kr/B551011/KorService2/locationBasedList2?serviceKey=${SERVICE_KEY}&MobileApp=AppTest&MobileOS=ETC&_type=json`;
+            try {
+                const response = await axios.get(API_URL, {
+                    params: {
+                        mapX: festival.mapx, // 축제 장소의 X좌표
+                        mapY: festival.mapy, // 축제 장소의 Y좌표
+                        radius: 3000, // 3km 반경
+                        numOfRows: 30,
+                        pageNo: 1,
+                        contentTypeId: 39, // 39 = 음식점
+                    }
+                });
+
+                console.log(response.data);
+                // API 응답 데이터에 타입을 명시적으로 지정 (ts.타입)
+                const items: FoodSearchList[] = response.data.response.body.items.item || [];
+                // 받아온 데이터에서 firstimage가 있는 아이템만 필터링
+                const filteredFoodList = items.filter(food => food.firstimage && food.firstimage.trim() !== '');
+                // 필터링된 리스트에서 최대 6개만 잘라서 상태에 저장
+                setFoodList(filteredFoodList.slice(0, 6));
+            } catch (e) {
+                console.error("주변 맛집 데이터 로딩 실패:", e);
+            }
+        };
+
+        fetchFoodList();
+    }, [festival]); // festival 상태가 변경되면 실행
+
+    useEffect(() => {
         // festival 데이터나 '구글맵' API(window.google)가 준비되지 않았으면 실행하지 않음
         if (!festival || !festival.mapy || !festival.mapx || !window.google) return;
-
         const mapContainer = document.getElementById('map');
         if (!mapContainer) return;
 
         const lat = parseFloat(festival.mapy);
         const lng = parseFloat(festival.mapx);
-        const position = {lat: lat, lng: lng}; // 구글맵은 {lat, lng} 객체를 사용합니다.
+        const position = {lat: lat, lng: lng}; // 구글맵은 {lat, lng} 객체를 사용
 
         // 구글맵 옵션
         const mapOptions = {
@@ -156,7 +228,6 @@ const DetailPage = () => {
                 map,
             });
         });
-
     }, [festival]);
 
     // 현재 위치로 길찾기 함수
@@ -165,7 +236,6 @@ const DetailPage = () => {
         navigator.geolocation.getCurrentPosition(
             (position) => {
                 const {latitude, longitude} = position.coords;
-                setUserLocation({lat: latitude, lng: longitude});
                 const url = `https://www.google.com/maps/dir/?api=1&origin=${latitude},${longitude}&destination=${festival.mapy},${festival.mapx}`;
                 window.open(url, '_blank');
             },
@@ -174,6 +244,18 @@ const DetailPage = () => {
                 console.error("Geolocation Error:", error);
             }
         );
+    };
+
+    // 모달을 여는 함수
+    const openDirectionsModal = (destination: { mapy: string; mapx: string; title: string; }) => {
+        setSelectedDestination(destination); // 어떤 장소인지 기억
+        setIsModalOpen(true); // 모달 열기
+    };
+
+    // 모달을 닫는 함수
+    const closeDirectionsModal = () => {
+        setIsModalOpen(false);
+        setSelectedDestination(null); // 선택 초기화
     };
 
     if (isLoading) {
@@ -185,90 +267,196 @@ const DetailPage = () => {
 
     return (
         <div className="festival-detail-container">
-            {isLoading && (
-                <div className="loading-overlay">
-                    <span>Loading data</span>
-                </div>
-            )}
-            <div className="detail-header">
-                <h1 className="detail-title">{festival.title}</h1>
-            </div>
-            <div className="swiper-container">
+            <div className="hero-section">
+                {festival && (
+                    <div
+                        className="hero-background-blur"
+                        style={{
+                            backgroundImage: `url(${festival.firstimage})`
+                        }}
+                    />
+                )}
                 <Swiper
                     modules={[Navigation, Pagination]}
-                    spaceBetween={0}
-                    slidesPerView={1}
                     navigation
                     pagination={{clickable: true}}
+                    className="hero-swiper"
                 >
-                    <SwiperSlide key={festival.firstimage}>
-                        <img src={festival.firstimage} alt={festival.title}/>
-                    </SwiperSlide>
+                    {festival.firstimage && (
+                        <SwiperSlide key={festival.contentid}>
+                            <img src={festival.firstimage} alt={festival.title} className="hero-image"/>
+                        </SwiperSlide>
+                    )}
                     {images.map(image => (
                         <SwiperSlide key={image.serialnum}>
-                            <img src={image.originimgurl} alt={image.imgname}/>
+                            <img src={image.originimgurl} alt={image.imgname} className="hero-image"/>
                         </SwiperSlide>
                     ))}
                 </Swiper>
+                <div className="hero-overlay"></div>
+                <div className="hero-title-wrapper">
+                    <h1 className="hero-title">{festival.title}</h1>
+                </div>
             </div>
 
             <div className="detail-content-wrapper">
+                <div className="main-content">
+                    <div className="info-section">
+                        <h2 className="section-title"><IoInformationCircleOutline/>소개</h2>
+                        <div className="info-content overview-content"
+                             dangerouslySetInnerHTML={{__html: festival.overview}}/>
+                    </div>
 
-                <ul className="detail-info-list">
-                    <li className="info-item">
-                        <span className="info-label">소개</span>
-                        <div className="info-content" dangerouslySetInnerHTML={{__html: festival.overview}}/>
-                    </li>
-                    {festival.homepage && (
-                        <li className="info-item">
-                            <span className="info-label">홈페이지</span>
-                            <div className="info-content" dangerouslySetInnerHTML={{__html: festival.homepage}}/>
-                        </li>
-                    )}
-                    {festival.tel && (
-                        <li className="info-item">
-                            <span className="info-label">연락처</span>
-                            <div className="info-content">{festival.tel}</div>
-                        </li>
-                    )}
-                    <li className="info-item">
-                        <span className="info-label">주소</span>
-                        <div className="info-content">{festival.addr1}</div>
-                    </li>
-                </ul>
-                <div className="detail-map-section">
-                    <div className="section-header"><h3 className="section-title">위치 정보</h3></div>
-                    <div id="map" style={{width: '100%', height: '400px'}}></div>
-                </div>
-
-                <div className="travel-guide-section">
-                    <h3 className="section-title">오시는 길 (Directions)</h3>
-                    <div className="travel-options">
-                        <div className="option-card primary-action">
-                            <div className="option-icon">📍</div>
-                            <div className="option-info">
-                                <h4>현재 위치에서 길찾기</h4>
-                                <p>가장 빠르고 정확한 경로를 확인하세요. (위치 정보 제공 동의 필요)</p>
-                                <button onClick={handleRouteFromCurrentLocation} className="primary-button">
-                                    내 위치에서 출발
-                                </button>
-                            </div>
-                        </div>
-                        <div className="option-card">
-                            <div className="option-icon">🚌🚆</div>
-                            <div className="option-info">
-                                <h4>대중교통 예매</h4>
-                                <p>고속버스나 기차를 이용해 편하게 이동하세요.</p>
-                                <div className="external-links">
-                                    <a href="https://www.kobus.co.kr/main.do" target="_blank" rel="noopener noreferrer"
-                                       className="option-link">고속버스 예매 (Kobus) →</a>
-                                    <a href="https://www.letskorail.com/" target="_blank" rel="noopener noreferrer"
-                                       className="option-link">기차 예매 (Korail) →</a>
-                                </div>
-                            </div>
-                        </div>
+                    <div className="info-section">
+                        <h2 className="section-title">정보</h2>
+                        <ul className="detail-info-grid">
+                            {information?.eventstartdate && (
+                                <li className="info-card">
+                                    <div className="info-card-icon"><IoCalendarOutline/></div>
+                                    <div className="info-card-content">
+                                        <span className="info-label">행사 기간</span>
+                                        <div
+                                            className="info-text">{`${information.eventstartdate.substring(0, 4)}.${information.eventstartdate.substring(4, 6)}.${information.eventstartdate.substring(6, 8)} ~ ${information.eventenddate.substring(0, 4)}.${information.eventenddate.substring(4, 6)}.${information.eventenddate.substring(6, 8)}`}</div>
+                                    </div>
+                                </li>
+                            )}
+                            {information?.playtime && (
+                                <li className="info-card">
+                                    <div className="info-card-icon"><IoTimeOutline/></div>
+                                    <div className="info-card-content">
+                                        <span className="info-label">공연 시간</span>
+                                        <div className="info-text"
+                                             dangerouslySetInnerHTML={{__html: information.playtime}}/>
+                                    </div>
+                                </li>
+                            )}
+                            {information?.usetimefestival && (
+                                <li className="info-card">
+                                    <div className="info-card-icon"><IoPricetagOutline/></div>
+                                    <div className="info-card-content">
+                                        <span className="info-label">티켓 / 금액</span>
+                                        <div className="info-text"
+                                             dangerouslySetInnerHTML={{__html: information.usetimefestival}}/>
+                                    </div>
+                                </li>
+                            )}
+                            {information?.sponsor1 && (
+                                <li className="info-card">
+                                    <div className="info-card-icon"><IoBusiness/></div>
+                                    <div className="info-card-content">
+                                        <span className="info-label">주최자 정보</span>
+                                        <div className="info-text">{information.sponsor1}</div>
+                                    </div>
+                                </li>
+                            )}
+                            {festival.tel && (
+                                <li className="info-card">
+                                    <div className="info-card-icon"><IoCall/></div>
+                                    <div className="info-card-content">
+                                        <span className="info-label">주최자 전화번호</span>
+                                        <div className="info-text">{festival.tel}</div>
+                                    </div>
+                                </li>
+                            )}
+                            {festival.homepage && (
+                                <li className="info-card">
+                                    <div className="info-card-icon"><IoLink/></div>
+                                    <div className="info-card-content">
+                                        <span className="info-label">웹사이트</span>
+                                        <div className="info-text">
+                                            <a href={festival.homepage.match(/href="([^"]*)"/)?.[1] || '#'}
+                                               target="_blank" rel="noopener noreferrer">
+                                                Visit Official Website
+                                            </a>
+                                        </div>
+                                    </div>
+                                </li>
+                            )}
+                        </ul>
                     </div>
                 </div>
+                <aside className="sidebar">
+                    <div className="sidebar-section">
+                        {/*날씨 위젯*/}
+                        {festival && <WeatherWidget lat={festival.mapy} lon={festival.mapx}/>}
+                        <h3 className="sidebar-title"><IoPin/> 오시는 길</h3>
+                        <p className="address-text">{festival.addr1}</p>
+                        <div id="map" style={{width: '100%', height: '250px', borderRadius: '12px'}}></div>
+                    </div>
+                    <div className="sidebar-section">
+                        <h3 className="sidebar-title">길찾기</h3>
+                        <p className="sidebar-description">축제 여행을 계획해보세요.</p>
+                        <button onClick={() => openDirectionsModal(festival)} className="primary-button">
+                            축제 장소 길찾기
+                        </button>
+                        <div className="external-links">
+                            <a href="https://www.kobus.co.kr/main.do" target="_blank" rel="noopener noreferrer">
+                                고속버스 예약 →</a>
+                            <a href="https://www.letskorail.com/" target="_blank" rel="noopener noreferrer">
+                                기차 예약 (Korail) →</a>
+                        </div>
+                    </div>
+                </aside>
+                {foodList.length > 0 && (
+                    <div className="nearby-food-section">
+                        <h2 className="section-title"><IoFastFoodOutline/> 축제 주변 / 추천 맛집 리스트!</h2>
+                        <ul className="food-grid-list">
+                            {foodList.map(food => (
+                                <li key={food.contentid} className="food-card">
+                                    <div className="food-card-image-wrapper">
+                                        {food.firstimage ? (
+                                            <img src={food.firstimage} alt={food.title} className="food-card-image"/>
+                                        ) : (
+                                            <div className="food-card-image placeholder"><IoFastFoodOutline/></div>
+                                        )}
+                                    </div>
+                                    <div className="food-card-content">
+                                        <h4 className="food-card-title">{food.title}</h4>
+                                        <p className="food-card-meta">
+                                            <IoLocationOutline/>
+                                            <span>{food.addr1}</span>
+                                        </p>
+                                        <div className="food-card-footer">
+                                            <span
+                                                className="food-card-dist">약 {Math.round(Number(food.dist) / 1000 * 10) / 10} km</span>
+                                            <button onClick={() => openDirectionsModal(food)}
+                                                    className="food-card-route-button">
+                                                길찾기
+                                            </button>
+                                        </div>
+                                    </div>
+                                </li>
+                            ))}
+                        </ul>
+                    </div>
+                )}
+                {isModalOpen && selectedDestination && (
+                    <div className="directions-modal-overlay" onClick={closeDirectionsModal}>
+                        <div className="directions-modal-content" onClick={(e) => e.stopPropagation()}>
+                            <h3>어떤 지도로 길을 찾으시겠어요?</h3>
+                            <p className="modal-destination-title">{selectedDestination.title}</p>
+                            <div className="modal-buttons">
+                                <a
+                                    href={`https://map.kakao.com/link/to/${selectedDestination.title},${selectedDestination.mapy},${selectedDestination.mapx}`}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="modal-button kakao"
+                                >
+                                    카카오맵으로 길찾기
+                                </a>
+                                <a
+                                    href={`https://www.google.com/maps/dir/?api=1&destination=${selectedDestination.mapy},${selectedDestination.mapx}`}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="modal-button google"
+                                >
+                                    구글맵으로 길찾기
+                                </a>
+                            </div>
+                            <button onClick={closeDirectionsModal} className="modal-close-button">닫기</button>
+                        </div>
+                    </div>
+                )}
             </div>
         </div>
     );

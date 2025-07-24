@@ -1,104 +1,168 @@
-/* src/pages/search.css */
+/* --- Google Font Import --- */
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap');
+
+/* --- Global & Typography --- */
+body {
+    background-color: #f8f9fa;
+}
 
 .search-page-container {
     max-width: 800px;
     margin: 40px auto;
     padding: 20px;
-    font-family: sans-serif;
+    font-family: 'Poppins', sans-serif;
+    color: #343a40;
+}
+
+/* --- Search Header --- */
+.search-header {
+    text-align: center;
+    margin-bottom: 48px;
 }
 
 .search-title {
-    text-align: center;
-    color: #333;
-    margin-bottom: 30px;
+    font-size: 2.5rem;
+    font-weight: 700;
+    color: #212529;
+    margin: 0 0 12px 0;
 }
 
-.search-controls {
+.search-subtitle {
+    font-size: 1.1rem;
+    color: #6c757d;
+    margin: 0;
+}
+
+/* --- Search Form --- */
+.search-input-wrapper {
     display: flex;
-    gap: 10px;
-    margin-bottom: 40px;
+    align-items: center;
+    background-color: #ffffff;
+    border-radius: 16px;
+    border: 1px solid #e9ecef;
+    padding: 8px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+    transition: box-shadow 0.3s ease;
+    margin-bottom: 48px;
+}
+
+.search-input-wrapper:focus-within {
+    box-shadow: 0 4px 20px rgba(0, 123, 255, 0.15);
+    border-color: #a3caff;
 }
 
 .search-select-area, .search-input-keyword {
-    padding: 12px;
-    border: 1px solid #ddd;
-    border-radius: 8px;
+    border: none;
+    background: transparent;
     font-size: 16px;
+    padding: 12px;
+    outline: none;
+    font-family: 'Poppins', sans-serif;
 }
 
 .search-select-area {
-    flex-basis: 180px;
+    color: #495057;
+    border-right: 1px solid #e9ecef;
+    margin-right: 8px;
     cursor: pointer;
-    background-color: white;
 }
 
 .search-input-keyword {
-    flex-grow: 1; /* 남는 공간을 모두 차지 */
+    flex-grow: 1;
+    color: #343a40;
 }
-
+.search-input-keyword::placeholder {
+    color: #adb5bd;
+}
 .search-input-keyword:disabled {
     background-color: #f5f5f5;
 }
 
+/* --- Search Results --- */
 .search-results-container {
     min-height: 200px;
 }
 
 .loading-indicator, .no-results-message {
     text-align: center;
-    color: #888;
-    font-size: 18px;
-    padding-top: 50px;
+    color: #868e96;
+    font-size: 1.1rem;
+    padding-top: 60px;
 }
 
 .festival-search-list {
     list-style: none;
     padding: 0;
     margin: 0;
-}
-
-.festival-search-item {
-    margin-bottom: 20px;
+    display: grid;
+    gap: 24px;
 }
 
 .festival-search-link {
     display: flex;
     align-items: center;
-    padding: 15px;
-    background-color: #f9f9f9;
-    border-radius: 12px;
+    padding: 20px;
+    background-color: #ffffff;
+    border: 1px solid #e9ecef;
+    border-radius: 16px;
     text-decoration: none;
     color: inherit;
-    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
 }
 
 .festival-search-link:hover {
-    transform: translateY(-5px);
-    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
+    transform: translateY(-4px);
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.08);
 }
 
 .festival-search-image {
-    width: 120px;
-    height: 90px;
-    border-radius: 8px;
+    width: 130px;
+    height: 100px;
+    border-radius: 12px;
     object-fit: cover;
-    margin-right: 20px;
-    border: 1px solid #eee;
+    margin-right: 24px;
+    flex-shrink: 0;
+    background-color: #f8f9fa;
 }
 
 .festival-search-info {
     display: flex;
     flex-direction: column;
+    gap: 8px;
+    flex-grow: 1;
+    min-width: 0;
 }
 
 .festival-search-title {
-    font-size: 18px;
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 10px;
+    font-size: 1.2rem;
     font-weight: 600;
-    margin: 0 0 8px 0;
+    color: #212529;
 }
 
-.festival-search-address {
-    font-size: 14px;
-    color: #666;
-    margin: 0;
+.festival-search-title > span {
+    word-break: break-word;
+}
+
+.festival-search-meta {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    font-size: 0.9rem;
+    color: #6c757d;
+}
+
+.ongoing-badge {
+    display: inline-block;
+    padding: 4px 10px;
+    border-radius: 6px;
+    background-color: #E53E3E;
+    color: white;
+    font-size: 13px;
+    font-weight: 700;
+    flex-shrink: 0;
+    white-space: nowrap;
 }

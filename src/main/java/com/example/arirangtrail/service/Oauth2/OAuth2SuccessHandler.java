@@ -68,7 +68,7 @@ public class OAuth2SuccessHandler implements AuthenticationSuccessHandler {
                     .build();
 
             response.addHeader(HttpHeaders.SET_COOKIE, cookie.toString());
-            response.sendRedirect("/test"); // 원하는 페이지로 리다이렉트
+            response.sendRedirect("http://localhost:3000/test"); // 원하는 페이지로 리다이렉트
         }
     }
 }
