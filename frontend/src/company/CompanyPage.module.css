@@ -1,77 +1,70 @@
 /* src/company/CompanyPage.module.css */
 
-.companyContainer {
-    max-width: 900px; /* 페이지 콘텐츠의 최대 너비 */
-    margin: 50px auto; /* 상하 50px, 좌우 자동 마진으로 중앙 정렬 */
-    padding: 30px; /* 내부 여백 */
-    border: 1px solid #eee;
+/* 전체 페이지 래퍼 */
+.pageWrapper {
+    height: 100vh;
+    overflow-y: scroll;
+    scroll-snap-type: y mandatory;
+}
+
+/* 각 섹션 */
+.section {
+    height: 100vh;
+    scroll-snap-align: start;
+    background-size: cover;
+    background-position: center;
+    transition: background-image 1s ease-in-out;
+    position: relative;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+/* 오버레이 (어둡게 + 내용) */
+.overlay {
+    background-color: rgba(0, 0, 0, 0.5);
+    padding: 40px;
     border-radius: 10px;
-    box-shadow: 0 4px 15px rgba(0,0,0,0.1); /* 부드러운 그림자 효과 */
-    background-color: #fff;
-    text-align: center; /* 전체 내용을 중앙 정렬 */
-    box-sizing: border-box;
-}
-
-.companyLogo {
-    max-width: 200px; /* 로고 이미지의 최대 너비 */
-    height: auto;
-    margin-bottom: 30px; /* 로고 아래 여백 */
-    display: block; /* 중앙 정렬을 위해 블록 요소로 설정 */
-    margin-left: auto; /* 로고 중앙 정렬 */
-    margin-right: auto; /* 로고 중앙 정렬 */
-}
-
-.companyTitle {
-    font-size: 2.2em;
-    color: #333;
-    margin-bottom: 20px;
-    font-weight: bold;
-}
-
-.companyDescription {
-    font-size: 1.1em;
-    line-height: 1.8; /* 줄 간격 조절로 가독성 향상 */
-    color: #555;
-    margin-bottom: 20px;
-    text-align: justify; /* 텍스트 양쪽 정렬 */
-}
-
-.contactInfo {
-    margin-top: 40px;
-    padding-top: 20px;
-    border-top: 1px solid #eee;
     text-align: center;
-    color: #666;
+    color: white;
+    max-width: 80%;
 }
 
-.contactInfo h3 {
-    font-size: 1.5em;
-    color: #333;
+/* 로고 */
+.logo {
+    max-width: 150px;
+    margin-bottom: 20px;
+}
+
+/* 제목 */
+.title {
+    font-size: 2.5rem;
+    font-weight: bold;
     margin-bottom: 15px;
 }
 
-.contactInfo p {
-    margin-bottom: 8px;
-    line-height: 1.5;
+/* 텍스트 */
+.text {
+    font-size: 1.2rem;
+    line-height: 1.6;
 }
 
-/* 모바일 반응형 */
+/* 반응형 */
 @media (max-width: 768px) {
-    .companyContainer {
-        margin: 20px auto;
+    .title {
+        font-size: 1.8rem;
+    }
+
+    .text {
+        font-size: 1rem;
+    }
+
+    .overlay {
         padding: 20px;
     }
-    .companyLogo {
-        max-width: 150px;
-    }
-    .companyTitle {
-        font-size: 1.8em;
-    }
-    .companyDescription {
-        font-size: 1em;
-        text-align: left; /* 모바일에서는 왼쪽 정렬이 더 나을 수 있음 */
-    }
-    .contactInfo h3 {
-        font-size: 1.3em;
+
+    .logo {
+        max-width: 100px;
     }
 }
+
