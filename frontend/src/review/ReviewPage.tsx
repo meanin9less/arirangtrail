@@ -3,7 +3,7 @@ import apiClient from '../api/axiosInstance';
 import axios from 'axios';
 import { useNavigate, useLocation, Link } from 'react-router-dom';
 // ✨ CSS 모듈 임포트 경로 수정: ReviewPage.module.css를 사용하도록 명확히 합니다.
-import styles from './ReviewPage.module.css';
+import styles from './Review.module.css';
 
 // 데이터 모델 정의 (DB 스키마에 맞춰 업데이트)
 interface Review {
