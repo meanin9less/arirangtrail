@@ -49,7 +49,6 @@ function App() {
             <Footer/>
         </Provider>
     );
-
 }
 
 export default App;
