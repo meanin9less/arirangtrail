@@ -6,6 +6,7 @@ import com.example.arirangtrail.jwt.JwtUtil;
 import com.example.arirangtrail.service.Oauth2.CustomOAuth2UserService;
 import com.example.arirangtrail.service.Oauth2.OAuth2SuccessHandler;
 import lombok.RequiredArgsConstructor;
+import org.springframework.boot.autoconfigure.security.servlet.PathRequest;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.RequestEntity;
@@ -16,10 +17,8 @@ import org.springframework.security.config.annotation.web.configuration.EnableWe
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.security.oauth2.client.endpoint.DefaultAuthorizationCodeTokenResponseClient;
 import org.springframework.security.oauth2.client.endpoint.OAuth2AccessTokenResponseClient;
 import org.springframework.security.oauth2.client.endpoint.OAuth2AuthorizationCodeGrantRequest;
-import org.springframework.security.oauth2.client.endpoint.OAuth2AuthorizationCodeGrantRequestEntityConverter;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.util.MultiValueMap;
@@ -58,11 +57,25 @@ public class SecurityConfig {
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+
+        // --- ✨✨✨ 핵심 수정 부분 시작 ✨✨✨ ---
+
+        // 1. JwtLoginFilter 인스턴스를 먼저 생성합니다.
+        JwtLoginFilter jwtLoginFilter = new JwtLoginFilter(authenticationManager(authenticationConfiguration), jwtUtil);
+
+        // 2. 이 필터가 어떤 URL을 처리할지 명시적으로 지정해줍니다.
+        //    이렇게 해야 기본값인 '/login' 대신 '/api/login'을 감시합니다.
+        jwtLoginFilter.setFilterProcessesUrl("/api/login");
+
+        // --- ✨✨✨ 핵심 수정 부분 끝 ✨✨✨ ---
+
+
         http.csrf(csrf->csrf.disable())
                 .formLogin(formLogin->formLogin.disable())
                 .httpBasic(httpBasic->httpBasic.disable())
 
                 .authorizeHttpRequests(authorizeHttpRequests->{
+
                     authorizeHttpRequests.anyRequest().permitAll();
                 })
 
@@ -82,7 +95,10 @@ public class SecurityConfig {
 
                 .addFilterBefore(new JwtFilter(jwtUtil), JwtLoginFilter.class)
 
-                .addFilterAt(new JwtLoginFilter(authenticationManager(authenticationConfiguration), jwtUtil), UsernamePasswordAuthenticationFilter.class)
+//                .addFilterAt(new JwtLoginFilter(authenticationManager(authenticationConfiguration), jwtUtil), UsernamePasswordAuthenticationFilter.class)
+                // ✨✨✨ 여기가 핵심 수정 포인트! ✨✨✨
+                // 새로 만들지 말고, 위에서 설정한 'jwtLoginFilter' 변수를 사용합니다.
+                .addFilterAt(jwtLoginFilter, UsernamePasswordAuthenticationFilter.class)
 
                 .oauth2Login(oauth2->
                         oauth2
