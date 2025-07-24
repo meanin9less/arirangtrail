@@ -1,42 +1,25 @@
-package com.example.arirangtrail.component.review;
+package com.example.arirangtrail.service.chat;
 
 import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.model.ObjectMetadata;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.stereotype.Component;
+import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
-import java.net.URL;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.UUID;
 
-
-//잠시 컴퍼넌트 꺼놓기
-@Component
+@Service
 @RequiredArgsConstructor
-public class FileStore {
+public class ChatFileService {
 
     private final AmazonS3 amazonS3;
 
     @Value("${cloud.aws.s3.bucket}")
     private String bucket;
 
-    public List<String> storeFiles(List<MultipartFile> multipartFiles) throws IOException {
-        List<String> storeFileResult = new ArrayList<>();
-        if (multipartFiles != null) {
-            for (MultipartFile multipartFile : multipartFiles) {
-                if (!multipartFile.isEmpty()) {
-                    storeFileResult.add(storeFile(multipartFile));
-                }
-            }
-        }
-        return storeFileResult;
-    }
-
-    public String storeFile(MultipartFile multipartFile) throws IOException {
+    public String saveFile(MultipartFile multipartFile) throws IOException {
         if (multipartFile.isEmpty()) {
             return null;
         }
@@ -48,24 +31,23 @@ public class FileStore {
         metadata.setContentLength(multipartFile.getSize());
         metadata.setContentType(multipartFile.getContentType());
 
+        // S3에 파일 업로드
         amazonS3.putObject(bucket, storeFileName, multipartFile.getInputStream(), metadata);
 
-        // Return the full URL of the uploaded file
+        // 업로드된 파일의 URL 반환
         return amazonS3.getUrl(bucket, storeFileName).toString();
     }
 
     public void deleteFile(String fileUrl) {
-        if (fileUrl == null || fileUrl.isEmpty()) {
-            return;
-        }
+        // 파일 URL을 기반으로 S3 객체 키를 추출하여 삭제하는 로직 (FileStore의 deleteFile 참조)
         try {
-            URL url = new URL(fileUrl);
-            String key = url.getPath().substring(1); // Remove the leading slash
+            String key = fileUrl.substring(fileUrl.indexOf(bucket + "/") + bucket.length() + 1);
             amazonS3.deleteObject(bucket, key);
         } catch (Exception e) {
-            // Log the exception
+            // e.printStackTrace(); // 로깅 프레임워크 사용 권장
         }
     }
+
 
     private String createStoreFileName(String originalFilename) {
         String ext = extractExt(originalFilename);

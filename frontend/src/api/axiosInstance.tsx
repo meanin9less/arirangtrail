@@ -14,12 +14,13 @@ declare module 'axios' {
         _retry?: boolean;
     }
 }
+const API_URL = process.env.REACT_APP_API_URL;
 
 // 1. Axios 인스턴스를 생성합니다.
 const apiClient: AxiosInstance = axios.create({
     // ✨ 변경할 부분: 여기에 백엔드 서버의 실제 주소를 입력하세요.
     // 예: "http://52.78.46.203:8080" 또는 "https://api.yourdomain.com"
-    baseURL: "/api", // 현재는 localhost:8080
+    baseURL: `${API_URL}/api`, // 현재는 localhost:8080
     headers: {
         "Content-Type": "application/json",
     },
@@ -63,7 +64,7 @@ apiClient.interceptors.response.use(
                 // 토큰 재발급 요청 (리프레시 토큰은 withCredentials 덕분에 자동으로 전송)
                 // ✨ 변경할 부분: 여기에 백엔드 서버의 실제 주소를 입력하세요.
                 // 예: "http://52.78.46.203:8080/reissue"
-                const response = await axios.post("http://localhost:8080/reissue", null, {
+                const response = await axios.post(`${API_URL}/api/reissue`, null, {
                     withCredentials: true,
                 });
 

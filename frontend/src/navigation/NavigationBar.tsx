@@ -17,6 +17,8 @@ const NavigationBar = () => {
     const jwtToken = useSelector((state: RootState) => state.token.token);
     const userProfile = useSelector((state: RootState) => state.token.userProfile);
     const isLoggedIn = !!jwtToken;
+    const totalUnreadCount = useSelector((state: RootState) => state.token.totalUnreadCount);
+
     const [showUserDropdown, setShowUserDropdown] = useState(false);
     const dropdownRef = useRef<HTMLDivElement>(null);
 
@@ -80,6 +82,15 @@ const NavigationBar = () => {
                     {isLoggedIn ? (
                         // 로그인 상태일 때: 프로필 이미지와 닉네임이 있는 드롭다운 버튼
                         <div className={styles.userMenuContainer}>
+                            {/* --- ✨ 여기가 새로 추가된 부분입니다 --- */}
+                            {/* 커뮤니티 링크를 감싸는 컨테이너를 하나 만들어서, 뱃지를 위치시킵니다. */}
+                            <Link to={"/community"} className={styles.communityLinkContainer}>
+                                나의 채팅기록이오
+                                {/* 안 읽은 메시지가 1개 이상일 때만 뱃지를 표시합니다. */}
+                                {totalUnreadCount > 0 && (
+                                    <span className={styles.unreadBadge}>안 읽은 메세지 {totalUnreadCount}</span>
+                                )}
+                            </Link>
                             <button
                                 className={styles.userProfileButton} // 새로운 스타일 클래스 적용
                                 onClick={() => setShowUserDropdown(!showUserDropdown)}
@@ -119,7 +130,7 @@ const NavigationBar = () => {
                     )}
                 </div>
             </nav>
-            <Outlet/>
+            {/*<Outlet />*/}
         </>
     );
 }
