@@ -39,7 +39,8 @@ apiClient.interceptors.request.use((config: InternalAxiosRequestConfig) => {
 
     // JWT 토큰이 존재하면 Authorization 헤더에 'Bearer' 접두사와 함께 토큰을 추가합니다.
     if (jwtToken) {
-        config.headers["Authorization"] = `Bearer ${jwtToken}`;
+        config.headers["Authorization"] = `${jwtToken}`;
+        // config.headers["Authorization"] = `Bearer ${jwtToken}`;
     }
 
     return config; // 수정된 요청 설정 반환
@@ -76,7 +77,8 @@ apiClient.interceptors.response.use(
                     store.dispatch(setToken(newAccessToken));
 
                     // 원래 실패했던 요청을 새로운 액세스 토큰으로 재시도합니다.
-                    originalRequest.headers['Authorization'] = `Bearer ${newAccessToken}`;
+                    originalRequest.headers['Authorization'] = `${newAccessToken}`;
+                    // originalRequest.headers['Authorization'] = `Bearer ${newAccessToken}`;
                     return apiClient(originalRequest); // 재시도된 요청 반환
                 } else {
                     console.error("Token reissue successful, but no new token in response header.");

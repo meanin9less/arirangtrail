@@ -116,6 +116,7 @@ jobs:
             sudo docker run -d -p 6379:6379 --name arirangredis -v arirangredis_volume:/data ${{ secrets.DOCKERHUB_USERNAME }}/arirangredis redis-server --requirepass ${{ secrets.REDIS_PASSWORD }}
 
             sudo docker run -d -p 8080:8080 --name arirangbackend \
+            -e SPRING_PROFILES_ACTIVE=prod \
             -e GOOGLE_CLIENT_ID=${{secrets.GOOGLE_CLIENT_ID}} \
             -e GOOGLE_CLIENT_SECRET=${{secrets.GOOGLE_CLIENT_SECRET}} \
             -e NAVER_CLIENT_ID=${{secrets.NAVER_CLIENT_ID}} \
