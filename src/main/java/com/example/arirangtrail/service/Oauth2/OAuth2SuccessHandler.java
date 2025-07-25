@@ -1,6 +1,8 @@
 package com.example.arirangtrail.service.Oauth2;
 
 import com.example.arirangtrail.data.dto.oauth2.CustomOAuth2User;
+import com.example.arirangtrail.data.entity.UserEntity;
+import com.example.arirangtrail.data.repository.UserRepository;
 import com.example.arirangtrail.jwt.JwtUtil;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.servlet.ServletException;
@@ -13,10 +15,13 @@ import org.springframework.http.ResponseCookie;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.web.authentication.AuthenticationSuccessHandler;
 import org.springframework.stereotype.Component;
+import org.springframework.web.util.UriComponentsBuilder;
 
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Optional;
 
 @Component
 @RequiredArgsConstructor
@@ -24,6 +29,7 @@ public class OAuth2SuccessHandler implements AuthenticationSuccessHandler {
 
     private final JwtUtil jwtUtil;
     private final ObjectMapper objectMapper = new ObjectMapper();
+    private final UserRepository userRepository;
 
     @Override
     public void onAuthenticationSuccess(HttpServletRequest request, HttpServletResponse response, Authentication authentication) throws IOException, ServletException {
@@ -31,16 +37,23 @@ public class OAuth2SuccessHandler implements AuthenticationSuccessHandler {
         CustomOAuth2User oAuth2User = (CustomOAuth2User) authentication.getPrincipal();
 
         String name = oAuth2User.getUserName();
-        String role = oAuth2User.getRole();
         String email = oAuth2User.getEmail();
 
-        System.out.printf(name+" onAuthenticationSuccess !!!!!!!!!!!!!");
-        System.out.printf(role+" onAuthenticationSuccess !!!!!!!!!!!!!");
-        System.out.printf(email+" onAuthenticationSuccess !!!!!!!!!!!!!");
+        Optional<UserEntity> loginUserOptional = this.userRepository.findByEmail(email);
+        if (loginUserOptional.isEmpty()) {
+            String targetUrl = UriComponentsBuilder.fromUriString("http://arirangtrail.duckdns.org/simplejoin")
+                    .queryParam("username", name)
+                    .queryParam("email", email)
+                    .encode(StandardCharsets.UTF_8)
+                    .build().toUriString();
+            response.sendRedirect(targetUrl);
+            return;
+        }
 
-        // JWT 생성
-        String access = jwtUtil.createToken("access", name, role, 60 * 10 * 1000L);
-        String refresh = jwtUtil.createToken("refresh", name, role, 24 * 60 * 60 * 1000L);
+        UserEntity user = loginUserOptional.get();
+
+        String access = jwtUtil.createToken("access", user.getUsername(), user.getRole(), 60 * 10 * 1000L);
+        String refresh = jwtUtil.createToken("refresh", user.getUsername(), user.getRole(), 24 * 60 * 60 * 1000L);
 
         // 클라이언트(Web/App)에 따라 분기 처리
         String appHeader = request.getHeader("andriodApp");
@@ -66,8 +79,8 @@ public class OAuth2SuccessHandler implements AuthenticationSuccessHandler {
                     .build();
 
             response.addHeader(HttpHeaders.SET_COOKIE, cookie.toString());
-//            response.sendRedirect("http://localhost:3000/test"); // 원하는 페이지로 리다이렉트
-            response.sendRedirect("http://arirangtrail.duckdns.org/reissue"); // 원하는 페이지로 리다이렉트
+            response.addHeader("Authorization", "Bearer " + access);
+            response.sendRedirect("http://arirangtrail.duckdns.org/userinfo"); // 원하는 페이지로 리다이렉트
         }
     }
 }

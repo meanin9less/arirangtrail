@@ -54,17 +54,8 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
 
-        // --- ✨✨✨ 핵심 수정 부분 시작 ✨✨✨ ---
-
-        // 1. JwtLoginFilter 인스턴스를 먼저 생성합니다.
         JwtLoginFilter jwtLoginFilter = new JwtLoginFilter(authenticationManager(authenticationConfiguration), jwtUtil);
-
-        // 2. 이 필터가 어떤 URL을 처리할지 명시적으로 지정해줍니다.
-        //    이렇게 해야 기본값인 '/login' 대신 '/api/login'을 감시합니다.
         jwtLoginFilter.setFilterProcessesUrl("/api/login");
-
-        // --- ✨✨✨ 핵심 수정 부분 끝 ✨✨✨ ---
-
 
         http.csrf(csrf->csrf.disable())
                 .formLogin(formLogin->formLogin.disable())
@@ -90,9 +81,6 @@ public class SecurityConfig {
 
                 .addFilterBefore(new JwtFilter(jwtUtil), JwtLoginFilter.class)
 
-//                .addFilterAt(new JwtLoginFilter(authenticationManager(authenticationConfiguration), jwtUtil), UsernamePasswordAuthenticationFilter.class)
-                // ✨✨✨ 여기가 핵심 수정 포인트! ✨✨✨
-                // 새로 만들지 말고, 위에서 설정한 'jwtLoginFilter' 변수를 사용합니다.
                 .addFilterAt(jwtLoginFilter, UsernamePasswordAuthenticationFilter.class)
 
                 .oauth2Login(oauth2->
