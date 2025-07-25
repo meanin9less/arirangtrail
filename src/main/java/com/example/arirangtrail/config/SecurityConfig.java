@@ -6,8 +6,10 @@ import com.example.arirangtrail.jwt.JwtUtil;
 import com.example.arirangtrail.service.Oauth2.CustomOAuth2UserService;
 import com.example.arirangtrail.service.Oauth2.OAuth2SuccessHandler;
 import lombok.RequiredArgsConstructor;
+import org.springframework.boot.autoconfigure.security.servlet.PathRequest;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.RequestEntity;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -20,6 +22,7 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.filter.ForwardedHeaderFilter;
 
+import java.util.Collections;
 import java.util.List;
 
 @Configuration
@@ -46,18 +49,29 @@ public class SecurityConfig {
         return new ForwardedHeaderFilter();
     }
 
+
+
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+
+        // --- ✨✨✨ 핵심 수정 부분 시작 ✨✨✨ ---
+
+        // 1. JwtLoginFilter 인스턴스를 먼저 생성합니다.
+        JwtLoginFilter jwtLoginFilter = new JwtLoginFilter(authenticationManager(authenticationConfiguration), jwtUtil);
+
+        // 2. 이 필터가 어떤 URL을 처리할지 명시적으로 지정해줍니다.
+        //    이렇게 해야 기본값인 '/login' 대신 '/api/login'을 감시합니다.
+        jwtLoginFilter.setFilterProcessesUrl("/api/login");
+
+        // --- ✨✨✨ 핵심 수정 부분 끝 ✨✨✨ ---
+
+
         http.csrf(csrf->csrf.disable())
                 .formLogin(formLogin->formLogin.disable())
                 .httpBasic(httpBasic->httpBasic.disable())
 
                 .authorizeHttpRequests(authorizeHttpRequests->{
-                    authorizeHttpRequests.requestMatchers("/", "/api/join", "/api/login", "/api/reissue", "/api/naver", "/api/kakao",
-                            "/api/login/oauth2/code/*", "/api/redis/**", "/api/reviews", "/api/reviews/", "/api/**").permitAll();
-                    authorizeHttpRequests.requestMatchers("/", "/api/join", "/api/login", "/api/reissue", "/api/naver", "/api/kakao", "/api/login/oauth2/code/*","/api/chat/**", "/ws-stomp/**").permitAll();
-                    authorizeHttpRequests.requestMatchers("/api/admin").hasRole("ADMIN");
-//                    authorizeHttpRequests.anyRequest().authenticated();
+                    authorizeHttpRequests.anyRequest().permitAll();
                 })
 
                 .cors(cors->cors.configurationSource(request -> {
@@ -76,13 +90,13 @@ public class SecurityConfig {
 
                 .addFilterBefore(new JwtFilter(jwtUtil), JwtLoginFilter.class)
 
-                .addFilterAt(new JwtLoginFilter(authenticationManager(authenticationConfiguration), jwtUtil), UsernamePasswordAuthenticationFilter.class)
+//                .addFilterAt(new JwtLoginFilter(authenticationManager(authenticationConfiguration), jwtUtil), UsernamePasswordAuthenticationFilter.class)
+                // ✨✨✨ 여기가 핵심 수정 포인트! ✨✨✨
+                // 새로 만들지 말고, 위에서 설정한 'jwtLoginFilter' 변수를 사용합니다.
+                .addFilterAt(jwtLoginFilter, UsernamePasswordAuthenticationFilter.class)
 
                 .oauth2Login(oauth2->
                         oauth2
-                                .redirectionEndpoint(endpoint ->
-                                        endpoint.baseUri("/api/login/oauth2/code")
-                                )
                                 .userInfoEndpoint(userInfo->{
                                     userInfo.userService(customOAuth2UserService);
                                 })

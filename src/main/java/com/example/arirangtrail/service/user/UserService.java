@@ -21,5 +21,4 @@ public class UserService {
                 joinDTO.getNickname()
         );
     }
-
 }
