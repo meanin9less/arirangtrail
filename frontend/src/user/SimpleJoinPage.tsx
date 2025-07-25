@@ -10,6 +10,7 @@ const SimpleJoinPage: React.FC = () => {
     const email = searchParams.get("email") ?? "";
 
     const navigate = useNavigate();
+    const provider = searchParams.get("provider") ?? ""; // kakao, google, naver 소셜 로그인 파라미터받기
 
     const [firstname, setFirstName] = useState('');
     const [lastname, setLastName] = useState('');
@@ -17,6 +18,20 @@ const SimpleJoinPage: React.FC = () => {
     const [nickname, setNickname] = useState('');
     const [error, setError] = useState('');
     const [success, setSuccess] = useState('');
+
+    // 소셜 로그인별로 case변경
+    const getSubmitButtonClass = (provider: string) => {
+        switch (provider) {
+            case "kakao":
+                return `${styles.submitButton} ${styles.kakaoSubmit}`;
+            case "google":
+                return `${styles.submitButton} ${styles.googleSubmit}`;
+            case "naver":
+                return `${styles.submitButton} ${styles.naverSubmit}`;
+            default:
+                return styles.submitButton;
+        }
+    };
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -100,7 +115,7 @@ const SimpleJoinPage: React.FC = () => {
                 {error && <div className={styles.errorMessage}>{error}</div>}
                 {success && <div className={styles.successMessage}>{success}</div>}
 
-                <button type="submit" className={styles.submitButton}>
+                <button type="submit" className={getSubmitButtonClass(provider)}>
                     가입하기
                 </button>
             </form>
