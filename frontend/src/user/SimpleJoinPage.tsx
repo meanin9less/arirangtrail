@@ -20,7 +20,7 @@ const SimpleJoinPage: React.FC = () => {
         setSuccess('');
 
         try {
-            const response = await axios.post('/simplejoin/:username/:email', {
+            const response = await axios.post('/join', {
                 username,
                 email,
                 firstname,
