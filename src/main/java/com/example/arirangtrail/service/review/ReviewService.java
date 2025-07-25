@@ -22,11 +22,16 @@ import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 //잠시 주석처리
 @Service
 @Profile("prod") // "prod" 프로필이 활성화될 때만 이 빈(Bean)을 생성하라는 의미!
 @RequiredArgsConstructor
 public class ReviewService {
+
+    private static final Logger log = LoggerFactory.getLogger(ReviewService.class); // 로거 추가
 
     private final ReviewRepository reviewRepository;
     private final FileStore fileStore;
@@ -49,7 +54,13 @@ public class ReviewService {
         reviewEntity.setUpdatedat(Instant.now());
 
         if (photoFiles != null && !photoFiles.isEmpty()) {
+            log.info("createReview: 업로드할 파일 개수: {}", photoFiles.size()); // 로그 추가
+
             List<String> photoUrls = fileStore.storeFiles(photoFiles, bucket);
+
+            log.info("createReview: S3에 업로드된 URL 개수: {}", photoUrls.size()); // 로그 추가
+            photoUrls.forEach(url -> log.info("createReview: 업로드된 URL: {}", url)); // 로그 추가
+
             List<ReviewphotoEntity> reviewPhotos = photoUrls.stream()
                     .map(url -> {
                         ReviewphotoEntity newPhoto = new ReviewphotoEntity();
@@ -59,6 +70,9 @@ public class ReviewService {
                     .collect(Collectors.toList());
 
             reviewEntity.changePhotos(reviewPhotos);
+            log.info("createReview: ReviewEntity에 사진 {}개가 설정되었습니다.", reviewPhotos.size()); // 로그 추가
+        } else {
+            log.info("createReview: 업로드할 파일이 없습니다."); // 로그 추가
         }
         return reviewRepository.save(reviewEntity);
     }
