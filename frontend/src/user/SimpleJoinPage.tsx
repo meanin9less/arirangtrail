@@ -1,10 +1,14 @@
 import React, { useState } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import {useParams, useNavigate, useSearchParams} from 'react-router-dom';
 import axios from 'axios';
 import styles from './User.module.css';
 
 const SimpleJoinPage: React.FC = () => {
-    const { username, email } = useParams<{ username: string; email: string }>();
+    const [searchParams] = useSearchParams();
+
+    const username = searchParams.get("username") ?? "";
+    const email = searchParams.get("email") ?? "";
+
     const navigate = useNavigate();
 
     const [firstname, setFirstName] = useState('');

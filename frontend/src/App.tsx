@@ -32,7 +32,7 @@ function App() {
                         <Route index element={<HomePage />} />
                         <Route path="login" element={<LoginPage />} />
                         <Route path="join" element={<JoinPage />} />
-                        <Route path="/simplejoin/:username/:email" element={<SimpleJoinPage/>}></Route>
+                        <Route path="/simplejoin" element={<SimpleJoinPage/>}></Route>
                         <Route path="logout" element={<LogoutPage />} />
                         <Route path="mypage" element={<MyPage />} />
                         <Route path="mypage/editinfo" element={<EditInfoPage />} />
