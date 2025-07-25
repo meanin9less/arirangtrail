@@ -1,10 +1,11 @@
 import React, { useState, useEffect, FormEvent } from 'react';
 import axios from 'axios';
 import ChatRoom from './ChatRoom';
-import { useSelector } from 'react-redux';
+import {useDispatch, useSelector} from 'react-redux';
 import { RootState } from '../store';
 import { Client } from "@stomp/stompjs";
 import SockJS from "sockjs-client";
+
 
 // 백엔드의 DTO와 일치하는 인터페이스 (participantCount 포함 확인)
 interface Room {
@@ -17,7 +18,7 @@ interface Room {
 const CommunityPage = () => {
     const userProfile = useSelector((state: RootState) => state.token.userProfile);
     const userName = userProfile?.username;
-
+    const dispatch= useDispatch();
     const [rooms, setRooms] = useState<Room[]>([]);
     const [newRoomName, setNewRoomName] = useState('');
     const [selectedRoomId, setSelectedRoomId] = useState<string | null>(null);
