@@ -1,5 +1,6 @@
 package com.example.arirangtrail.data.dao.user;
 
+import com.example.arirangtrail.data.dto.user.JoinDTO;
 import com.example.arirangtrail.data.entity.UserEntity;
 import com.example.arirangtrail.data.repository.UserRepository;
 import jakarta.persistence.EntityNotFoundException;
@@ -13,6 +14,7 @@ import java.sql.Date;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.util.Optional;
+import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
@@ -100,5 +102,21 @@ public class UserDAO {
         }else {
             throw new EntityNotFoundException("user not found");
         }
+    }
+
+    public UserEntity simpleJoin(String username, String email, String firstName, String lastName, LocalDate birthdate, String nickname) {
+        UserEntity userEntity = UserEntity.builder()
+                .username(username)
+                .password(passwordEncoder.encode(UUID.randomUUID().toString().replace("-", "")))
+                .email(email)
+                .firstname(firstName)
+                .lastname(lastName)
+                .birthdate(birthdate)
+                .nickname(nickname)
+                .role("ROLE_USER")
+                .createdat(Instant.now())
+                .updatedat(Instant.now())
+                .build();
+        return this.userRepository.save(userEntity);
     }
 }

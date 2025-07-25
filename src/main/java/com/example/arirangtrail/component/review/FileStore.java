@@ -3,6 +3,7 @@ package com.example.arirangtrail.component.review;
 import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.model.ObjectMetadata;
 import lombok.RequiredArgsConstructor;
+import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -15,6 +16,7 @@ import java.util.UUID;
 
 //잠시 컴퍼넌트 꺼놓기
 @Component
+@Profile("prod") // "prod" 프로필이 활성화될 때만 이 빈(Bean)을 생성하라는 의미!
 @RequiredArgsConstructor
 public class FileStore {
 
