@@ -11,6 +11,7 @@ import com.example.arirangtrail.data.repository.ReviewRepository;
 import jakarta.persistence.EntityNotFoundException;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -28,6 +29,9 @@ public class ReviewService {
     private final ReviewRepository reviewRepository;
     private final FileStore fileStore;
 
+    @Value("${cloud.aws.s3.bucket}")
+    private String bucket;
+
     @Transactional
     public ReviewEntity createReview(ReviewCreateRequestDto createDto, List<MultipartFile> photoFiles) throws IOException {
         ReviewEntity reviewEntity = new ReviewEntity();
@@ -43,7 +47,7 @@ public class ReviewService {
         reviewEntity.setUpdatedat(Instant.now());
 
         if (photoFiles != null && !photoFiles.isEmpty()) {
-            List<String> photoUrls = fileStore.storeFiles(photoFiles);
+            List<String> photoUrls = fileStore.storeFiles(photoFiles, bucket);
             List<ReviewphotoEntity> reviewPhotos = photoUrls.stream()
                     .map(url -> {
                         ReviewphotoEntity newPhoto = new ReviewphotoEntity();
@@ -71,10 +75,10 @@ public class ReviewService {
         if (newPhotoFiles != null && !newPhotoFiles.isEmpty()) {
             Set<ReviewphotoEntity> oldPhotos = reviewEntity.getReviewphotos();
             if (oldPhotos != null && !oldPhotos.isEmpty()) {
-                oldPhotos.forEach(photo -> fileStore.deleteFile(photo.getImageurl()));
+                oldPhotos.forEach(photo -> fileStore.deleteFile(photo.getImageurl(), bucket));
             }
 
-            List<String> newPhotoUrls = fileStore.storeFiles(newPhotoFiles);
+            List<String> newPhotoUrls = fileStore.storeFiles(newPhotoFiles, bucket);
 
             List<ReviewphotoEntity> newReviewPhotos = newPhotoUrls.stream()
                     .map(url -> {
@@ -95,7 +99,7 @@ public class ReviewService {
 
         Set<ReviewphotoEntity> photos = reviewEntity.getReviewphotos();
         if (photos != null && !photos.isEmpty()) {
-            photos.forEach(photo -> fileStore.deleteFile(photo.getImageurl()));
+            photos.forEach(photo -> fileStore.deleteFile(photo.getImageurl(), bucket));
         }
 
         reviewRepository.delete(reviewEntity);
