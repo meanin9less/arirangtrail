@@ -112,7 +112,12 @@ const CommunityPage = () => {
     }
 
     if (!userName) {
-        return <div>로그인 후 이용 가능합니다.</div>;
+        return <div>
+            {/*<img src={"/dochat-e1.png"} alt={"도챗1"}/>*/}
+            로그인 후 이용 가능합니다.
+            {/*<img src={"/dochat-e2.png"} alt={"도챗2"}/>*/}
+
+        </div>;
     }
 
 // 이 부분은 CommunityPage.tsx의 return 문 전체입니다.
