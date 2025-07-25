@@ -37,10 +37,8 @@ public class JwtLoginFilter extends UsernamePasswordAuthenticationFilter {
 
     @Override
     public Authentication attemptAuthentication(HttpServletRequest request, HttpServletResponse response) throws AuthenticationException {
-//        setFilterProcessesUrl("/admin-login");
         String username = obtainUsername(request);
         String password = obtainPassword(request);
-        //클라이언트 요청에서 username, password 추출
 
         UsernamePasswordAuthenticationToken authRequest = new UsernamePasswordAuthenticationToken(username, password, null);
         //스프링 시큐리티에서 username과 password를 검증하기 위해서는 token에 담아야 함
@@ -49,26 +47,6 @@ public class JwtLoginFilter extends UsernamePasswordAuthenticationFilter {
 
     @Override
     public void successfulAuthentication(HttpServletRequest request, HttpServletResponse response, FilterChain chain, Authentication authResult) throws IOException, ServletException {
-//        UserDetails userDetails = (UserDetails) authResult.getPrincipal();
-//        String username = userDetails.getUsername();
-//        Collection<? extends GrantedAuthority> grantedAuthorities = userDetails.getAuthorities();
-//        Iterator<? extends GrantedAuthority> iterator = grantedAuthorities.iterator();
-//        GrantedAuthority grantedAuthority = iterator.next();
-//        String role = grantedAuthority.getAuthority();
-//
-//        Map<String, Object> responseData = new HashMap<>();
-//        responseData.put("role", role);
-//
-//        ObjectMapper mapper = new ObjectMapper();
-//        String jsonMessage = mapper.writeValueAsString(responseData);
-//
-//        String access_token = this.jwtUtil.createToken("access", username, role, 5 * 1000L);
-//        String refresh_token = this.jwtUtil.createToken("refresh", username, role, 60 * 60 * 24 * 1000L);
-//        response.addHeader("Authorization", "Bearer " + access_token);
-//        response.addCookie(this.createCookie("refresh", refresh_token));
-//        response.setCharacterEncoding("UTF-8");
-//        response.getWriter().write(jsonMessage);
-        // Principal을 CustomUserDetails로 캐스팅
         CustomUserDetails userDetails = (CustomUserDetails) authResult.getPrincipal();
         // CustomUserDetails에서 UserEntity를 꺼냄
         UserEntity userEntity = userDetails.getUserEntity();
@@ -93,7 +71,7 @@ public class JwtLoginFilter extends UsernamePasswordAuthenticationFilter {
         mapper.disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
         String jsonMessage = mapper.writeValueAsString(responseData);
 
-        String access_token = this.jwtUtil.createToken("access", username, role, 5 * 1000L);// 5초
+        String access_token = this.jwtUtil.createToken("access", username, role, 300 * 1000L);// 5초
         String refresh_token = this.jwtUtil.createToken("refresh", username, role, 60 * 60 * 24 * 1000L);
 
         response.addHeader("Authorization", "Bearer " + access_token);

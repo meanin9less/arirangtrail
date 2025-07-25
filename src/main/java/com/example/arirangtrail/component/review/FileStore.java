@@ -21,22 +21,19 @@ public class FileStore {
 
     private final AmazonS3 amazonS3;
 
-    @Value("${cloud.aws.s3.bucket}")
-    private String bucket;
-
-    public List<String> storeFiles(List<MultipartFile> multipartFiles) throws IOException {
+    public List<String> storeFiles(List<MultipartFile> multipartFiles, String bucket) throws IOException {
         List<String> storeFileResult = new ArrayList<>();
         if (multipartFiles != null) {
             for (MultipartFile multipartFile : multipartFiles) {
                 if (!multipartFile.isEmpty()) {
-                    storeFileResult.add(storeFile(multipartFile));
+                    storeFileResult.add(storeFile(multipartFile, bucket));
                 }
             }
         }
         return storeFileResult;
     }
 
-    public String storeFile(MultipartFile multipartFile) throws IOException {
+    public String storeFile(MultipartFile multipartFile, String bucket) throws IOException {
         if (multipartFile.isEmpty()) {
             return null;
         }
@@ -54,7 +51,7 @@ public class FileStore {
         return amazonS3.getUrl(bucket, storeFileName).toString();
     }
 
-    public void deleteFile(String fileUrl) {
+    public void deleteFile(String fileUrl, String bucket) {
         if (fileUrl == null || fileUrl.isEmpty()) {
             return;
         }
