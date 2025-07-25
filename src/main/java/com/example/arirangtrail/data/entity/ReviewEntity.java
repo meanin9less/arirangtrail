@@ -11,6 +11,7 @@ import org.hibernate.annotations.ColumnDefault;
 import java.math.BigDecimal;
 import java.time.Instant;
 import java.time.LocalDate;
+import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
@@ -80,14 +81,19 @@ public class ReviewEntity {
      * @param newPhotos 새로 연결할 ReviewphotoEntity 목록
      */
     public void changePhotos(List<ReviewphotoEntity> newPhotos) {
-        // 1. 기존 사진 목록을 모두 비웁니다. (orphanRemoval = true 덕분에 DB에서 DELETE 쿼리가 나감)
-        this.reviewphotos.clear();
+        // 기존 사진 모두 제거 (orphanRemoval=true에 의해 DB에서도 삭제됨)
+        if (this.reviewphotos != null) {
+            this.reviewphotos.clear();
+        } else {
+            this.reviewphotos = new HashSet<>();
+        }
 
-        // 2. 새로운 사진 목록을 추가합니다.
-        if (newPhotos != null) {
-            this.reviewphotos.addAll(newPhotos);
-            // 3. 각 사진(자식)에게 부모가 누구인지 알려줍니다.
-            newPhotos.forEach(photo -> photo.setReviewid(this));
+        // 새로운 사진 추가 및 연관관계 설정
+        if (newPhotos != null && !newPhotos.isEmpty()) {
+            for (ReviewphotoEntity newPhoto : newPhotos) {
+                this.reviewphotos.add(newPhoto);
+                newPhoto.setReviewid(this); // 핵심: 자식 엔티티에 부모(자기 자신)를 설정
+            }
         }
     }
 }
