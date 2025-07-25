@@ -1,6 +1,6 @@
 package com.example.arirangtrail.data.dto.oauth2;
 
-import com.example.arirangtrail.data.dto.user.UserDTO;
+import com.example.arirangtrail.data.dto.user.UserAuthDTO;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.GrantedAuthority;
@@ -14,7 +14,7 @@ import java.util.Map;
 @RequiredArgsConstructor
 public class CustomOAuth2User implements OAuth2User {
 
-    private final UserDTO userDTO;
+    private final UserAuthDTO userAuthDTO;
 
     @Override
     public Map<String, Object> getAttributes() {
@@ -27,7 +27,7 @@ public class CustomOAuth2User implements OAuth2User {
         authorities.add(new GrantedAuthority() {
             @Override
             public String getAuthority() {
-                return userDTO.getRole();
+                return userAuthDTO.getRole();
             }
         });
         return authorities;
@@ -35,18 +35,18 @@ public class CustomOAuth2User implements OAuth2User {
 
     @Override
     public String getName() {
-        return this.userDTO.getName();
+        return this.userAuthDTO.getName();
     }
 
     public String getUserName(){
-        return this.userDTO.getUsername();
+        return this.userAuthDTO.getUsername();
     }
 
     public String getRole() {
-        return this.userDTO.getRole();
+        return this.userAuthDTO.getRole();
     }
 
     public String getEmail() {
-        return this.userDTO.getEmail();
+        return this.userAuthDTO.getEmail();
     }
 }

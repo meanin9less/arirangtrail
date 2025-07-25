@@ -22,7 +22,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 //잠시 주석처리
-//@Service
+@Service
 @RequiredArgsConstructor
 public class ReviewService {
 

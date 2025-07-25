@@ -128,7 +128,23 @@ useEffect(() => {
 
     // 컴포넌트가 사라질 때는 웹소켓 연결만 깔끔하게 끊어줍니다.
     return () => {
+        // ★ 1. 현재 컴포넌트의 마지막 메시지 번호를 가져옵니다.
+        // lastMessageSeq 상태 대신 lastMessageSeqRef를 사용해야 합니다.
+        const finalReadSeq = lastMessageSeqRef.current;
+        console.log(`[나가기 전 읽음 처리] Room: ${roomId}, User: ${userName}, LastReadSeq: ${finalReadSeq}`);
+
+        // ★ 2. 서버에 마지막으로 읽은 위치를 업데이트합니다.
+        updateLastReadSequence(finalReadSeq);
+
+        // ★ 3. 기존의 웹소켓 연결 해제 로직은 그대로 둡니다.
         if (clientRef.current?.connected) {
+            // 퇴장 메시지를 서버에 먼저 보낼 시간을 확보하기 위해 약간의 지연을 둘 수도 있습니다.
+            // (필수는 아니지만, 안정성을 높일 수 있습니다)
+            clientRef.current.publish({
+                destination: '/api/pub/chat/leave', // 백엔드에 퇴장 메시지용 엔드포인트가 있다면 사용
+                body: JSON.stringify({ roomId, sender: userName, type: 'LEAVE' }),
+            });
+
             clientRef.current.deactivate();
             console.log('STOMP 연결이 비활성화되었습니다.');
         }
