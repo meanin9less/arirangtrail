@@ -22,7 +22,7 @@ import java.util.List;
 import java.util.Map; // Map 임포트
 
 //잠시 꺼놓기
-//@RestController
+@RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/reviews")
 public class ReviewController {
