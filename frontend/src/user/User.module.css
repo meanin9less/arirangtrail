@@ -380,4 +380,30 @@
         padding: 10px 20px;
         font-size: 1em;
     }
+
+
+    /* 소셜별 가입 버튼 색상 */
+    .kakaoSubmit {
+        background-color: #fee500;
+        color: #3c1e1e;
+    }
+    .kakaoSubmit:hover {
+        background-color: #e5cc00;
+    }
+
+    .googleSubmit {
+        background-color: #db4437;
+        color: white;
+    }
+    .googleSubmit:hover {
+        background-color: #c23b30;
+    }
+
+    .naverSubmit {
+        background-color: #1ec800;
+        color: white;
+    }
+    .naverSubmit:hover {
+        background-color: #179e00;
+    }
 }
