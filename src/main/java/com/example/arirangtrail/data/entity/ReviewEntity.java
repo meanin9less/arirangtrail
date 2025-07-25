@@ -11,10 +11,8 @@ import org.hibernate.annotations.ColumnDefault;
 import java.math.BigDecimal;
 import java.time.Instant;
 import java.time.LocalDate;
-import java.util.HashSet;
-import java.util.LinkedHashSet;
+import java.util.ArrayList;
 import java.util.List;
-import java.util.Set;
 
 /**
  * 리뷰 정보를 데이터베이스의 'reviews' 테이블에 매핑하는 엔티티입니다.
@@ -68,7 +66,7 @@ public class ReviewEntity {
 
     @OneToMany(mappedBy = "review", cascade = CascadeType.ALL, orphanRemoval = true)
     // review 필드에 의해 매핑되며, ReviewEntity가 삭제되면 연관된 ReviewphotoEntity도 삭제됩니다.
-    private Set<ReviewphotoEntity> reviewphotos = new LinkedHashSet<>(); // 리뷰에 첨부된 사진 목록
+    private List<ReviewphotoEntity> reviewphotos = new ArrayList<>(); // 리뷰에 첨부된 사진 목록
 
     @Size(max = 255)
     @NotNull
@@ -85,14 +83,14 @@ public class ReviewEntity {
         if (this.reviewphotos != null) {
             this.reviewphotos.clear();
         } else {
-            this.reviewphotos = new HashSet<>();
+            this.reviewphotos = new ArrayList<>();
         }
 
         // 새로운 사진 추가 및 연관관계 설정
         if (newPhotos != null && !newPhotos.isEmpty()) {
             for (ReviewphotoEntity newPhoto : newPhotos) {
-                this.reviewphotos.add(newPhoto);
                 newPhoto.setReview(this); // 핵심: 자식 엔티티에 부모(자기 자신)를 설정
+                this.reviewphotos.add(newPhoto);
             }
         }
     }
