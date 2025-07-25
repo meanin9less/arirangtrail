@@ -66,8 +66,8 @@ public class ReviewEntity {
     @Column(name = "updatedat", nullable = false)
     private Instant updatedat; // 수정일 (Instant 타입)
 
-    @OneToMany(mappedBy = "reviewid", cascade = CascadeType.ALL, orphanRemoval = true)
-    // reviewid 필드에 의해 매핑되며, ReviewEntity가 삭제되면 연관된 ReviewphotoEntity도 삭제됩니다.
+    @OneToMany(mappedBy = "review", cascade = CascadeType.ALL, orphanRemoval = true)
+    // review 필드에 의해 매핑되며, ReviewEntity가 삭제되면 연관된 ReviewphotoEntity도 삭제됩니다.
     private Set<ReviewphotoEntity> reviewphotos = new LinkedHashSet<>(); // 리뷰에 첨부된 사진 목록
 
     @Size(max = 255)
@@ -92,7 +92,7 @@ public class ReviewEntity {
         if (newPhotos != null && !newPhotos.isEmpty()) {
             for (ReviewphotoEntity newPhoto : newPhotos) {
                 this.reviewphotos.add(newPhoto);
-                newPhoto.setReviewid(this); // 핵심: 자식 엔티티에 부모(자기 자신)를 설정
+                newPhoto.setReview(this); // 핵심: 자식 엔티티에 부모(자기 자신)를 설정
             }
         }
     }
