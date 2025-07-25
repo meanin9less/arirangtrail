@@ -27,6 +27,7 @@ import java.util.stream.Collectors;
 public class ReviewService {
 
     private final ReviewRepository reviewRepository;
+    private final ReviewphotoRepository reviewphotoRepository; // ReviewphotoRepository 주입
     private final FileStore fileStore;
 
     @Value("${cloud.aws.s3.bucket}")
@@ -34,31 +35,38 @@ public class ReviewService {
 
     @Transactional
     public ReviewEntity createReview(ReviewCreateRequestDto createDto, List<MultipartFile> photoFiles) throws IOException {
-        ReviewEntity reviewEntity = new ReviewEntity();
-        reviewEntity.setUsername(createDto.getUsername());
-        reviewEntity.setContentid(createDto.getContentid());
-        reviewEntity.setContenttitle(createDto.getContenttitle());
-        reviewEntity.setTitle(createDto.getTitle());
-        reviewEntity.setContent(createDto.getContent());
-        reviewEntity.setRating(createDto.getRating());
-        reviewEntity.setVisitdate(createDto.getVisitdate());
+        // 1. ReviewEntity 생성 및 저장 (사진 정보 제외)
+        ReviewEntity reviewToSave = new ReviewEntity();
+        reviewToSave.setUsername(createDto.getUsername());
+        reviewToSave.setContentid(createDto.getContentid());
+        reviewToSave.setContenttitle(createDto.getContenttitle());
+        reviewToSave.setTitle(createDto.getTitle());
+        reviewToSave.setContent(createDto.getContent());
+        reviewToSave.setRating(createDto.getRating());
+        reviewToSave.setVisitdate(createDto.getVisitdate());
+        reviewToSave.setCreatedat(Instant.now());
+        reviewToSave.setUpdatedat(Instant.now());
 
-        reviewEntity.setCreatedat(Instant.now());
-        reviewEntity.setUpdatedat(Instant.now());
+        ReviewEntity savedReview = reviewRepository.save(reviewToSave);
 
+        // 2. 사진 파일이 있는 경우, S3 업로드 후 ReviewphotoEntity 저장
         if (photoFiles != null && !photoFiles.isEmpty()) {
             List<String> photoUrls = fileStore.storeFiles(photoFiles, bucket);
-            List<ReviewphotoEntity> reviewPhotos = photoUrls.stream()
+
+            List<ReviewphotoEntity> photosToSave = photoUrls.stream()
                     .map(url -> {
                         ReviewphotoEntity newPhoto = new ReviewphotoEntity();
                         newPhoto.setImageurl(url);
+                        newPhoto.setReview(savedReview); // ★ 저장된 ReviewEntity(ID가 있는)를 설정
                         return newPhoto;
                     })
                     .collect(Collectors.toList());
 
-            reviewEntity.changePhotos(reviewPhotos);
+            // 3. ReviewphotoEntity 리스트를 DB에 저장
+            reviewphotoRepository.saveAll(photosToSave);
         }
-        return reviewRepository.save(reviewEntity);
+
+        return savedReview;
     }
 
     @Transactional
