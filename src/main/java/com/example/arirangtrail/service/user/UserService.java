@@ -2,6 +2,8 @@ package com.example.arirangtrail.service.user;
 
 import com.example.arirangtrail.data.dao.user.UserDAO;
 import com.example.arirangtrail.data.dto.user.JoinDTO;
+import com.example.arirangtrail.data.dto.user.UserDTO;
+import com.example.arirangtrail.data.entity.UserEntity;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -21,4 +23,48 @@ public class UserService {
                 joinDTO.getNickname()
         );
     }
+
+    public void resetPassword(String username, String password) {
+        this.userDAO.resetPassword(username, password);
+    }
+
+    public UserDTO updateInform(UserDTO userDTO) {
+        UserEntity updated=this.userDAO.updateInform(userDTO.getUsername(),userDTO.getFirstname(),userDTO.getLastname(),userDTO.getEmail(),userDTO.getBirthdate(),userDTO.getNickname(),userDTO.getImageurl());
+        UserDTO updatedDTO= UserDTO.builder()
+                .username(updated.getUsername())
+                .firstname(updated.getFirstname())
+                .lastname(updated.getLastname())
+                .email(updated.getEmail())
+                .birthdate(updated.getBirthdate())
+                .nickname(updated.getNickname())
+                .imageurl(updated.getImageurl())
+                .build();
+        return updatedDTO;
+    }
+
+    public Boolean comaparePassword(String username, String password) {
+        return this.userDAO.comaparePassword(username, password);
+    }
+
+    public UserDTO userInform(String username) {
+        UserEntity entity= this.userDAO.userInform(username);
+        UserDTO userDTO = UserDTO.builder()
+                .username(entity.getUsername())
+                .role(entity.getRole())
+                .firstname(entity.getFirstname())
+                .lastname(entity.getLastname())
+                .email(entity.getEmail())
+                .birthdate(entity.getBirthdate())
+                .nickname(entity.getNickname())
+                .imageurl(entity.getImageurl())
+                .build();
+        return userDTO;
+    }
+
+    public String deleteMember(String username) {
+        this.userDAO.deleteMember(username);
+        return "deleteMember success";
+    }
+
+
 }

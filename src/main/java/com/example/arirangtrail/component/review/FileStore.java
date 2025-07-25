@@ -21,9 +21,6 @@ public class FileStore {
 
     private final AmazonS3 amazonS3;
 
-    @Value("${cloud.aws.s3.bucket}")
-    private String bucket;
-
     public List<String> storeFiles(List<MultipartFile> multipartFiles) throws IOException {
         List<String> storeFileResult = new ArrayList<>();
         if (multipartFiles != null) {
@@ -36,7 +33,7 @@ public class FileStore {
         return storeFileResult;
     }
 
-    public String storeFile(MultipartFile multipartFile) throws IOException {
+    public String storeFile(MultipartFile multipartFile,String bucket) throws IOException {
         if (multipartFile.isEmpty()) {
             return null;
         }
