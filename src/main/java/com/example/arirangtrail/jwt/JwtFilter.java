@@ -45,6 +45,7 @@ public class JwtFilter extends OncePerRequestFilter {
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException {
 
+
         // ======================= ▼▼▼▼▼ 이 부분 추가 ▼▼▼▼▼ =======================
         // OAuth2 로그인 콜백 요청은 토큰 검사를 건너뜀
         String requestURI = request.getRequestURI();

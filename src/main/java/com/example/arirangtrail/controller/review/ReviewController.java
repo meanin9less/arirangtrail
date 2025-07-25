@@ -7,6 +7,7 @@ import com.example.arirangtrail.data.entity.ReviewEntity;
 import com.example.arirangtrail.service.review.ReviewService;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
+import org.springframework.context.annotation.Profile;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -23,6 +24,7 @@ import java.util.Map; // Map 임포트
 
 //잠시 꺼놓기
 @RestController
+@Profile("prod") // "prod" 프로필이 활성화될 때만 이 빈(Bean)을 생성하라는 의미!
 @RequiredArgsConstructor
 @RequestMapping("/api/reviews")
 public class ReviewController {

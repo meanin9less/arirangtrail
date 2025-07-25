@@ -4,6 +4,7 @@ import {useSelector, useDispatch} from 'react-redux';
 import {RootState, AppDispatch, clearAuth} from '../store'; // clearAuth 임포트
 import styles from './NavigationBar.module.css';
 
+
 // 이미지 파일 임포트 (경로 확인: src/images/ 에 있다고 가정)
 import arirangTrailIcon from '../images/arirang1.png'; // 아리랑 트레일 로고 이미지 임포트
 import personIcon from '../images/person.png'; // 로그인 아이콘 (로그아웃 상태일 때)
