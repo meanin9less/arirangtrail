@@ -89,7 +89,7 @@ public class ReviewService {
         reviewEntity.setVisitdate(updateDto.getVisitdate());
 
         if (newPhotoFiles != null && !newPhotoFiles.isEmpty()) {
-            Set<ReviewphotoEntity> oldPhotos = reviewEntity.getReviewphotos();
+            List<ReviewphotoEntity> oldPhotos = reviewEntity.getReviewphotos();
             if (oldPhotos != null && !oldPhotos.isEmpty()) {
                 oldPhotos.forEach(photo -> fileStore.deleteFile(photo.getImageurl(), bucket));
             }
@@ -113,7 +113,7 @@ public class ReviewService {
         ReviewEntity reviewEntity = reviewRepository.findById(reviewId)
                 .orElseThrow(() -> new EntityNotFoundException("리뷰를 찾을 수 없습니다. ID: " + reviewId));
 
-        Set<ReviewphotoEntity> photos = reviewEntity.getReviewphotos();
+        List<ReviewphotoEntity> photos = reviewEntity.getReviewphotos();
         if (photos != null && !photos.isEmpty()) {
             photos.forEach(photo -> fileStore.deleteFile(photo.getImageurl(), bucket));
         }
