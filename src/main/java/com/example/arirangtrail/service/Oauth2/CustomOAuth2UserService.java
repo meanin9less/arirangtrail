@@ -1,6 +1,6 @@
 package com.example.arirangtrail.service.Oauth2;
 
-import com.example.arirangtrail.data.dto.user.UserDTO;
+import com.example.arirangtrail.data.dto.user.UserAuthDTO;
 import com.example.arirangtrail.data.dto.oauth2.*;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.oauth2.client.userinfo.DefaultOAuth2UserService;
@@ -41,15 +41,15 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
         String username=auth2Response.getProvider()+"@"+auth2Response.getProviderId();
         System.out.println("유저이름:"+username);
 
-        UserDTO userDTO=new UserDTO();
-        userDTO.setUsername(username);
-        userDTO.setName(auth2Response.getName());
-        userDTO.setEmail(auth2Response.getEmail());
-        userDTO.setRole("ROLE_USER");
+        UserAuthDTO userAuthDTO =new UserAuthDTO();
+        userAuthDTO.setUsername(username);
+        userAuthDTO.setName(auth2Response.getName());
+        userAuthDTO.setEmail(auth2Response.getEmail());
+        userAuthDTO.setRole("ROLE_USER");
 
         // DB 저장 로직 (생략) ...
 
         // 공통 DTO인 CustomOAuth2User에 파싱한 정보를 담아 반환
-        return new CustomOAuth2User(userDTO);
+        return new CustomOAuth2User(userAuthDTO);
     }
 }
