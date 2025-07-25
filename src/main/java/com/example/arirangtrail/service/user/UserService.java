@@ -1,6 +1,7 @@
 package com.example.arirangtrail.service.user;
 
 import com.example.arirangtrail.data.dao.user.UserDAO;
+import com.example.arirangtrail.data.dto.token.TokenDTO;
 import com.example.arirangtrail.data.dto.user.JoinDTO;
 import com.example.arirangtrail.data.dto.user.UserDTO;
 import com.example.arirangtrail.data.entity.UserEntity;
@@ -13,16 +14,6 @@ public class UserService {
     private final UserDAO userDAO;
 
     public String join(JoinDTO joinDTO) {
-        if(joinDTO.getUsername().contains("@")){
-            return userDAO.join(
-                    joinDTO.getUsername(),
-                    joinDTO.getPassword(),
-                    joinDTO.getEmail(),
-                    joinDTO.getFirstname(),
-                    joinDTO.getLastname(),
-                    joinDTO.getBirthdate(),
-                    joinDTO.getNickname());
-        }
         return userDAO.join(
                 joinDTO.getUsername(),
                 joinDTO.getPassword(),
@@ -76,5 +67,25 @@ public class UserService {
         return "deleteMember success";
     }
 
+    public UserDTO simpleJoin(JoinDTO joinDTO) {
+        UserEntity user = this.userDAO.simpleJoin(
+                joinDTO.getUsername(),
+                joinDTO.getEmail(),
+                joinDTO.getFirstname(),
+                joinDTO.getLastname(),
+                joinDTO.getBirthdate(),
+                joinDTO.getNickname()
+        );
+        return UserDTO.builder()
+                .username(user.getUsername())
+                .firstname(user.getFirstname())
+                .lastname(user.getLastname())
+                .email(user.getEmail())
+                .birthdate(user.getBirthdate())
+                .nickname(user.getNickname())
+                .imageurl(user.getImageurl())
+                .role(user.getRole())
+                .build();
+    }
 
 }
