@@ -20,8 +20,8 @@ public class ReviewphotoEntity {
     private Long id; // 사진 ID
 
     @ManyToOne(fetch = FetchType.LAZY) // ReviewEntity와의 다대일 관계를 정의합니다.
-    @JoinColumn(name = "reviewid", nullable = false) // 외래키 컬럼명을 지정합니다. (ReviewEntity의 reviewid와 연결)
-    private ReviewEntity reviewid; // 부모 ReviewEntity
+    @JoinColumn(name = "reviewid", nullable = false)
+    private ReviewEntity review; // 부모 ReviewEntity
 
     @Column(name = "imageurl", nullable = false)
     private String imageurl; // 이미지 URL
