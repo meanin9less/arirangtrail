@@ -13,6 +13,16 @@ public class UserService {
     private final UserDAO userDAO;
 
     public String join(JoinDTO joinDTO) {
+        if(joinDTO.getUsername().contains("@")){
+            return userDAO.join(
+                    joinDTO.getUsername(),
+                    joinDTO.getPassword(),
+                    joinDTO.getEmail(),
+                    joinDTO.getFirstname(),
+                    joinDTO.getLastname(),
+                    joinDTO.getBirthdate(),
+                    joinDTO.getNickname());
+        }
         return userDAO.join(
                 joinDTO.getUsername(),
                 joinDTO.getPassword(),
