@@ -1,5 +1,7 @@
 package com.example.arirangtrail.jwt;
 
+import com.example.arirangtrail.jwt.customuserdetails.CustomUserDetails;
+import com.example.arirangtrail.jwt.customuserdetails.CustomUserDetailsService;
 import io.jsonwebtoken.ExpiredJwtException;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
@@ -24,6 +26,8 @@ import java.util.List;
 @RequiredArgsConstructor
 public class JwtFilter extends OncePerRequestFilter {
     private final JwtUtil jwtUtil;
+    // ★★★ 1. CustomUserDetailsService를 주입받습니다. ★★★
+    private final CustomUserDetailsService customUserDetailsService;
     private final AntPathMatcher antPathMatcher = new AntPathMatcher();
 
 //    // ★ 4. 토큰 검사를 건너뛸 경로 목록 정의
@@ -85,16 +89,23 @@ public class JwtFilter extends OncePerRequestFilter {
             response.setCharacterEncoding("UTF-8");
             return;
         }
+        // 기존 토큰 통과시 만드는 정보가 유저네임만 있고 userdetails의 세부정보를 반영못함,
 
-        String username = this.jwtUtil.getUserName(token);
-        String role = this.jwtUtil.getRole(token);
+        String username = jwtUtil.getUserName(token);
 
-        List<GrantedAuthority> authorities = new ArrayList<>();
-        authorities.add(new SimpleGrantedAuthority(role));
+        // ★ 1. username으로 CustomUserDetails 객체를 DB에서 조회합니다.
+        CustomUserDetails userDetails = (CustomUserDetails) customUserDetailsService.loadUserByUsername(username);
 
-        User user = new User(username, "", authorities);
-        Authentication auth = new UsernamePasswordAuthenticationToken(user, null, authorities);
-        SecurityContextHolder.getContext().setAuthentication(auth);
+        // ★ 2. CustomUserDetails를 사용하여 Authentication 객체를 생성합니다.
+        Authentication authToken = new UsernamePasswordAuthenticationToken(
+                userDetails,
+                null,
+                userDetails.getAuthorities());
+
+        // ★ 3. SecurityContextHolder에 인증 정보를 저장합니다.
+        SecurityContextHolder.getContext().setAuthentication(authToken);
+
+
         filterChain.doFilter(request, response);
     }
 }
