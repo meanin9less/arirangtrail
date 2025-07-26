@@ -3,6 +3,7 @@ package com.example.arirangtrail.config;
 import com.example.arirangtrail.jwt.JwtFilter;
 import com.example.arirangtrail.jwt.JwtLoginFilter;
 import com.example.arirangtrail.jwt.JwtUtil;
+import com.example.arirangtrail.jwt.customuserdetails.CustomUserDetailsService;
 import com.example.arirangtrail.service.Oauth2.CustomOAuth2UserService;
 import com.example.arirangtrail.service.Oauth2.OAuth2SuccessHandler;
 import lombok.RequiredArgsConstructor;
@@ -33,6 +34,7 @@ public class SecurityConfig {
     private final JwtUtil jwtUtil;
     private final CustomOAuth2UserService customOAuth2UserService;
     private final OAuth2SuccessHandler oAuth2SuccessHandler;
+    private final CustomUserDetailsService customUserDetailsService;
 
     @Bean
     public AuthenticationManager authenticationManager(AuthenticationConfiguration configuration) throws Exception{
@@ -79,7 +81,7 @@ public class SecurityConfig {
                 .sessionManagement(session->
                         session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
 
-                .addFilterBefore(new JwtFilter(jwtUtil), JwtLoginFilter.class)
+                .addFilterBefore(new JwtFilter(jwtUtil,customUserDetailsService), JwtLoginFilter.class)
 
                 .addFilterAt(jwtLoginFilter, UsernamePasswordAuthenticationFilter.class)
 
