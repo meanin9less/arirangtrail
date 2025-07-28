@@ -54,8 +54,6 @@ dependencies {
     annotationProcessor 'org.projectlombok:lombok'
     testImplementation 'org.springframework.boot:spring-boot-starter-test'
     testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
-
-    // 이제 완벽한 버전 관리 하에, 버전 없이 이름만 적어줍니다.
     implementation 'io.awspring.cloud:spring-cloud-aws-starter-s3'
 }
 
