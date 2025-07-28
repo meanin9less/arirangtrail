@@ -1,7 +1,8 @@
 package com.example.arirangtrail.service.redis;
 
-import com.example.arirangtrail.data.dto.festival.FestivalStatusDto;
-import com.example.arirangtrail.data.dto.festival.LikedUserDto;
+import com.example.arirangtrail.data.dto.festival.FestivalStatusDTO;
+import com.example.arirangtrail.data.dto.festival.LikeStatusDTO;
+import com.example.arirangtrail.data.dto.festival.LikedUserDTO;
 import com.example.arirangtrail.data.entity.UserEntity;
 import com.example.arirangtrail.data.entity.redis.FestivalMetaEntity;
 import com.example.arirangtrail.data.entity.redis.LikeEntity;
@@ -13,7 +14,6 @@ import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.NoSuchElementException;
@@ -32,7 +32,7 @@ public class FestivalService {
     // --- 좋아요 관련 로직 ---
 
     @Transactional
-    public boolean toggleLike(String username, Long contentid) {
+    public LikeStatusDTO toggleLike(String username, Long contentid) {
         String festivalLikesKey = "festival:" + contentid + ":likes";
         String userLikesKey = "user:" + username + ":likes";
         String festivalMetaKey = "festival_meta:" + contentid;
@@ -43,6 +43,7 @@ public class FestivalService {
                 .orElseThrow(() -> new NoSuchElementException("해당 사용자를 찾을 수 없습니다: " + username));
 
         Double score = redisTemplate.opsForZSet().score(festivalLikesKey, username);
+        boolean isLiked;
 
         // isMember 검사 시에도 String 타입을 사용해야 합니다.
         if (score == null) {
@@ -55,8 +56,7 @@ public class FestivalService {
             newLike.setUser(user);
             newLike.setContentid(contentid);
             likeRepository.save(newLike);
-
-            return true;
+            isLiked = true;
         } else {
             // 좋아요 취소
             redisTemplate.opsForZSet().remove(festivalLikesKey, username);
@@ -64,9 +64,14 @@ public class FestivalService {
             redisTemplate.opsForHash().increment(festivalMetaKey, "like_count", -1);
 
             likeRepository.deleteByUser_UsernameAndContentid(username, contentid);
-
-            return false;
+            isLiked = false;
         }
+        // (수정) 작업이 끝난 후, Redis에서 최종 likeCount를 다시 조회합니다.
+        Object likeCountObj = redisTemplate.opsForHash().get(festivalMetaKey, "like_count");
+        long currentLikeCount = (likeCountObj != null) ? Long.parseLong(likeCountObj.toString()) : 0;
+
+        // (수정) 최신 상태를 DTO에 담아 반환합니다.
+        return new LikeStatusDTO(isLiked, currentLikeCount);
     }
 
     public Set<String> getLikedFestivalsByUser(String username) {
@@ -91,7 +96,7 @@ public class FestivalService {
     }
 
     // 밑의 기존 로직 활용하여 유저 있거나 없거나 축제의 좋아요나 공유 횟수 상태 조회(로그인 안해도 보여줌)
-    public FestivalStatusDto getFestivalStatus(Long contentid, String username) {
+    public FestivalStatusDTO getFestivalStatus(Long contentid, String username) {
         // 1. 기존 메소드를 재활용하여 좋아요/공유 카운트를 가져옵니다.
         FestivalMetaEntity meta = this.getFestivalMeta(contentid);
         long likeCount = meta.getLikeCount();
@@ -107,7 +112,7 @@ public class FestivalService {
         }
 
         // 3. 세 가지 정보를 DTO에 담아 반환합니다.
-        return new FestivalStatusDto(likeCount, shareCount, isLiked);
+        return new FestivalStatusDTO(likeCount, shareCount, isLiked);
     }
 
     // ---기존 정보 조회 관련 로직 ---
@@ -141,7 +146,7 @@ public class FestivalService {
     }
 
     // 축제에 따른 좋아하는 유저
-    public List<LikedUserDto> getLikedUsersByFestival(Long contentid) {
+    public List<LikedUserDTO> getLikedUsersByFestival(Long contentid) {
         String festivalLikesKey = "festival:" + contentid + ":likes";
 
         // 1. Redis Set에서 모든 멤버(username)를 가져옵니다.
@@ -156,7 +161,7 @@ public class FestivalService {
 
         // 3. DB 조회 결과를 최종 DTO 리스트로 변환합니다.
         return users.stream()
-                .map(userEntity -> new LikedUserDto(
+                .map(userEntity -> new LikedUserDTO(
                         userEntity.getUsername(),
                         userEntity.getNickname()
                 ))
