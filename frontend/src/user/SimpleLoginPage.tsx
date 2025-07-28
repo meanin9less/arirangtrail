@@ -12,15 +12,39 @@ const SimpleLoginPage: React.FC = () => {
     const { userData, accessToken } = location.state || {};
 
     useEffect(() => {
-        const response = apiClient.get('/api/userinfo');
-        if (userData && accessToken) {
-            dispatch(setUserProfile(userData));
-            dispatch(setToken(accessToken));
-            // 저장 후 메인 페이지로 이동
-            navigate('/');
-        } else {
-            navigate('/login'); // 데이터 없으면 로그인으로
+        const reissue = async () =>{
+            try {
+                const response = await apiClient.get("/api/reissue");
+                if (response.status===200){
+                    const access = response.headers["Authorization"];
+                    dispatch(setToken(access));
+                    const res = await apiClient.get("/api/userinfo",{
+                        headers:{
+                            Authorization:access
+                        }
+                    });
+                    if (res.status===200){
+                        const userProfileData = {
+                            username: res.data.username,
+                            nickname: res.data.nickname,
+                            imageUrl: res.data.imageUrl || 'https://placehold.co/50x50/cccccc/ffffff?text=User'
+                        };
+                        dispatch(setUserProfile(userProfileData));
+                    }
+                }
+            }catch (err: any) {
+                console.error('가입 실패:', err);
+                if (err.response) {
+                    console.error('Response status:', err.response.status);
+                    console.error('Response data:', err.response.data);
+                } else if (err.request) {
+                    console.error('No response received:', err.request);
+                } else {
+                    console.error('Error', err.message);
+                }
+            }
         }
+        reissue();
     }, [userData, accessToken, dispatch, navigate]);
 
     return <div>자동 로그인 처리 중...</div>;
