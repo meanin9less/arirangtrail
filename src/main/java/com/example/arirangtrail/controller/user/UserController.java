@@ -103,7 +103,7 @@ public class UserController {
 
     @GetMapping(value = "/userinfo") // oauth2 로그인 한 유저 유저 인포 받는 컨트롤러
     public ResponseEntity<UserDTO> userInfo(HttpServletRequest request) {
-        String token = request.getHeader("Authorization");
+        String token = request.getHeader("authorization");
         String access_token = token.substring(7);
         String username = this.jwtUtil.getUserName(access_token);
         UserDTO userDTO = this.userService.userInform(username);

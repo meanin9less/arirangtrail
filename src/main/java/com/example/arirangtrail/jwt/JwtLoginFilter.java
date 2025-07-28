@@ -74,7 +74,7 @@ public class JwtLoginFilter extends UsernamePasswordAuthenticationFilter {
         String access_token = this.jwtUtil.createToken("access", username, role, 300 * 1000L);// 5초
         String refresh_token = this.jwtUtil.createToken("refresh", username, role, 60 * 60 * 24 * 1000L);
 
-        response.addHeader("Authorization", "Bearer " + access_token);
+        response.addHeader("authorization", "Bearer " + access_token);
         response.addCookie(this.createCookie("refresh", refresh_token));
         response.setContentType("application/json");
         response.setCharacterEncoding("UTF-8");

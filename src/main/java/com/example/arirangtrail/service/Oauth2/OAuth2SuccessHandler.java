@@ -79,7 +79,7 @@ public class OAuth2SuccessHandler implements AuthenticationSuccessHandler {
                     .build();
 
             response.addHeader(HttpHeaders.SET_COOKIE, cookie.toString());
-            response.addHeader("Authorization", "Bearer " + access);
+            response.addHeader("authorization", "Bearer " + access);
             response.sendRedirect("http://arirangtrail.duckdns.org/userinfo"); // 원하는 페이지로 리다이렉트
         }
     }
