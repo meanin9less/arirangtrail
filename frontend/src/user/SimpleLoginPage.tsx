@@ -30,6 +30,7 @@ const SimpleLoginPage: React.FC = () => {
                             imageUrl: res.data.imageUrl || 'https://placehold.co/50x50/cccccc/ffffff?text=User'
                         };
                         dispatch(setUserProfile(userProfileData));
+                        navigate("/");
                     }
                 }
             }catch (err: any) {
