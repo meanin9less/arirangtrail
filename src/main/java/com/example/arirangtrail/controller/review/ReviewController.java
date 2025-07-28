@@ -77,7 +77,7 @@ public class ReviewController {
     // ✨ ✨ ✨ 추가: 모든 리뷰 조회 엔드포인트 ✨ ✨ ✨
     @GetMapping
     public ResponseEntity<ReviewListResponseDto> getAllReviews(
-            @PageableDefault(size = 20, sort = "createdAt,desc") Pageable pageable) {
+            @PageableDefault(size = 20, sort = "createdat,desc") Pageable pageable) {
         ReviewListResponseDto reviewListResponse = reviewService.getAllReviews(pageable);
         return ResponseEntity.ok(reviewListResponse);
     }
