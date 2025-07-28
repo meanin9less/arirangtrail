@@ -44,7 +44,7 @@ const SimpleJoinPage: React.FC = () => {
             const response = await apiClient.post('/simplejoin', {
                 username,
                 email,
-                password,
+                password: password ? password : null,
                 firstname,
                 lastname,
                 birthdate,
