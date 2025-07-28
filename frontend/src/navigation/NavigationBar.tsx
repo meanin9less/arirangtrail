@@ -130,6 +130,6 @@ const NavigationBar = () => {
             {/*<Outlet />*/}
         </>
     );
-};
+}
 
 export default NavigationBar;
