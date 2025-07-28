@@ -47,7 +47,7 @@ const SimpleJoinPage: React.FC = () => {
                 password: password ? password : null,
                 firstname,
                 lastname,
-                birthdate,
+                birthdate: birthdate ? birthdate : null,  // 빈 문자열일 경우 null로 변환
                 nickname,
             });
 
