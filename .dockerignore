@@ -7,9 +7,9 @@
 # Gradle
 .gradle/
 build/
-gradle/
-gradlew
-gradlew.bat
+#gradle/
+#gradlew
+#gradlew.bat
 
 # Node.js
 node_modules/
