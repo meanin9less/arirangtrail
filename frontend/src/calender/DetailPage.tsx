@@ -8,7 +8,7 @@ import {
     IoPin,
     IoPricetagOutline,
     IoTimeOutline,
-    IoShareSocialOutline, IoHeartOutline, IoHeart,
+    IoShareSocialOutline, IoHeartOutline, IoHeart, IoBusOutline, IoTrainOutline,
 } from "react-icons/io5";
 import React, {useEffect, useState} from "react";
 import axios from "axios";
@@ -478,11 +478,18 @@ const DetailPage = () => {
                             축제 장소 길찾기
                         </button>
                         <div className="external-links">
-                            <br/>
-                            <a href="https://www.kobus.co.kr/main.do" target="_blank" rel="noopener noreferrer">
-                                → 고속버스 예약 바로가기</a><br/>
-                            <a href="https://www.letskorail.com/" target="_blank" rel="noopener noreferrer">
-                                → 기차 예약 바로가기</a>
+                            <a href="https://www.kobus.co.kr/main.do" target="_blank" rel="noopener noreferrer"
+                               className="link-card">
+                                <IoBusOutline className="link-card-icon"/>
+                                <span className="link-card-text">고속버스 예매</span>
+                                <span className="link-card-arrow">→</span>
+                            </a>
+                            <a href="https://www.letskorail.com/" target="_blank" rel="noopener noreferrer"
+                               className="link-card">
+                                <IoTrainOutline className="link-card-icon"/>
+                                <span className="link-card-text">기차 예매</span>
+                                <span className="link-card-arrow">→</span>
+                            </a>
                         </div>
                     </div>
                 </aside>

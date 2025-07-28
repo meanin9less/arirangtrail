@@ -242,6 +242,11 @@
 .dropdownItem:hover {
     background-color: rgba(255, 255, 255, 0.1); /* 호버 시 배경색 변경 (기존 스타일) */
 }
+.communityLinkContainer{
+    color: white;
+    width: 100px;
+
+}
 
 /* 13. 애니메이션 키프레임 */
 @keyframes fadeIn {
