@@ -1,6 +1,6 @@
 plugins {
     id 'java'
-    id 'org.springframework.boot' version '3.3.3'
+    id 'org.springframework.boot' version '3.3.3' // 3.5.3 -> 3.3.3 으로 수정
     id 'io.spring.dependency-management' version '1.1.7'
 }
 
@@ -13,15 +13,19 @@ java {
     }
 }
 
-// 스프링 클라우드 버전 관리를 위한 변수 설정
 ext {
-    set('springCloudVersion', "2023.0.2") // Spring Boot 3.3.x는 2023.0.2와 호환됩니다.
+    // Spring Boot 3.3.x 와 호환되는 Spring Cloud 버전
+    set('springCloudVersion', "2023.0.2")
 }
 
-// 스프링 클라우드 BOM(버전 목록)을 임포트합니다.
 dependencyManagement {
     imports {
+        // 1. 스프링 클라우드 핵심 BOM (원래 있던 것)
         mavenBom "org.springframework.cloud:spring-cloud-dependencies:${springCloudVersion}"
+
+        // ================== 👇👇👇 이것이 마지막 퍼즐 조각! 👇👇👇 ==================
+        // 2. AWS 전용 BOM 추가
+        mavenBom "io.awspring.cloud:spring-cloud-aws-dependencies:3.1.1"
     }
 }
 
@@ -55,10 +59,8 @@ dependencies {
     annotationProcessor 'org.projectlombok:lombok'
     testImplementation 'org.springframework.boot:spring-boot-starter-test'
     testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
-    // AWS SDK for S3//261 확인
-//    implementation 'com.amazonaws:aws-java-sdk-s3:1.12.261' // 버전은 최신 버전으로 확인 후 적용하는 것을 권장합니다.
-    // Spring Cloud AWS for simpler integration (Optional but recommended)
-//    implementation 'org.springframework.cloud:spring-cloud-starter-aws:2.2.6.RELEASE'
+
+    // 이제 두 개의 BOM이 버전을 관리해주므로, 버전 없이 이름만 적어도 완벽하게 작동합니다.
     implementation 'io.awspring.cloud:spring-cloud-aws-starter-s3'
 }
 
