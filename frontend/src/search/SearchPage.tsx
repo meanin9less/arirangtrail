@@ -48,6 +48,7 @@ const SearchPage = () => {
     const [festivals, setFestivals] = useState<SearchFestival[]>([]);
     const [filterFestivals, setFilterFestivals] = useState<SearchFestival[]>([]);
     const [isLoading, setIsLoading] = useState<boolean>(true);
+    const [showGoingOnly, setShowGoingOnly] = useState<boolean>(false);
 
     const getTodayDateString = () => {
         const today = new Date();
@@ -93,16 +94,35 @@ const SearchPage = () => {
         fetchFestivalsByArea();
     }, [selectAreaCode]);
 
+    // 키워드와 '진행중' 체크박스 상태가 변경될 때마다 필터링 로직을 다시 실행
     useEffect(() => {
-        if (searchKeyword.trim() === "") {
-            // 키워드가 비어있으면, 필터링된 목록을 원본 목록 전체로 되돌림
-            setFilterFestivals(festivals);
-        } else {
-            const filtered = festivals.filter(festival =>
-                festival.title.toLowerCase().includes(searchKeyword.toLowerCase()));
-            setFilterFestivals(filtered);
+        // 원본 목록(festivals)으로 시작
+        let tempFilteredList = festivals;
+
+        // 키워드로 필터링
+        if (searchKeyword.trim() !== "") {
+            tempFilteredList = tempFilteredList.filter(festival =>
+                festival.title.toLowerCase().includes(searchKeyword.toLowerCase())
+            );
         }
-    }, [searchKeyword, festivals]);
+
+        // '진행중' 체크박스가 선택되었다면, 추가로 필터링
+        if (showGoingOnly) {
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+
+            tempFilteredList = tempFilteredList.filter(festival => {
+                const startDate = new Date(`${festival.eventstartdate.substring(0, 4)}-${festival.eventstartdate.substring(4, 6)}-${festival.eventstartdate.substring(6, 8)}`);
+                const endDate = new Date(`${festival.eventenddate.substring(0, 4)}-${festival.eventenddate.substring(4, 6)}-${festival.eventenddate.substring(6, 8)}`);
+                return today >= startDate && today <= endDate;
+            });
+        }
+
+        // 최종 필터링된 목록으로 상태 업데이트
+        setFilterFestivals(tempFilteredList);
+
+    }, [searchKeyword, festivals, showGoingOnly]); //
+
 
     return (
         <div className="search-page-container">
@@ -110,24 +130,36 @@ const SearchPage = () => {
                 <h1 className="search-title">지역검색</h1>
                 <p className="search-subtitle">찾으시는 지역 선택과 키워드를 입력하실 수 있습니다.</p>
             </header>
-            <div className="search-input-wrapper">
-                <select
-                    className="search-select-area"
-                    value={selectAreaCode}
-                    onChange={(e) => setSelectAreaCode(e.target.value)}
-                >
-                    {areaData.map(area => (
-                        <option key={area.code} value={area.code}>{area.name}</option>
-                    ))}
-                </select>
-                <input
-                    type="text"
-                    className="search-input-keyword"
-                    placeholder="키워드를 입력해주세요.(예: 불꽃, 시장)"
-                    value={searchKeyword}
-                    onChange={(e) => setSearchKeyword(e.target.value)}
-                    disabled={isLoading}
-                />
+            <div className="search-controls-wrapper">
+                <div className="search-input-wrapper">
+                    <select
+                        className="search-select-area"
+                        value={selectAreaCode}
+                        onChange={(e) => setSelectAreaCode(e.target.value)}
+                    >
+                        {areaData.map(area => (
+                            <option key={area.code} value={area.code}>{area.name}</option>
+                        ))}
+                    </select>
+                    <input
+                        type="text"
+                        className="search-input-keyword"
+                        placeholder="키워드를 입력해주세요.(예: 불꽃, 시장)"
+                        value={searchKeyword}
+                        onChange={(e) => setSearchKeyword(e.target.value)}
+                        disabled={isLoading}
+                    />
+                </div>
+                <div className="filter-checkbox-wrapper">
+                    <input
+                        type="checkbox"
+                        id="ongoing-filter"
+                        className="filter-checkbox"
+                        checked={showGoingOnly}
+                        onChange={(e) => setShowGoingOnly(e.target.checked)}
+                    />
+                    <label htmlFor="ongoing-filter" className="filter-checkbox-label">현재 진행중인 축제만 보기</label>
+                </div>
             </div>
 
             <div className="search-results-container">
