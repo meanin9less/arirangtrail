@@ -14,7 +14,7 @@ const SimpleLoginPage: React.FC = () => {
     useEffect(() => {
         const reissue = async () =>{
             try {
-                const response = await apiClient.get("/reissue");
+                const response = await apiClient.post("/reissue");
                 if (response.status===200){
                     const access = response.headers["Authorization"];
                     dispatch(setToken(access));
