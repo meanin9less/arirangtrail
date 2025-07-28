@@ -67,7 +67,7 @@ public class UserController {
         return ResponseEntity.status(HttpStatus.OK).body(userDTO);
     }
 
-    @PostMapping(value = "/comapre-password")// 비밀번호 재확인시 일치/불일치를 boolean으로 전달
+    @PostMapping(value = "/compare-password")// 비밀번호 재확인시 일치/불일치를 boolean으로 전달
     public ResponseEntity<Boolean> comaparePassword(@RequestParam String username, String password) {//username, password 필요
         return ResponseEntity.status(HttpStatus.OK).body(this.userService.comaparePassword(username,password));
     }

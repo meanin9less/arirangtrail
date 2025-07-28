@@ -16,13 +16,8 @@ interface UserProfileResponseDto {
     imageUrl?: string;
 }
 
-    interface PasswordVerificationRequestDto {
-    password: string;
-}
 
-interface PasswordVerificationResponseDto {
-    message: string;
-}
+type PasswordVerificationResponseDto = boolean;
 
 const MyPage: React.FC = () => {
     const navigate = useNavigate();
@@ -123,17 +118,16 @@ const MyPage: React.FC = () => {
             }
 
             // 쿼리 스트링 직접 작성
-            const response = await apiClient.post<PasswordVerificationResponseDto>(
-                `/comapre-password?username=${encodeURIComponent(username)}&password=${encodeURIComponent(currentPassword)}`,
+            const response = await apiClient.post<boolean>(
+                `/compare-password?username=${encodeURIComponent(username)}&password=${encodeURIComponent(currentPassword)}`,
                 null
             );
 
-            setAuthMessage(response.data.message);
-
-            if (response.status === 200 && response.data.message.includes('일치')) {
+            if (response.status === 200 && response.data === true) {
+                setAuthMessage('비밀번호 일치');
                 navigate('/mypage/editinfo');
             } else {
-                setAuthMessage(response.data.message);
+                setAuthMessage('비밀번호가 일치하지 않습니다.');
             }
         } catch (error: any) {
             console.error('비밀번호 인증 오류:', error);
@@ -223,7 +217,7 @@ const MyPage: React.FC = () => {
                                 {authLoading ? '인증 중...' : '간편 인증'}
                             </button>
                             {authMessage && (
-                                <p className={authMessage.includes('성공') || authMessage.includes('일치') ? styles.authSuccessMessage : styles.authErrorMessage}>
+                                <p className={typeof authMessage === 'string' && (authMessage.includes('성공') || authMessage.includes('일치')) ? styles.authSuccessMessage : styles.authErrorMessage}>
                                     {authMessage}
                                 </p>
                             )}
