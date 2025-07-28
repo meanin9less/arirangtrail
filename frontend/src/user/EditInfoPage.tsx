@@ -74,7 +74,7 @@ const EditInfoPage: React.FC = () => {
             setError(null);
             try {
                 // ✨ ✨ ✨ 복구 필요: 실제 백엔드 API 호출을 활성화하세요. ✨ ✨ ✨
-                const response = await apiClient.get<UserProfile>('/api/mypage/profile');
+                const response = await apiClient.get<UserProfile>('/mypage/profile');
                 // const profileData = response.data;
 
                 // ✨ 개발/테스트 목적으로 사용했던 임시 더미 데이터 (위의 백엔드 연동 코드 활성화 시 제거)
@@ -182,7 +182,7 @@ const EditInfoPage: React.FC = () => {
         try {
             // [백엔드 연동 필요] PUT 요청으로 사용자 정보 업데이트
             // FormData 사용 시 axios가 'Content-Type': 'multipart/form-data' 헤더를 자동으로 설정합니다.
-            const response = await apiClient.put<ApiResponse>('/api/mypage/profile', formDataToSend);
+            const response = await apiClient.put<ApiResponse>('/mypage/profile', formDataToSend);
 
             setModalMessage(response.data.message || '정보가 성공적으로 수정되었습니다.');
             setModalMessageType('success');
