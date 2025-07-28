@@ -14,11 +14,11 @@ const SimpleLoginPage: React.FC = () => {
     useEffect(() => {
         const reissue = async () =>{
             try {
-                const response = await apiClient.get("/api/reissue");
+                const response = await apiClient.get("/reissue");
                 if (response.status===200){
                     const access = response.headers["Authorization"];
                     dispatch(setToken(access));
-                    const res = await apiClient.get("/api/userinfo",{
+                    const res = await apiClient.get("/userinfo",{
                         headers:{
                             Authorization:access
                         }
