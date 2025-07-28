@@ -1,9 +1,9 @@
 import React, { useState, useEffect, useRef, ChangeEvent } from 'react';
 import { Client } from '@stomp/stompjs';
 import SockJS from 'sockjs-client';
-import axios from 'axios';
-import { useSelector } from 'react-redux';
-import { RootState } from '../store'; // store 파일 경로에 맞게 수정해주세요.
+import {useDispatch, useSelector} from 'react-redux';
+import store, {RootState, setTotalUnreadCount} from '../store'; // store 파일 경로에 맞게 수정해주세요.
+import apiClient from '../api/axiosInstance';
 
 // --- 타입 정의 ---
 interface ChatMessage {
@@ -41,6 +41,8 @@ const lastMessageSeqRef = useRef(lastMessageSeq);
 const fileInputRef = useRef<HTMLInputElement>(null);
 const messageContainerRef = useRef<HTMLDivElement>(null);
 
+const dispatch = useDispatch();
+
 const API_URL = process.env.REACT_APP_API_URL;
 
 // --- useEffect 훅: lastMessageSeq 동기화 ---
@@ -59,7 +61,7 @@ const updateLastReadSequence = async (seqToUpdate: number) => {
     if (!userName) return;
 
     try {
-        await axios.post(`${API_URL}/api/chat/rooms/update-status`, {
+        await apiClient.post(`chat/rooms/update-status`, {
             roomId: roomId,
             username: userName,
             lastReadSeq: seqToUpdate,
@@ -73,7 +75,7 @@ const updateLastReadSequence = async (seqToUpdate: number) => {
 /** 채팅방의 기본 정보를 불러옵니다. */
 const fetchRoomInfo = async () => {
     try {
-        const response = await axios.get<RoomInfo>(`${API_URL}/api/chat/rooms/${roomId}`);
+        const response = await apiClient.get<RoomInfo>(`chat/rooms/${roomId}`);
         setRoomInfo(response.data);
     } catch (error) {
         console.error("채팅방 정보를 가져오는 데 실패했습니다.", error);
@@ -86,7 +88,7 @@ const fetchRoomInfo = async () => {
  */
 const fetchPreviousMessages = async (): Promise<ChatMessage[]> => {
     try {
-        const response = await axios.get<ChatMessage[]>(`${API_URL}/api/chat/rooms/${roomId}/messages?size=50`);
+        const response = await apiClient.get<ChatMessage[]>(`chat/rooms/${roomId}/messages?size=50`);
         const fetchedMessages = Array.isArray(response.data) ? response.data : [];
 
         setMessages(fetchedMessages);
@@ -106,6 +108,12 @@ const fetchPreviousMessages = async (): Promise<ChatMessage[]> => {
 
 // --- 메인 useEffect 훅: 컴포넌트 초기화, 웹소켓 연결, 정리 ---
 useEffect(() => {
+
+    const token = store.getState().token.token;
+    if (!userName || !token) {
+        return;
+    }
+
     /** 컴포넌트 마운트 시 실행될 비동기 초기화 함수 */
     const initializeAndConnect = async () => {
         if (!userName) return;
@@ -119,6 +127,13 @@ useEffect(() => {
         // 백엔드의 orElse() 로직 덕분에, 이 호출 한 번으로 참여 기록이 보장됩니다.
         const lastSeq = previousMessages.length > 0 ? previousMessages[previousMessages.length - 1].messageSeq ?? 0 : 0;
         await updateLastReadSequence(lastSeq);
+
+        try {
+            const response = await apiClient.get(`/chat/users/${userName}/unread-count`);
+            dispatch(setTotalUnreadCount(response.data.totalUnreadCount));
+        } catch (error) {
+            console.error("안 읽은 메시지 개수 업데이트 실패", error);
+        }
 
         // 3. 모든 기록 작업이 끝난 후 웹소켓에 연결합니다.
         connectWebSocket();
@@ -157,6 +172,10 @@ useEffect(() => {
 /** WebSocket 연결을 설정하고 활성화합니다. */
 const connectWebSocket = () => {
     const client = new Client({
+        connectHeaders: {
+            // ★★★ 여기에 Authorization 헤더를 추가합니다. ★★★
+            Authorization: `${store.getState().token.token}`, // Redux에서 토큰 가져오기
+        },
         webSocketFactory: () => new SockJS(`${API_URL}/ws-stomp`),
         reconnectDelay: 5000,
         debug: (str) => { console.log(new Date(), str); },
@@ -210,7 +229,7 @@ const handleFileChange = async (e: ChangeEvent<HTMLInputElement>) => {
     formData.append('file', file);
 
     try {
-        const response = await axios.post<{ url: string }>(`${API_URL}/api/files/upload`, formData);
+        const response = await apiClient.post<{ url: string }>(`files/upload`, formData);
         const imageUrl = response.data.url;
 
         if (clientRef.current?.connected) {
@@ -240,7 +259,7 @@ const handleImageIconClick = () => fileInputRef.current?.click();
 const handleLeaveRoom = async () => {
     if (!userName) return;
     try {
-        await axios.post(`${API_URL}/api/chat/rooms/${roomId}/leave`, { username: userName });
+        await apiClient.post(`chat/rooms/${roomId}/leave`, { username: userName });
         onLeave();
     } catch (error) {
         console.error("채팅방 나가기에 실패했습니다.", error);
@@ -252,7 +271,7 @@ const handleLeaveRoom = async () => {
 const handleDeleteRoom = async () => {
     if (!userName || !window.confirm("정말로 이 방을 삭제하시겠습니까? 모든 대화 내용이 사라집니다.")) return;
     try {
-        await axios.delete(`${API_URL}/api/chat/rooms/${roomId}`, { data: { username: userName } });
+        await apiClient.delete(`chat/rooms/${roomId}`, { data: { username: userName } });
         alert("채팅방이 삭제되었습니다.");
         onLeave();
     } catch (error) {

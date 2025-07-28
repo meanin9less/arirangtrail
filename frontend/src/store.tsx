@@ -12,6 +12,7 @@ interface TokenState {
         email?: string; // ✨ 추가: 이메일은 선택 사항일 수 있습니다.
     } | null; // 사용자 프로필 객체이거나 없을 수 있습니다.
     totalUnreadCount: number; // ✨ 추가: 총 안 읽은 메시지 개수
+    lobbyLastUpdated: number | null;
 }
 
 // 2. 'token' 슬라이스의 초기 상태를 정의합니다.
@@ -19,6 +20,7 @@ const initState: TokenState = {
     token: null, // 초기에는 토큰이 없습니다.
     userProfile: null, // ✨ 추가: 초기에는 사용자 프로필도 없습니다.
     totalUnreadCount: 0, // ✨ 초기값은 0
+    lobbyLastUpdated: null as number | null,
 };
 
 // 3. Redux Toolkit의 createSlice를 사용하여 'token' 슬라이스를 생성합니다.
@@ -44,6 +46,9 @@ const tokenSlice = createSlice({
             state.userProfile = null;
             state.totalUnreadCount = 0; // ✨ 초기화
         },
+        updateLobby: (state) => {
+            state.lobbyLastUpdated = Date.now(); // 현재 시간으로 타임스탬프를 찍어 상태 변경
+        },
     },
 });
 
@@ -64,7 +69,7 @@ export type RootState = ReturnType<typeof store.getState>;
 export type AppDispatch = typeof store.dispatch;
 
 // 7. 'setToken', 'setUserProfile', 'clearAuth' 액션 생성자를 내보냅니다.
-export const { setToken, setUserProfile, clearAuth, setTotalUnreadCount } = tokenSlice.actions;
+export const { setToken, setUserProfile, clearAuth, setTotalUnreadCount,updateLobby } = tokenSlice.actions;
 
 
 // 8. 설정된 Redux 스토어 인스턴스를 기본으로 내보냅니다.

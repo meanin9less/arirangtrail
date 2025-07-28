@@ -21,9 +21,9 @@ public class FestivalController {
     // 특정축제 좋아요 토글
     @PostMapping("/{contentid}/like")
     public ResponseEntity<Boolean> toggleLike(
-            @RequestParam String username,// 어슨 수정할 생각 해놔야 함.
-            @PathVariable Long contentid
-//            @AuthenticationPrincipal String username // security context holder를 통해 현재 토큰의 로그인한 사용자 username 가져오기 자동완성// 근데 경로 닫아놔야 인증함
+            @PathVariable Long contentid,
+//            @RequestParam String username// 어슨 수정할 생각 해놔야 함.
+            @AuthenticationPrincipal String username // security context holder를 통해 현재 토큰의 로그인한 사용자 username 가져오기 자동완성// 근데 경로 닫아놔야 인증함
     ) {
         boolean isLiked = festivalService.toggleLike(username, contentid);
         return ResponseEntity.ok(isLiked); // 현재 좋아요 상태 (true: 좋아요, false: 취소) 반환

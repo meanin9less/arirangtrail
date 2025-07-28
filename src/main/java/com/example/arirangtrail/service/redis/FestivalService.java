@@ -11,6 +11,8 @@ import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.Instant;
+import java.time.LocalDateTime;
 import java.util.NoSuchElementException;
 import java.util.Set;
 
@@ -29,22 +31,30 @@ public class FestivalService {
     public boolean toggleLike(String username, Long contentid) {
         String userLikesKey = "user:" + username + ":likes";
         String festivalMetaKey = "festival_meta:" + contentid;
+
+        // Long 타입의 contentid를 String으로 한번만 변환하여 재사용합니다.
+        String contentIdStr = String.valueOf(contentid);
+
         UserEntity user = userRepository.findByUsername(username)
                 .orElseThrow(() -> new NoSuchElementException("해당 사용자를 찾을 수 없습니다: " + username));
 
-        if (Boolean.TRUE.equals(redisTemplate.opsForSet().isMember(userLikesKey, contentid))) {
+        // isMember 검사 시에도 String 타입을 사용해야 합니다.
+        if (Boolean.TRUE.equals(redisTemplate.opsForSet().isMember(userLikesKey, contentIdStr))) {
             // 좋아요 취소
-            redisTemplate.opsForSet().remove(userLikesKey, contentid);
+            // remove 시에도 String 타입을 사용해야 합니다.
+            redisTemplate.opsForSet().remove(userLikesKey, contentIdStr);
             redisTemplate.opsForHash().increment(festivalMetaKey, "like_count", -1);
             likeRepository.deleteByUser_UsernameAndContentid(username, contentid);
             return false; // 좋아요 취소됨
         } else {
             // 좋아요 추가
-            redisTemplate.opsForSet().add(userLikesKey, String.valueOf(contentid));
+            // add 시에도 String 타입을 사용합니다.
+            redisTemplate.opsForSet().add(userLikesKey, contentIdStr);
             redisTemplate.opsForHash().increment(festivalMetaKey, "like_count", 1);
             LikeEntity newLike = new LikeEntity();
             newLike.setUser(user);
-            newLike.setContentid(contentid);
+            newLike.setContentid(contentid); // RDB에는 원래 타입인 Long을 저장합니다.
+            newLike.setCreatedat(Instant.now());
             likeRepository.save(newLike);
             return true; // 좋아요 추가됨
         }

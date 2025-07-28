@@ -93,16 +93,17 @@ public class JwtFilter extends OncePerRequestFilter {
 
         String username = jwtUtil.getUserName(token);
 
-        // ★ 1. username으로 CustomUserDetails 객체를 DB에서 조회합니다.
+        // 2. ★ (가장 중요) CustomUserDetailsService를 사용하여 DB에서 실제 사용자 정보를 조회합니다.
+        //    이제 userDetails 객체 안에는 username, password(암호화된), role, nickname 등 모든 정보가 담겨 있습니다.
         CustomUserDetails userDetails = (CustomUserDetails) customUserDetailsService.loadUserByUsername(username);
 
-        // ★ 2. CustomUserDetails를 사용하여 Authentication 객체를 생성합니다.
+        // 3. ★ (중요) DB에서 가져온 "진짜" 사용자 정보(userDetails)를 통째로 사용하여 인증 객체를 만듭니다.
         Authentication authToken = new UsernamePasswordAuthenticationToken(
-                userDetails,
+                username, // <--- 이 부분을 userDetails에서 username으로 변경!
                 null,
                 userDetails.getAuthorities());
 
-        // ★ 3. SecurityContextHolder에 인증 정보를 저장합니다.
+        // 4. 이 "진짜" 정보가 담긴 인증 객체를 SecurityContext에 저장합니다.
         SecurityContextHolder.getContext().setAuthentication(authToken);
 
 
