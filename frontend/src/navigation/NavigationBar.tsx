@@ -4,12 +4,12 @@ import {useSelector, useDispatch} from 'react-redux';
 import {RootState, AppDispatch, clearAuth} from '../store'; // clearAuth 임포트
 import styles from './NavigationBar.module.css';
 
+import navStyles from './NavigationBar.module.css';
+import homeStyles from '../homepage/HomePage.module.css';
 
-// 이미지 파일 임포트 (경로 확인: src/images/ 에 있다고 가정)
-import arirangTrailIcon from '../images/arirang1.png'; // 아리랑 트레일 로고 이미지 임포트
-import personIcon from '../images/person.png'; // 로그인 아이콘 (로그아웃 상태일 때)
+import arirangTrailIcon from '../images/arirang1.png';
+import personIcon from '../images/person.png';
 
-// 기본 프로필 이미지 URL (이미지 파일이 없을 경우 사용될 플레이스홀더)
 const defaultProfileIcon = 'https://placehold.co/30x30/cccccc/ffffff?text=U';
 
 const NavigationBar = () => {
@@ -27,8 +27,10 @@ const NavigationBar = () => {
     const location = useLocation();
     // 홈페이지('/')인지 확인
     const isHomePage = location.pathname === '/';
-    // 경로에 따라 다른 클래스 이름을 적용
-    const navClassName = isHomePage ? `${styles.navbar} ${styles.transparent}` : `${styles.navbar} ${styles.solid}`;
+
+    // 경로에 따라 다른 스타일을 사용
+    const styles = isHomePage ? homeStyles : navStyles;
+    const navClassName = isHomePage ? homeStyles.navbar : navStyles.navbar;
 
     useEffect(() => {
         const handleClickOutside = (event: MouseEvent) => {
@@ -38,10 +40,8 @@ const NavigationBar = () => {
         };
 
         document.addEventListener('mousedown', handleClickOutside);
-        return () => {
-            document.removeEventListener('mousedown', handleClickOutside);
-        };
-    }, [dropdownRef]);
+        return () => document.removeEventListener('mousedown', handleClickOutside);
+    }, []);
 
     const handleLogout = () => {
         // clearAuth 액션을 디스패치하여 토큰과 프로필 정보를 모두 초기화
@@ -71,14 +71,14 @@ const NavigationBar = () => {
 
                 {/* 중앙 그룹: 기존 링크들 */}
                 <div className={styles.navGroupCenter}>
-                    <Link to={"/calender"} className={styles.navLink}>캘린더</Link>
-                    <Link to={"/search"} className={styles.navLink}>지역검색</Link>
-                    <Link to={"/review"} className={styles.navLink}>축제후기</Link>
-                    <Link to={"/community"} className={styles.navLink}>커뮤니티</Link>
-                    <Link to={"/company"} className={styles.navLink}>회사소개</Link>
+                    <Link to="/calender" className={styles.navLink}>캘린더</Link>
+                    <Link to="/search" className={styles.navLink}>지역검색</Link>
+                    <Link to="/review" className={styles.navLink}>축제후기</Link>
+                    <Link to="/community" className={styles.navLink}>커뮤니티</Link>
+                    <Link to="/company" className={styles.navLink}>회사소개</Link>
                 </div>
 
-                {/* 우측 그룹: 로그인/마이페이지 조건부 렌더링 */}
+                {/* 우측: 로그인 or 사용자 메뉴 */}
                 <div className={styles.navGroupRight} ref={dropdownRef}>
                     {isLoggedIn ? (
                         // 로그인 상태일 때: 프로필 이미지와 닉네임이 있는 드롭다운 버튼
@@ -93,17 +93,17 @@ const NavigationBar = () => {
                                 )}
                             </Link>
                             <button
-                                className={styles.userProfileButton} // 새로운 스타일 클래스 적용
+                                className={styles.userProfileButton}
                                 onClick={() => setShowUserDropdown(!showUserDropdown)}
                             >
                                 {/* 프로필 이미지 (또는 플레이스홀더) */}
                                 <img
                                     src={profileImageUrl}
                                     alt="프로필"
-                                    className={styles.profileImageSmall} // 새로운 스타일 클래스 적용
-                                    onError={(e) => { // 이미지 로드 실패 시 플레이스홀더 이미지로 대체
+                                    className={styles.profileImageSmall}
+                                    onError={(e) => {
                                         const target = e.target as HTMLImageElement;
-                                        target.onerror = null; // 무한 루프 방지
+                                        target.onerror = null;
                                         target.src = defaultProfileIcon;
                                     }}
                                 />
@@ -111,8 +111,7 @@ const NavigationBar = () => {
                             {showUserDropdown && (
                                 // 드롭다운 메뉴
                                 <div className={styles.userDropdownMenu}>
-                                    <Link to={"/mypage"} className={styles.dropdownItem}
-                                          onClick={() => setShowUserDropdown(false)}>
+                                    <Link to="/mypage" className={styles.dropdownItem} onClick={() => setShowUserDropdown(false)}>
                                         마이페이지
                                     </Link>
                                     <button onClick={handleLogout} className={styles.dropdownItem}>
@@ -122,11 +121,8 @@ const NavigationBar = () => {
                             )}
                         </div>
                     ) : (
-                        // 로그아웃 상태일 때: 로그인 아이콘 링크
-                        <Link to={"/login"} className={styles.loginLinkTextOnly}>
-                            <img src={personIcon} alt="로그인 아이콘" className={styles.icon}/>
-                            {/* 로그인 텍스트는 필요에 따라 추가/제거 */}
-                            {/* <span className={styles.linkText}>로그인</span> */}
+                        <Link to="/login" className={styles.loginLinkTextOnly}>
+                            <img src={personIcon} alt="로그인 아이콘" className={styles.icon} />
                         </Link>
                     )}
                 </div>
@@ -134,6 +130,6 @@ const NavigationBar = () => {
             {/*<Outlet />*/}
         </>
     );
-}
+};
 
 export default NavigationBar;

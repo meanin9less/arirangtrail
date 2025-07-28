@@ -1,10 +1,8 @@
 package com.example.arirangtrail.service.review;
 
 import com.example.arirangtrail.component.review.FileStore;
-import com.example.arirangtrail.data.dto.review.ReviewCreateRequestDto;
-import com.example.arirangtrail.data.dto.review.ReviewResponseDto; // ✨ 추가: ReviewResponseDto 임포트
-import com.example.arirangtrail.data.dto.review.ReviewPhotoResponseDto; // ReviewPhotoResponseDto 임포트
-import com.example.arirangtrail.data.dto.review.ReviewUpdateRequestDto;
+import com.example.arirangtrail.data.dto.PaginationDto;
+import com.example.arirangtrail.data.dto.review.*;
 import com.example.arirangtrail.data.entity.ReviewEntity;
 import com.example.arirangtrail.data.entity.ReviewphotoEntity;
 import com.example.arirangtrail.data.repository.ReviewRepository;
@@ -13,6 +11,8 @@ import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Profile;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -89,7 +89,7 @@ public class ReviewService {
         reviewEntity.setVisitdate(updateDto.getVisitdate());
 
         if (newPhotoFiles != null && !newPhotoFiles.isEmpty()) {
-            Set<ReviewphotoEntity> oldPhotos = reviewEntity.getReviewphotos();
+            List<ReviewphotoEntity> oldPhotos = reviewEntity.getReviewphotos();
             if (oldPhotos != null && !oldPhotos.isEmpty()) {
                 oldPhotos.forEach(photo -> fileStore.deleteFile(photo.getImageurl(), bucket));
             }
@@ -113,7 +113,7 @@ public class ReviewService {
         ReviewEntity reviewEntity = reviewRepository.findById(reviewId)
                 .orElseThrow(() -> new EntityNotFoundException("리뷰를 찾을 수 없습니다. ID: " + reviewId));
 
-        Set<ReviewphotoEntity> photos = reviewEntity.getReviewphotos();
+        List<ReviewphotoEntity> photos = reviewEntity.getReviewphotos();
         if (photos != null && !photos.isEmpty()) {
             photos.forEach(photo -> fileStore.deleteFile(photo.getImageurl(), bucket));
         }
@@ -122,31 +122,23 @@ public class ReviewService {
     }
 
     // ✨ ✨ ✨ 추가: 모든 리뷰 조회 메서드 ✨ ✨ ✨
-    public List<ReviewResponseDto> getAllReviews() {
-        List<ReviewEntity> reviews = reviewRepository.findAll(); // 모든 ReviewEntity 조회
-        return reviews.stream()
-                .map(this::convertToDto) // 각 Entity를 DTO로 변환
-                .collect(Collectors.toList()); // DTO 목록으로 수집
+    public ReviewListResponseDto getAllReviews(Pageable pageable) {
+        Page<ReviewEntity> reviewPage = reviewRepository.findAll(pageable);
+        Page<ReviewResponseDto> reviewDtoPage = reviewPage.map(this::convertToDto);
+
+        return new ReviewListResponseDto(
+                reviewDtoPage.getContent(),
+                new PaginationDto(reviewDtoPage)
+        );
     }
 
-    /**
-     * 특정 ID를 가진 리뷰를 조회하여 DTO 형태로 반환합니다.
-     * @param reviewId 조회할 리뷰의 ID (Long 타입)
-     * @return 해당 ID에 해당하는 ReviewResponseDto
-     * @throws RuntimeException 리뷰를 찾을 수 없을 경우 발생
-     */
     public ReviewResponseDto getReviewById(Long reviewId) {
         ReviewEntity reviewEntity = reviewRepository.findById(reviewId) // ID로 ReviewEntity 조회
                 .orElseThrow(() -> new RuntimeException("Review not found with ID: " + reviewId)); // 없으면 예외 발생
         return convertToDto(reviewEntity); // 조회된 Entity를 DTO로 변환
     }
 
-    /**
-     * ReviewEntity를 ReviewResponseDto로 변환하는 헬퍼 메서드입니다.
-     * 엔티티의 필드 타입에 맞춰 DTO 필드에 값을 매핑합니다.
-     * @param entity 변환할 ReviewEntity
-     * @return 변환된 ReviewResponseDto
-     */
+
     private ReviewResponseDto convertToDto(ReviewEntity entity) {
         // ReviewphotoEntity 목록을 ReviewPhotoResponseDto 목록으로 변환합니다.
         List<ReviewPhotoResponseDto> photos = entity.getReviewphotos().stream()

@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import {useParams, useNavigate, useSearchParams} from 'react-router-dom';
 import axios from 'axios';
 import styles from './User.module.css';
+import apiClient from "../api/axiosInstance";
 
 const SimpleJoinPage: React.FC = () => {
     const [searchParams] = useSearchParams();
@@ -39,7 +40,7 @@ const SimpleJoinPage: React.FC = () => {
         setSuccess('');
 
         try {
-            const response = await axios.post('/join', {
+            const response = await apiClient.post('/simplejoin', {
                 username,
                 email,
                 firstname,
@@ -51,7 +52,7 @@ const SimpleJoinPage: React.FC = () => {
             if (response.status === 200) {
                 setSuccess('가입이 완료되었습니다.');
                 setTimeout(() => {
-                    navigate('/login');
+                    navigate('/');
                 }, 1500);
             }
         } catch (err) {
