@@ -54,7 +54,6 @@ public class FestivalService {
             LikeEntity newLike = new LikeEntity();
             newLike.setUser(user);
             newLike.setContentid(contentid);
-            newLike.setCreatedat(Instant.now());
             likeRepository.save(newLike);
 
             return true;
