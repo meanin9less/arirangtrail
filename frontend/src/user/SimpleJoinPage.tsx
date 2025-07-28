@@ -56,7 +56,7 @@ const SimpleJoinPage: React.FC = () => {
                 dispatch(setUserProfile(response.data)); // 정보를 저장
                 setSuccess('가입이 완료되었습니다.');
                 setTimeout(() => {
-                    navigate('/userinfo');
+                    navigate('/');
                 }, 1500);
             }
         } catch (err: any) {
