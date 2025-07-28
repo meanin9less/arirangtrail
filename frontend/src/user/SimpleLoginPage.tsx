@@ -2,6 +2,7 @@ import React, { useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useDispatch } from 'react-redux';
 import { setUserProfile, setToken } from '../store';
+import apiClient from "../api/axiosInstance";
 
 const SimpleLoginPage: React.FC = () => {
     const location = useLocation();
@@ -11,6 +12,7 @@ const SimpleLoginPage: React.FC = () => {
     const { userData, accessToken } = location.state || {};
 
     useEffect(() => {
+        const response = apiClient.get('/api/userinfo');
         if (userData && accessToken) {
             dispatch(setUserProfile(userData));
             dispatch(setToken(accessToken));
