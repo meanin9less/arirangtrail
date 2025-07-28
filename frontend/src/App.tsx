@@ -22,6 +22,7 @@ import SearchPage from "./search/SearchPage";
 import ReviewWritePage from "./review/ReviewWritePage";
 import ReviewDetailPage from './review/ReviewDetailPage';
 import SimpleJoinPage from "./user/SimpleJoinPage";
+import SimpleLoginPage from "./user/SimpleLoginPage";
 
 function App() {
     return (
@@ -35,6 +36,7 @@ function App() {
                             <Route path="login" element={<LoginPage />} />
                             <Route path="join" element={<JoinPage />} />
                             <Route path="/simplejoin" element={<SimpleJoinPage/>}></Route>
+                            <Route path={"userinfo"} element={<SimpleLoginPage/>}></Route>
                             <Route path="logout" element={<LogoutPage />} />
                             <Route path="mypage" element={<MyPage />} />
                             <Route path="mypage/editinfo" element={<EditInfoPage />} />
