@@ -2,8 +2,6 @@ import React, { useState, useEffect, FormEvent } from 'react';
 import ChatRoom from './ChatRoom';
 import {useDispatch, useSelector} from 'react-redux';
 import store, { RootState } from '../store';
-import { Client } from "@stomp/stompjs";
-import SockJS from "sockjs-client";
 import {BsChatDots} from "react-icons/bs";
 import { Link } from 'react-router-dom';
 import apiClient from "../api/axiosInstance";
@@ -15,8 +13,8 @@ id: number;
 title: string;
 creator: string;
 participantCount: number;
-isLiked: boolean; // 내가 좋아요를 눌렀는지 여부
-shareCount: number; // 공유 횟수
+// isLiked: boolean; // 내가 좋아요를 눌렀는지 여부
+// shareCount: number; // 공유 횟수
 }
 
 const CommunityPage = () => {
@@ -94,26 +92,26 @@ const handleLeaveRoom = () => {
     fetchMyRooms();
 };
 
-const handlelike=async (roomId: number)=>{
-    try {
-        // const username=userName;
-        const response = await apiClient.post<boolean>(`/festivals/${roomId}/like`);
-        //?username=${username}
-        console.log("현재 like 상태:"+ response.data);
-    } catch (e) {
-        console.error("좋아요 실패했습니다.", e);
-    }
-}
-
-const handleShared=async (roomId:number)=>{
-    try {
-        const response=await apiClient.post(`/festivals/${roomId}/share`);
-
-        console.log("현재 Shared 상태:"+ response.data);
-    } catch (error) {
-        console.error("공유 처리 실패:", error);
-    }
-}
+// const handlelike=async (roomId: number)=>{
+//     try {
+//         // const username=userName;
+//         const response = await apiClient.post<boolean>(`/festivals/${roomId}/like`);
+//         //?username=${username}
+//         console.log("현재 like 상태:"+ response.data);
+//     } catch (e) {
+//         console.error("좋아요 실패했습니다.", e);
+//     }
+// }
+//
+// const handleShared=async (roomId:number)=>{
+//     try {
+//         const response=await apiClient.post(`/festivals/${roomId}/share`);
+//
+//         console.log("현재 Shared 상태:"+ response.data);
+//     } catch (error) {
+//         console.error("공유 처리 실패:", error);
+//     }
+// }
 
 const myRooms = rooms.filter(room => myRoomIds.includes(room.id));
 const otherRooms = rooms.filter(room => !myRoomIds.includes(room.id));
@@ -204,10 +202,6 @@ return (
                             <td style={styles.td}>{room.creator}</td>
                             <td style={styles.td}>{room.participantCount}</td>
                             <td style={styles.td}><button onClick={() => handleEnterRoom(room.id.toString())} style={styles.enterButton}>입장</button></td>
-                            <td><button key={room.id} onClick={()=>handlelike(room.id)}>좋아요 버튼</button>
-                            </td>
-                            <td><button key={room.id} onClick={()=>handleShared(room.id)}>공유 버튼</button>
-                            </td>
                         </tr>
                     ))}
                     </tbody>

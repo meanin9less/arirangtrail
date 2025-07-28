@@ -63,18 +63,18 @@ public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Excepti
             .formLogin(formLogin->formLogin.disable())
             .httpBasic(httpBasic->httpBasic.disable())
 
-//                .authorizeHttpRequests(authorizeHttpRequests->{
-//                    authorizeHttpRequests.anyRequest().permitAll();
-//                })
-            // 추후 웹소켓 인증 통과를 위한 절차
-            .authorizeHttpRequests(authorizeHttpRequests -> {
-                authorizeHttpRequests
-                        // ★★★ 웹소켓 연결 경로는 인증 없이 허용해야 합니다. ★★★
-                        .requestMatchers("/ws-stomp/**").permitAll()
-                        .requestMatchers("/api/login", "/api/join", "/api/reissue", "/login/oauth2/**").permitAll()
-                        .requestMatchers("/api/admin/**").hasRole("ADMIN")
-                        .anyRequest().authenticated();
-            })
+                .authorizeHttpRequests(authorizeHttpRequests->{
+                    authorizeHttpRequests.anyRequest().permitAll();
+                })
+//            // 추후 웹소켓 인증 통과를 위한 절차
+//            .authorizeHttpRequests(authorizeHttpRequests -> {
+//                authorizeHttpRequests
+//                        // ★★★ 웹소켓 연결 경로는 인증 없이 허용해야 합니다. ★★★
+//                        .requestMatchers("/ws-stomp/**").permitAll()
+//                        .requestMatchers("/api/login", "/api/join", "/api/reissue", "/login/oauth2/**").permitAll()
+//                        .requestMatchers("/api/admin/**").hasRole("ADMIN")
+//                        .anyRequest().authenticated();
+//            })
 
 
             .cors(cors->cors.configurationSource(request -> {
