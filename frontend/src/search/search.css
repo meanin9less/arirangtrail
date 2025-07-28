@@ -43,7 +43,6 @@ body {
     padding: 8px;
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
     transition: box-shadow 0.3s ease;
-    margin-bottom: 48px;
 }
 
 .search-input-wrapper:focus-within {
@@ -71,11 +70,82 @@ body {
     flex-grow: 1;
     color: #343a40;
 }
+
 .search-input-keyword::placeholder {
     color: #adb5bd;
 }
+
 .search-input-keyword:disabled {
     background-color: #f5f5f5;
+}
+
+/* 검색 컨트롤 영역을 묶는 래퍼 */
+.search-controls-wrapper {
+    display: flex;
+    flex-direction: column;
+    gap: 16px; /* ✨ 검색창과 체크박스 사이 세로 간격을 약간 조정 */
+    margin-bottom: 20px; /* ✨ 검색 영역과 결과 목록 사이 간격은 넉넉하게 유지 */
+}
+
+/* 체크박스와 라벨을 감싸는 래퍼 */
+.filter-checkbox-wrapper {
+    position: relative; /* 자식 요소들의 기준점 */
+    display: inline-block; /* 내용물 크기만큼만 차지 */
+    margin-left: 8px; /* 왼쪽 정렬 맞춤을 위한 여백 */
+}
+
+/* 체크박스 스타일 */
+.filter-checkbox {
+    position: absolute;
+    opacity: 0;
+    width: 0;
+    height: 0;
+}
+
+/* 2. 라벨을 '박스' 또는 '버튼'처럼 꾸밉니다. */
+.filter-checkbox-label {
+    display: inline-flex; /* 내부 아이콘과 텍스트 정렬 */
+    align-items: center;
+    gap: 8px;
+    background-color: #f8f9fa; /* 기본 배경색 (꺼진 상태) */
+    border: 1px solid #dee2e6; /* 기본 테두리 */
+    color: #495057; /* 기본 글자색 */
+    padding: 10px 16px;
+    border-radius: 12px; /* 둥근 모서리 */
+    font-size: 1rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease-in-out;
+    user-select: none; /* 텍스트 드래그 방지 */
+}
+
+/* 3. ✨ 숨겨진 체크박스가 ':checked'(선택)되었을 때,
+      바로 뒤에 오는(+) 라벨의 스타일을 바꿉니다. (핵심 트릭) */
+.filter-checkbox:checked + .filter-checkbox-label {
+    background-color: #007bff; /* 선택 시 배경색 */
+    border-color: #007bff; /* 선택 시 테두리색 */
+    color: white; /* 선택 시 글자색 */
+    box-shadow: 0 4px 10px rgba(0, 123, 255, 0.2); /* 은은한 그림자 효과 */
+}
+
+/* 박스에 마우스를 올렸을 때 */
+.filter-checkbox-label:hover {
+    border-color: #adb5bd;
+    background-color: #f1f3f5;
+}
+
+.filter-checkbox-label::before {
+    content: '✓'; /* 체크 모양 아이콘 */
+    font-size: 1.2rem;
+    line-height: 1;
+    color: #adb5bd; /* 기본 아이콘 색상 */
+    transition: all 0.2s ease-in-out;
+}
+
+/* 체크되었을 때, 아이콘 모양도 바꿉니다. */
+.filter-checkbox:checked + .filter-checkbox-label::before {
+    color: white; /* 선택 시 아이콘 색상 */
+    transform: scale(1.2); /* 살짝 커지는 효과 */
 }
 
 /* --- Search Results --- */

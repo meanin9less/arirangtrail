@@ -1,41 +1,50 @@
 /* src/HomePage.module.css */
 
-/* 메인 컨테이너 스타일 */
-.homeContainer {
-    position: relative;
-    height: calc(100vh - 70px); /* 내비게이션 바 높이 제외 (대략 60px) */
-    overflow: hidden; /* 넘치는 부분 숨김 */
-    display: flex;
-    align-items: center;
-    justify-content: center;
-
-    /* 배경 이미지와 전환 효과는 JSX에서 인라인으로 동적으로 적용됩니다. */
-    /* backgroundImage: url(...); */
-    /* transition: background-image 1.5s ease-in-out; */
-    background-size: cover; /* 배경 이미지가 요소를 꽉 채우도록 */
-    background-position: center center; /* 배경 이미지 중앙 정렬 */
-    background-repeat: no-repeat; /* 배경 이미지 반복 없음 */
+/* =================================================== */
+/*                     기본 레이아웃                      */
+/* =================================================== */
+.homePageLayout {
+    /* ✨ 이제 이 요소가 페이지의 높이를 결정합니다. */
+    /* 푸터가 보일 수 있도록 충분한 높이를 가집니다. */
+    width: 100%;
+    height: 100vh; /* 화면 높이를 꽉 채움 */
+    position: relative; /* 자식 요소들의 기준점 */
 }
 
-/* 배경 이미지 위에 어두운 오버레이 */
+/* =================================================== */
+/*             배경 이미지 및 오버레이 (최상위)             */
+/* =================================================== */
+.homeContainer {
+    position: absolute; /* ✨ 이제 Layout에 속한 배경 레이어 역할 */
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 1; /* ✨ 네비게이션 바(2)보다 아래에 위치 */
+    background-size: cover;
+    background-position: center center;
+    transition: background-image 1.5s ease-in-out;
+}
+
 .overlay {
     position: absolute;
     top: 0;
     left: 0;
     width: 100%;
     height: 100%;
-    background-color: rgba(0, 0, 0, 0.5); /* 검은색 50% 투명도 오버레이 */
+    /* ✨ 중요: 가독성을 위한 강력한 오버레이 */
+    background: linear-gradient(to bottom, rgba(0, 0, 0, 0.6) 0%, transparent 30%, transparent 70%, rgba(0, 0, 0, 0.6) 100%);
     z-index: 1; /* 콘텐츠보다 아래에 위치 */
 }
 
 /* 1. 홈 네비게이션 바 */
 .navbar {
     z-index: 100;
-    color: white;
     position: fixed;
     top: 0;
     left: 0;
-    padding: 15px 20px;
+    padding: 0;
+    margin: 0;
     display: flex;
     justify-content: space-between;
     align-items: center;
@@ -71,9 +80,8 @@
     display: flex;
     align-items: center;
     gap: 8px;
-    font-size: 50px;
+    font-size: 35px;
     font-weight: 700;
-    opacity: 0.8;
 }
 
 /* 4. 홈 링크 특정 스타일 */
@@ -139,8 +147,8 @@
 
 /* 7. 아이콘 이미지 스타일 (홈 아이콘에만 적용) */
 .icon {
-    height: 30px;
-    width: 30px;
+    height: 50px;
+    width: 50px;
     object-fit: contain;
     filter: invert(100%);
     transition: transform 0.3s ease;
@@ -151,7 +159,7 @@
     object-fit: contain;
     height: 700px;
     width: 1200px;
-    filter: invert(100%) opacity(0.8);
+    filter: brightness(0) invert(1) drop-shadow(0 2px 4px rgba(0,0,0,0.5));
 
 }
 
@@ -182,8 +190,8 @@
 
 /* ✨ 9-2. 프로필 이미지 (작은 원형) 스타일 */
 .profileImageSmall {
-    width: 60px; /* 작은 원형 프로필 이미지 크기 */
-    height: 60px;
+    width: 50px; /* 작은 원형 프로필 이미지 크기 */
+    height: 50px;
     border-radius: 50%; /* 원형 */
     object-fit: cover; /* 이미지 비율 유지하며 채우기 */
     border: 1px solid rgba(255, 255, 255, 0.5); /* 흰색 테두리 */
