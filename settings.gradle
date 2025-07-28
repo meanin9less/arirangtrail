@@ -1,1 +1,10 @@
+// 1. 플러그인 관리 블록이 가장 먼저 와야 합니다.
+pluginManagement {
+    repositories {
+        gradlePluginPortal()
+        mavenCentral()
+    }
+}
+
+// 2. 그 다음에 다른 설정들이 와야 합니다.
 rootProject.name = 'arirangtrail'
