@@ -173,7 +173,7 @@ const EditInfoPage: React.FC = () => {
         try {
             // [백엔드 연동 필요] PUT 요청으로 사용자 정보 업데이트
             // FormData 사용 시 axios가 'Content-Type': 'multipart/form-data' 헤더를 자동으로 설정합니다.
-                const response = await apiClient.put<ApiResponse>('/userinfo', formDataToSend);
+                const response = await apiClient.put<ApiResponse>('/update-inform', formDataToSend);
 
             setModalMessage(response.data.message || '정보가 성공적으로 수정되었습니다.');
             setModalMessageType('success');
