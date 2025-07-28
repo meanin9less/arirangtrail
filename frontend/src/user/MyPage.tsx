@@ -16,7 +16,7 @@ interface UserProfileResponseDto {
     imageUrl?: string;
 }
 
-interface PasswordVerificationRequestDto {
+    interface PasswordVerificationRequestDto {
     password: string;
 }
 
@@ -104,8 +104,8 @@ const MyPage: React.FC = () => {
 
     // 간편 인증 제출 핸들러
     const handleSimpleAuth = async () => {
-        setAuthLoading(true); // 로딩 시작
-        setAuthMessage(null); // 메시지 초기화
+        setAuthLoading(true);
+        setAuthMessage(null);
 
         if (!currentPassword.trim()) {
             setAuthMessage('비밀번호를 입력해주세요.');
@@ -114,29 +114,36 @@ const MyPage: React.FC = () => {
         }
 
         try {
-            // ✨ 백엔드 API 호출로 대체합니다.
-            const requestBody: PasswordVerificationRequestDto = { password: currentPassword };
-            const response = await apiClient.post<PasswordVerificationResponseDto>('/compare-password', requestBody);
+            // username을 쿼리 파라미터로 보내고, body는 빈값 또는 null로 보내기
+            const username = storedUserProfile?.username;
+            if (!username) {
+                setAuthMessage('사용자 정보가 없습니다.');
+                setAuthLoading(false);
+                return;
+            }
+
+            // 쿼리 스트링 직접 작성
+            const response = await apiClient.post<PasswordVerificationResponseDto>(
+                `/comapre-password?username=${encodeURIComponent(username)}&password=${encodeURIComponent(currentPassword)}`,
+                null
+            );
 
             setAuthMessage(response.data.message);
 
-            // 백엔드에서 200 OK와 함께 성공 메시지를 보낼 경우
             if (response.status === 200 && response.data.message.includes('일치')) {
-                navigate('/mypage/editinfo'); // 인증 성공 시 정보 수정 페이지로 이동
+                navigate('/mypage/editinfo');
             } else {
-                // 백엔드에서 200 OK를 보냈지만 메시지가 '일치하지 않음'일 경우
                 setAuthMessage(response.data.message);
             }
         } catch (error: any) {
             console.error('비밀번호 인증 오류:', error);
             let msg = '비밀번호 인증 실패: 네트워크 오류 또는 알 수 없는 오류';
             if (axios.isAxiosError(error) && error.response) {
-                // 백엔드에서 401 Unauthorized와 함께 메시지를 보낼 경우
                 msg = error.response.data?.message || '비밀번호가 올바르지 않습니다.';
             }
             setAuthMessage(msg);
         } finally {
-            setAuthLoading(false); // 로딩 종료
+            setAuthLoading(false);
         }
     };
 
