@@ -73,33 +73,24 @@ const EditInfoPage: React.FC = () => {
             setLoading(true);
             setError(null);
             try {
-                // ✨ ✨ ✨ 복구 필요: 실제 백엔드 API 호출을 활성화하세요. ✨ ✨ ✨
-                const response = await apiClient.get<UserProfile>('/api/mypage/profile');
-                // const profileData = response.data;
+                const response = await apiClient.get<UserProfile>('/userinfo', {
+                    headers: {
+                        Authorization: `Bearer ${jwtToken}`,
+                    },
+                });
+                const profileData = response.data;
 
-                // ✨ 개발/테스트 목적으로 사용했던 임시 더미 데이터 (위의 백엔드 연동 코드 활성화 시 제거)
-                const profileData: UserProfile = {
-                    username: "dev_user",
-                    email: "dev.user@example.com",
-                    firstname: "길동",
-                    lastname: "홍",
-                    birthdate: "1990-01-01",
-                    nickname: "개발자닉",
-                    imageUrl: "https://placehold.co/100x100/007bff/ffffff?text=DEV" // 임시 이미지 URL
-                };
-
-                setOriginalProfile(profileData); // 원본 프로필 저장
-                setFormData({ // 폼 데이터 초기화
+                setOriginalProfile(profileData);
+                setFormData({
                     email: profileData.email,
                     firstname: profileData.firstname,
                     lastname: profileData.lastname,
                     birthdate: profileData.birthdate,
                     nickname: profileData.nickname,
                 });
-                setCurrentImageUrl(profileData.imageUrl || null); // 기존 이미지 URL 설정
-                setSelectedFile(null); // 새 파일 선택 상태 초기화
-                setImagePreviewUrl(null); // 미리보기 URL 초기화
-
+                setCurrentImageUrl(profileData.imageUrl || null);
+                setSelectedFile(null);
+                setImagePreviewUrl(null);
             } catch (err: any) {
                 console.error('사용자 정보 불러오기 오류:', err);
                 let errorMessage = '사용자 정보를 불러오는 데 실패했습니다.';
@@ -182,7 +173,7 @@ const EditInfoPage: React.FC = () => {
         try {
             // [백엔드 연동 필요] PUT 요청으로 사용자 정보 업데이트
             // FormData 사용 시 axios가 'Content-Type': 'multipart/form-data' 헤더를 자동으로 설정합니다.
-            const response = await apiClient.put<ApiResponse>('/api/mypage/profile', formDataToSend);
+                const response = await apiClient.put<ApiResponse>('/userinfo', formDataToSend);
 
             setModalMessage(response.data.message || '정보가 성공적으로 수정되었습니다.');
             setModalMessageType('success');
