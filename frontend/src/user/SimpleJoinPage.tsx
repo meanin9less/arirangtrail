@@ -53,7 +53,12 @@ const SimpleJoinPage: React.FC = () => {
             });
 
             if (response.status === 200) {
-                dispatch(setUserProfile(response.data)); // 정보를 저장
+                const userProfileData = {
+                    username: response.data.username,
+                    nickname: response.data.nickname,
+                    imageUrl: response.data.imageUrl || 'https://placehold.co/50x50/cccccc/ffffff?text=User'
+                };
+                dispatch(setUserProfile(userProfileData)); // 정보를 저장
                 setSuccess('가입이 완료되었습니다.');
                 setTimeout(() => {
                     navigate('/');
