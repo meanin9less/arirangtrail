@@ -1,2 +1,16 @@
-# 백엔드 Docker 빌드 시 frontend 폴더를 제외합니다.
-frontend/
+# Docker build ignore file
+
+# Git
+.git/
+.gitignore
+
+# Gradle
+.gradle/
+build/
+gradle/
+gradlew
+gradlew.bat
+
+# Node.js
+node_modules/
+npm-debug.log

@@ -10,6 +10,7 @@ import lombok.Setter;
 import java.math.BigDecimal;
 import java.time.Instant;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 
 /**
@@ -30,7 +31,7 @@ public class ReviewResponseDto {
     private String content; // 리뷰 내용
     private BigDecimal rating; // 평점 (예: 1.0 ~ 5.0)
     private LocalDate visitDate; // 방문일
-    private Instant createdAt; // 생성일시
-    private Instant updatedAt; // 수정일시
+    private LocalDateTime createdAt; // 생성일시
+    private LocalDateTime updatedAt; // 수정일시
     private List<ReviewPhotoResponseDto> photos; // 리뷰 사진 목록 (분리된 DTO 사용)
 }

@@ -7,10 +7,13 @@ import jakarta.validation.constraints.Size;
 import lombok.Getter;
 import lombok.Setter;
 import org.hibernate.annotations.ColumnDefault;
+import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.UpdateTimestamp;
 
 import java.math.BigDecimal;
 import java.time.Instant;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -54,15 +57,13 @@ public class ReviewEntity {
     @Column(name = "visitdate")
     private LocalDate visitdate; // 방문일 (LocalDate 타입)
 
-    @NotNull
-    @ColumnDefault("CURRENT_TIMESTAMP") // 기본값으로 현재 타임스탬프 설정
-    @Column(name = "createdat", nullable = false)
-    private Instant createdat; // 생성일 (Instant 타입)
+    @CreationTimestamp // INSERT 시 Hibernate가 자동으로 현재 시간을 넣어줌
+    @Column(nullable = false, updatable = false)
+    private LocalDateTime createdat;// 생성일 (Instant 타입)
 
-    @NotNull
-    @ColumnDefault("CURRENT_TIMESTAMP") // 기본값으로 현재 타임스탬프 설정
-    @Column(name = "updatedat", nullable = false)
-    private Instant updatedat; // 수정일 (Instant 타입)
+    @UpdateTimestamp // UPDATE 시 Hibernate가 자동으로 현재 시간을 넣어줌
+    @Column(nullable = false)
+    private LocalDateTime updatedat;
 
     @OneToMany(mappedBy = "review", cascade = CascadeType.ALL, orphanRemoval = true)
     // review 필드에 의해 매핑되며, ReviewEntity가 삭제되면 연관된 ReviewphotoEntity도 삭제됩니다.

@@ -92,6 +92,7 @@ const DetailPage = () => {
     const [likeCount, setLikeCount] = useState(0); // 좋아요 개수
     const jwtToken = useSelector((state: RootState) => state.token.token);
     const userProfile = useSelector((state: RootState) => state.token.userProfile);
+    const [isLikeLoading, setIsLikeLoading] = useState(true);
     const [selectedDestination, setSelectedDestination] = useState<{
         mapy: string;
         mapx: string;
@@ -255,48 +256,56 @@ const DetailPage = () => {
     //     );
     // };
 
-    useEffect(() => {
-        // 백엔드 API를 호출하여 현재 축제의 좋아요 상태와 개수를 가져옴
-        const fetchLikeData = async () => {
-            try {
-                // 백엔드에 '좋아요' 상태를 확인하는 API 요청 (사용자 인증 정보 포함)
-                const response = await apiClient.get(`/festivals/${festivalId}/status`);
-                setIsLiked(response.data.isLiked);
-                setLikeCount(response.data.likeCount);
-                //set으로 공유횟수 만들면 좋다.
-            } catch (error) {
-                console.error("좋아요 상태 로딩 실패:", error);
-            }
-        };
+    const fetchLikeData = async () => {
+        // API 요청 중임을 시각적으로 표시 (선택사항이지만 권장)
+        setIsLikeLoading(true);
+        try {
+            const response = await apiClient.get(`/festivals/${festivalId}/status`, {
+                params: { username: userProfile?.username || undefined }
+            });
+            // 서버가 준 값으로만 상태를 업데이트
+            setIsLiked(response.data.isLiked);
+            setLikeCount(response.data.likeCount);
+        } catch (error) {
+            console.error("좋아요 상태 로딩 실패:", error);
+            // 에러 시 안전한 기본값으로 설정
+            setIsLiked(false);
+        } finally {
+            setIsLikeLoading(false);
+        }
+    };
 
-        if (festivalId) { //
+    useEffect(() => {
+        if (festivalId) {
             fetchLikeData();
         }
     }, [festivalId, jwtToken]);
 
     const handleLikeClick = async () => {
-        // 로그인 상태가 아니면 로그인 페이지로 유도
-        if (!jwtToken) {
-            alert("로그인이 필요한 기능입니다.");
-            return;
-        }
+        if (!jwtToken || isLikeLoading) return;
 
-        // UI를 낙관적으로 업데이트 (선택 사항, 하지만 사용자 경험 향상)
-        setIsLiked(prev => !prev);
-        setLikeCount(prev => isLiked ? prev - 1 : prev + 1);
+        const previousLiked = isLiked;
+        const previousCount = likeCount;
+
+        // 먼저 UI 업데이트 (낙관적 업데이트)
+        setIsLiked(!isLiked);
+        setLikeCount(isLiked ? likeCount - 1 : likeCount + 1);
+        setIsLikeLoading(true);
+
         try {
-            await apiClient.post(`/festivals/${festivalId}/like`, null,{
-                    params: {
-                        username: userProfile?.username
-                    }
-                }
-            );
+            await apiClient.post(`/festivals/${festivalId}/like`, null, {
+                params: { username: userProfile?.username }
+            });
+
+            // 성공하면 서버에서 정확한 상태 조회
+            await fetchLikeData();
         } catch (error) {
-            console.error("좋아요 처리 실패:", error);
-            alert("요청 처리에 실패했습니다. 다시 시도해주세요.");
-            // 실패 시 UI를 원래 상태로 되돌림
-            setIsLiked(prev => !prev);
-            setLikeCount(prev => isLiked ? prev + 1 : prev - 1);
+            // 실패하면 이전 상태로 롤백
+            setIsLiked(previousLiked);
+            setLikeCount(previousCount);
+            alert("요청 처리에 실패했습니다.");
+        } finally {
+            setIsLikeLoading(false);
         }
     };
 
@@ -362,7 +371,7 @@ const DetailPage = () => {
                                 <button
                                     onClick={handleLikeClick}
                                     className={`like-button ${isLiked ? 'active' : ''}`}
-                                    disabled={!jwtToken}
+                                    disabled={!jwtToken || isLikeLoading}
                                     aria-label="가고 싶어요 버튼"
                                 >
                                     {/* isLiked 상태에 따라 아이콘 변경 */}
