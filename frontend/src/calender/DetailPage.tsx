@@ -91,6 +91,7 @@ const DetailPage = () => {
     const [isLiked, setIsLiked] = useState(false); // 좋아요 상태
     const [likeCount, setLikeCount] = useState(0); // 좋아요 개수
     const jwtToken = useSelector((state: RootState) => state.token.token);
+    const userProfile = useSelector((state: RootState) => state.token.userProfile);
     const [selectedDestination, setSelectedDestination] = useState<{
         mapy: string;
         mapx: string;
@@ -259,9 +260,10 @@ const DetailPage = () => {
         const fetchLikeData = async () => {
             try {
                 // 백엔드에 '좋아요' 상태를 확인하는 API 요청 (사용자 인증 정보 포함)
-                const response = await apiClient.get(`/festivals/${festivalId}/like-status`);
+                const response = await apiClient.get(`/festivals/${festivalId}/status`);
                 setIsLiked(response.data.isLiked);
                 setLikeCount(response.data.likeCount);
+                //set으로 공유횟수 만들면 좋다.
             } catch (error) {
                 console.error("좋아요 상태 로딩 실패:", error);
             }
@@ -282,15 +284,13 @@ const DetailPage = () => {
         // UI를 낙관적으로 업데이트 (선택 사항, 하지만 사용자 경험 향상)
         setIsLiked(prev => !prev);
         setLikeCount(prev => isLiked ? prev - 1 : prev + 1);
-
         try {
-            if (isLiked) {
-                // 좋아요 취소: axios 대신 apiClient 사용
-                await apiClient.delete(`/festivals/${festivalId}/like`);
-            } else {
-                // 좋아요 추가: axios 대신 apiClient 사용
-                await apiClient.post(`/festivals/${festivalId}/like`);
-            }
+            await apiClient.post(`/festivals/${festivalId}/like`, null,{
+                    params: {
+                        username: userProfile?.username
+                    }
+                }
+            );
         } catch (error) {
             console.error("좋아요 처리 실패:", error);
             alert("요청 처리에 실패했습니다. 다시 시도해주세요.");
