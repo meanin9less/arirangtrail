@@ -50,7 +50,7 @@ public class ReissueController {
 
         String newAccessToken=this.jwtUtil.createToken("access", username, role, 1000*60*60L);
 
-        response.addHeader("Authorization", "Bearer "+newAccessToken);
+        response.addHeader("authorization", "Bearer "+newAccessToken);
         return ResponseEntity.status(HttpStatus.OK).body("토큰 발급 성공");
     }
 

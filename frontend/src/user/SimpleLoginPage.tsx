@@ -17,12 +17,12 @@ const SimpleLoginPage: React.FC = () => {
                 const response = await apiClient.post("/reissue");
                 console.log(response);
                 if (response.status===200){
-                    const access = response.headers["Authorization"];
+                    const access = response.headers["authorization"];
                     console.log(access);
                     dispatch(setToken(access));
                     const res = await apiClient.get("/userinfo",{
                         headers:{
-                            Authorization:access
+                            authorization:access
                         }
                     });
                     console.log(res);
