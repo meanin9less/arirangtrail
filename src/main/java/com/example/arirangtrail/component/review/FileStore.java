@@ -13,7 +13,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
-@Component
+//@Component
 @RequiredArgsConstructor
 public class FileStore {
 

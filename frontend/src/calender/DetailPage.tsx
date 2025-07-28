@@ -8,11 +8,11 @@ import {
     IoPin,
     IoPricetagOutline,
     IoTimeOutline,
-    IoShareSocialOutline,
+    IoShareSocialOutline, IoHeartOutline, IoHeart,
 } from "react-icons/io5";
 import React, {useEffect, useState} from "react";
 import axios from "axios";
-import {useParams} from "react-router-dom";
+import {useNavigate, useParams} from "react-router-dom";
 import {Swiper, SwiperSlide} from "swiper/react";
 import {Navigation, Pagination} from "swiper/modules";
 import 'swiper/css';
@@ -21,6 +21,9 @@ import 'swiper/css/pagination';
 import "./detail.css"
 import WeatherWidget from "../WeatherWidget";
 import ShareApi from "../ShareApi";
+import apiClient from "../api/axiosInstance";
+import {useSelector} from "react-redux";
+import {RootState} from "../store";
 
 // 구글맵 API 타입 선언
 declare global {
@@ -85,6 +88,9 @@ const DetailPage = () => {
     const [information, setInformation] = useState<AddInformation | null>(null);
     const [foodList, setFoodList] = useState<FoodSearchList[]>([]);
     const [isModalOpen, setIsModalOpen] = useState(false); // 모달이 열렸는지 여부
+    const [isLiked, setIsLiked] = useState(false); // 좋아요 상태
+    const [likeCount, setLikeCount] = useState(0); // 좋아요 개수
+    const jwtToken = useSelector((state: RootState) => state.token.token);
     const [selectedDestination, setSelectedDestination] = useState<{
         mapy: string;
         mapx: string;
@@ -248,6 +254,52 @@ const DetailPage = () => {
     //     );
     // };
 
+    useEffect(() => {
+        // 백엔드 API를 호출하여 현재 축제의 좋아요 상태와 개수를 가져옴
+        const fetchLikeData = async () => {
+            try {
+                // 백엔드에 '좋아요' 상태를 확인하는 API 요청 (사용자 인증 정보 포함)
+                const response = await apiClient.get(`/festivals/${festivalId}/like-status`);
+                setIsLiked(response.data.isLiked);
+                setLikeCount(response.data.likeCount);
+            } catch (error) {
+                console.error("좋아요 상태 로딩 실패:", error);
+            }
+        };
+
+        if (festivalId) { //
+            fetchLikeData();
+        }
+    }, [festivalId, jwtToken]);
+
+    const handleLikeClick = async () => {
+        // 로그인 상태가 아니면 로그인 페이지로 유도
+        if (!jwtToken) {
+            alert("로그인이 필요한 기능입니다.");
+            return;
+        }
+
+        // UI를 낙관적으로 업데이트 (선택 사항, 하지만 사용자 경험 향상)
+        setIsLiked(prev => !prev);
+        setLikeCount(prev => isLiked ? prev - 1 : prev + 1);
+
+        try {
+            if (isLiked) {
+                // 좋아요 취소: axios 대신 apiClient 사용
+                await apiClient.delete(`/festivals/${festivalId}/like`);
+            } else {
+                // 좋아요 추가: axios 대신 apiClient 사용
+                await apiClient.post(`/festivals/${festivalId}/like`);
+            }
+        } catch (error) {
+            console.error("좋아요 처리 실패:", error);
+            alert("요청 처리에 실패했습니다. 다시 시도해주세요.");
+            // 실패 시 UI를 원래 상태로 되돌림
+            setIsLiked(prev => !prev);
+            setLikeCount(prev => isLiked ? prev + 1 : prev - 1);
+        }
+    };
+
     // 모달을 여는 함수
     const openDirectionsModal = (destination: { mapy: string; mapx: string; title: string; }) => {
         setSelectedDestination(destination); // 어떤 장소인지 기억
@@ -259,7 +311,6 @@ const DetailPage = () => {
         setIsModalOpen(false);
         setSelectedDestination(null); // 선택 초기화
     };
-
 
     if (isLoading) {
         return <div className="loading-overlay"><span>축제 정보를 불러오는 중...</span></div>;
@@ -307,17 +358,29 @@ const DetailPage = () => {
                     <div className="info-section">
                         <div className={"info-section2"}>
                             <h2 className="section-title"><IoInformationCircleOutline/>소개</h2>
-                            <ShareApi
-                                shareData={{
-                                    title: `[축제 정보] ${festival.title}`,
-                                    text: festival.overview.replace(/<[^>]+>/g, ''),
-                                    url: window.location.href,
-                                    imageUrl: festival.firstimage, // 카카오톡 공유에 사용할 대표 이미지 전달
-                                }}
-                                className="icon-button"
-                            >
-                                <IoShareSocialOutline size={22}/> {/* 아이콘 컴포넌트를 자식으로 전달 */}
-                            </ShareApi>
+                            <div className="actions-group">
+                                <button
+                                    onClick={handleLikeClick}
+                                    className={`like-button ${isLiked ? 'active' : ''}`}
+                                    disabled={!jwtToken}
+                                    aria-label="가고 싶어요 버튼"
+                                >
+                                    {/* isLiked 상태에 따라 아이콘 변경 */}
+                                    {isLiked ? <IoHeart size={20}/> : <IoHeartOutline size={20}/>}
+                                    <span>{likeCount}</span>
+                                </button>
+                                <ShareApi
+                                    shareData={{
+                                        title: `[축제 정보] ${festival.title}`,
+                                        text: festival.overview.replace(/<[^>]+>/g, ''),
+                                        url: window.location.href,
+                                        imageUrl: festival.firstimage, // 카카오톡 공유에 사용할 대표 이미지 전달
+                                    }}
+                                    className="icon-button"
+                                >
+                                    <IoShareSocialOutline size={22}/> {/* 아이콘 컴포넌트를 자식으로 전달 */}
+                                </ShareApi>
+                            </div>
                         </div>
                         <div className="info-content overview-content"
                              dangerouslySetInnerHTML={{__html: festival.overview}}/>
@@ -422,7 +485,8 @@ const DetailPage = () => {
                                 <li key={food.contentid} className="food-card">
                                     <div className="food-card-image-wrapper">
                                         {food.firstimage ? (
-                                            <img src={food.firstimage} alt={food.title} className="food-card-image"/>
+                                            <img src={food.firstimage} alt={food.title}
+                                                 className="food-card-image"/>
                                         ) : (
                                             <div className="food-card-image placeholder"><IoFastFoodOutline/></div>
                                         )}

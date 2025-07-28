@@ -152,7 +152,7 @@ body {
     margin-bottom: 40px;
 }
 
-.info-section2{
+.info-section2 {
     display: flex;
     justify-content: space-between;
 }
@@ -229,9 +229,11 @@ body {
 .sidebar-section {
     margin-bottom: 32px;
 }
+
 .sidebar-section:last-child {
     margin-bottom: 0;
 }
+
 .sidebar-title {
     display: flex;
     align-items: center;
@@ -240,11 +242,13 @@ body {
     font-weight: 600;
     margin: 0 0 12px 0;
 }
+
 .address-text {
     font-size: 0.95rem;
     color: #495057;
     margin: 0 0 16px 0;
 }
+
 .primary-button {
     width: 100%;
     padding: 14px;
@@ -257,6 +261,7 @@ body {
     cursor: pointer;
     transition: all 0.2s ease;
 }
+
 .primary-button:hover {
     background-color: #0056b3;
     transform: translateY(-2px);
@@ -503,6 +508,86 @@ body {
     display: inline-block;
 }
 
+/* --- 소개(h2)와 버튼 그룹을 양쪽으로 정렬 --- */
+.info-section2 {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1rem;
+}
+
+/* --- '가고싶어요' 버튼과 공유 버튼을 묶어서 정렬 --- */
+.actions-group {
+    display: flex;
+    align-items: center;
+    gap: 12px; /* 버튼 사이의 간격 */
+}
+
+/* --- '가고 싶어요' 버튼 스타일 (공유 버튼 기반, 하트 버전) --- */
+.like-button {
+    /* 레이아웃 & 정렬 */
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px; /* 아이콘과 숫자 사이 간격 */
+
+    /* 크기 & 여백 */
+    height: 48px;
+    padding: 0 20px;
+    flex-shrink: 0;
+
+    /* 디자인 & 색상 */
+    font-size: 1rem;
+    font-weight: 600;
+    background-color: #ffffff;
+    color: #495057; /* 기본 아이콘/텍스트 색상 */
+    border: 1px solid #dee2e6;
+    border-radius: 12px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.04);
+
+    /* 인터랙션 */
+    cursor: pointer;
+    transition: all 0.2s cubic-bezier(0.22, 1, 0.36, 1);
+    -webkit-tap-highlight-color: transparent;
+}
+
+/* '가고 싶어요' 버튼에 마우스를 올렸을 때 */
+.like-button:not(:disabled):hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.08);
+    border-color: #ced4da;
+}
+
+/* 마우스를 올렸을 때 효과 (비활성화 아닐 때만) */
+.like-button:not(:disabled):hover {
+    transform: translateY(-2px); /* 살짝 위로 이동 */
+    background-color: #e7e7e7;
+}
+
+/* --- '좋아요'가 눌린 활성 상태(.active) 스타일 --- */
+.like-button.active {
+    background-color: #fff0f6; /* 옅은 핑크색 배경 */
+    border-color: #ffc2d1; /* 핑크색 테두리 */
+    color: #e53e3e; /* 붉은색 아이콘/텍스트 */
+}
+
+.like-button.active:hover {
+    background-color: #ffe5ea;
+    border-color: #ffa8b9;
+}
+
+/* --- 비활성화 상태 스타일 --- */
+.like-button:disabled {
+    cursor: not-allowed;
+    opacity: 0.7;
+    background-color: #f1f3f5;
+}
+
+.like-button:disabled:hover {
+    transform: none;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.04);
+}
+
 /* 공유하기 아이콘 버튼 자체의 스타일 */
 .icon-button {
     width: 48px;
@@ -618,6 +703,7 @@ body {
     .detail-content-wrapper {
         grid-template-columns: 1fr;
     }
+
     .sidebar {
         position: static;
     }
@@ -627,12 +713,15 @@ body {
     .detail-info-grid {
         grid-template-columns: 1fr;
     }
+
     .food-grid-list {
         grid-template-columns: 1fr;
     }
+
     .hero-title {
         font-size: 1.8rem;
     }
+
     .main-content, .sidebar {
         padding: 24px;
     }
