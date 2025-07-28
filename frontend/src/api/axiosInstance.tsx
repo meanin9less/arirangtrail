@@ -14,12 +14,13 @@ declare module 'axios' {
         _retry?: boolean;
     }
 }
+const API_URL = process.env.REACT_APP_API_URL;
 
 // 1. Axios 인스턴스를 생성합니다.
 const apiClient: AxiosInstance = axios.create({
     // ✨ 변경할 부분: 여기에 백엔드 서버의 실제 주소를 입력하세요.
     // 예: "http://52.78.46.203:8080" 또는 "https://api.yourdomain.com"
-    baseURL: "http://localhost:8080/api", // 현재는 localhost:8080
+    baseURL: `${API_URL}/api`, // 현재는 localhost:8080
     headers: {
         "Content-Type": "application/json",
     },
@@ -38,7 +39,8 @@ apiClient.interceptors.request.use((config: InternalAxiosRequestConfig) => {
 
     // JWT 토큰이 존재하면 Authorization 헤더에 'Bearer' 접두사와 함께 토큰을 추가합니다.
     if (jwtToken) {
-        config.headers["Authorization"] = `Bearer ${jwtToken}`;
+        config.headers["Authorization"] = `${jwtToken}`;
+        // config.headers["Authorization"] = `Bearer ${jwtToken}`;
     }
 
     return config; // 수정된 요청 설정 반환
@@ -63,7 +65,7 @@ apiClient.interceptors.response.use(
                 // 토큰 재발급 요청 (리프레시 토큰은 withCredentials 덕분에 자동으로 전송)
                 // ✨ 변경할 부분: 여기에 백엔드 서버의 실제 주소를 입력하세요.
                 // 예: "http://52.78.46.203:8080/reissue"
-                const response = await axios.post("http://localhost:8080/reissue", null, {
+                const response = await axios.post(`${API_URL}/api/reissue`, null, {
                     withCredentials: true,
                 });
 
@@ -75,7 +77,8 @@ apiClient.interceptors.response.use(
                     store.dispatch(setToken(newAccessToken));
 
                     // 원래 실패했던 요청을 새로운 액세스 토큰으로 재시도합니다.
-                    originalRequest.headers['Authorization'] = `Bearer ${newAccessToken}`;
+                    originalRequest.headers['Authorization'] = `${newAccessToken}`;
+                    // originalRequest.headers['Authorization'] = `Bearer ${newAccessToken}`;
                     return apiClient(originalRequest); // 재시도된 요청 반환
                 } else {
                     console.error("Token reissue successful, but no new token in response header.");

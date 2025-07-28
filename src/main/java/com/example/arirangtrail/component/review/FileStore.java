@@ -3,7 +3,7 @@ package com.example.arirangtrail.component.review;
 import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.model.ObjectMetadata;
 import lombok.RequiredArgsConstructor;
-import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -13,28 +13,28 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
-//@Component
+
+//잠시 컴퍼넌트 꺼놓기
+@Component
+@Profile("prod") // "prod" 프로필이 활성화될 때만 이 빈(Bean)을 생성하라는 의미!
 @RequiredArgsConstructor
 public class FileStore {
 
     private final AmazonS3 amazonS3;
 
-    @Value("${cloud.aws.s3.bucket}")
-    private String bucket;
-
-    public List<String> storeFiles(List<MultipartFile> multipartFiles) throws IOException {
+    public List<String> storeFiles(List<MultipartFile> multipartFiles, String bucket) throws IOException {
         List<String> storeFileResult = new ArrayList<>();
         if (multipartFiles != null) {
             for (MultipartFile multipartFile : multipartFiles) {
                 if (!multipartFile.isEmpty()) {
-                    storeFileResult.add(storeFile(multipartFile));
+                    storeFileResult.add(storeFile(multipartFile, bucket));
                 }
             }
         }
         return storeFileResult;
     }
 
-    public String storeFile(MultipartFile multipartFile) throws IOException {
+    public String storeFile(MultipartFile multipartFile, String bucket) throws IOException {
         if (multipartFile.isEmpty()) {
             return null;
         }
@@ -52,7 +52,7 @@ public class FileStore {
         return amazonS3.getUrl(bucket, storeFileName).toString();
     }
 
-    public void deleteFile(String fileUrl) {
+    public void deleteFile(String fileUrl, String bucket) {
         if (fileUrl == null || fileUrl.isEmpty()) {
             return;
         }

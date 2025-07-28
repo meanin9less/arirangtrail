@@ -2,188 +2,228 @@
 
 /* 공통 컨테이너 스타일 (로그인/회원가입 페이지 모두 사용) */
 .authContainer {
-    padding: 20px;
-    border: 4px solid #ccc;
-    border-radius: 5px;
-    max-width: 450px;
-    margin: 50px auto;
-    box-sizing: border-box;
     display: flex;
     flex-direction: column;
     align-items: center;
-
-    background-color: #fff;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    justify-content: center;
+    min-height: 100vh;
+    background-color: #f0f2f5;
+    padding: 20px;
+    box-sizing: border-box;
+    font-family: 'Inter', sans-serif;
 }
 
-/* 아리랑 이미지 스타일 */
 .arirangImage {
-    max-width: 150px;
+    width: 150px;
     height: auto;
-    margin-bottom: 20px;
-    border-radius: 8px;
-    object-fit: contain;
+    margin-bottom: 30px;
+    border-radius: 10px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
 }
 
-.successMessage {
-    color: green;
-    font-weight: bold;
+.authContainer h2 {
+    color: #333;
+    margin-bottom: 25px;
+    font-size: 2.2em;
+    font-weight: 700;
+    text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.05);
 }
 
-.errorMessage {
-    color: red;
-    font-weight: bold;
-}
-
-/* 전통 로그인 폼 스타일 */
 .authForm {
+    background-color: #ffffff;
+    padding: 40px;
+    border-radius: 15px;
+    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.1);
     width: 100%;
+    max-width: 400px;
     display: flex;
     flex-direction: column;
-    gap: 15px;
-    margin-bottom: 20px; /* 소셜 로그인 버튼과의 간격 */
+    gap: 20px;
 }
 
 .formGroup {
-    margin-bottom: 0;
+    display: flex;
+    flex-direction: column;
 }
 
-.formGroup label {
-    display: block;
-    margin-bottom: 5px;
-    font-weight: bold;
+.formLabel {
+    margin-bottom: 8px;
     color: #555;
+    font-weight: 600;
+    font-size: 0.95em;
 }
 
-.inputField {
-    width: 100%;
-    padding: 10px;
-    border: 1px solid #ccc;
-    border-radius: 5px;
-    box-sizing: border-box;
+.inputField,
+.formInput {
+    padding: 14px 18px;
+    border: 1px solid #ddd;
+    border-radius: 8px;
     font-size: 1em;
+    color: #333;
+    transition: border-color 0.3s ease, box-shadow 0.3s ease;
+}
+
+.inputField:focus,
+.formInput:focus {
+    border-color: #007bff;
+    box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.25);
+    outline: none;
 }
 
 .buttonContainer {
     display: flex;
     justify-content: center;
+    margin-top: 20px;
+}
+
+.loginButtonMargin {
+    margin-bottom: 10px; /* 로그인 버튼 아래 여백 추가 */
 }
 
 .primaryButton {
-    width: 80%;
-    max-width: 300px;
-    padding: 12px;
-    background-color: #007bff;
+    background: linear-gradient(135deg, #007bff, #0056b3);
     color: white;
+    padding: 15px 25px;
     border: none;
-    border-radius: 5px;
-    cursor: pointer;
-    transition: background-color 0.3s ease, transform 0.2s ease;
+    border-radius: 8px;
     font-size: 1.1em;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    width: 100%;
+    box-shadow: 0 4px 15px rgba(0, 123, 255, 0.3);
 }
 
 .primaryButton:hover {
-    background-color: #0056b3;
+    background: linear-gradient(135deg, #0056b3, #003f7f);
     transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(0, 123, 255, 0.4);
 }
 
 .primaryButton:disabled {
-    background-color: #cccccc;
+    background: #cccccc;
     cursor: not-allowed;
+    box-shadow: none;
+    transform: none;
 }
 
-/* ✨ 구분선 스타일 */
 .divider {
-    width: 100%;
+    display: flex;
+    align-items: center;
     text-align: center;
+    margin: 30px 0;
+    width: 100%;
+    max-width: 400px;
+}
+
+.divider::before,
+.divider::after {
+    content: '';
+    flex: 1;
     border-bottom: 1px solid #eee;
-    line-height: 0.1em;
-    margin: 20px 0;
 }
 
 .dividerText {
-    background:#fff;
-    padding:0 10px;
+    padding: 0 15px;
     color: #888;
     font-size: 0.9em;
+    font-weight: 500;
 }
 
-
-/* OAuth 2.0 버튼 컨테이너 */
 .oauthButtonsContainer {
     display: flex;
     flex-direction: column;
     gap: 15px;
     width: 100%;
-    max-width: 300px;
-    margin-bottom: 20px; /* 회원가입 링크와의 간격 */
+    max-width: 400px;
+    margin-bottom: 25px;
 }
 
-/* OAuth 2.0 버튼 공통 스타일 */
 .oauthButtonNaver,
 .oauthButtonKakao,
 .oauthButtonGoogle {
     display: flex;
     align-items: center;
     justify-content: center;
-    padding: 12px 20px;
-    border: none;
-    border-radius: 5px;
+    padding: 15px;
+    border-radius: 8px;
     font-size: 1em;
-    font-weight: bold;
-    color: white;
+    font-weight: 600;
     text-decoration: none;
-    cursor: pointer;
-    transition: background-color 0.3s ease, transform 0.2s ease;
-    box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+    color: white;
+    transition: all 0.3s ease;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
 }
 
-/* 각 OAuth 제공자별 색상 */
 .oauthButtonNaver {
-    background-color: #03c75a; /* 네이버 녹색 */
+    background-color: #1ec800;
 }
 .oauthButtonNaver:hover {
-    background-color: #02a04a;
-    transform: translateY(-2px);
+    background-color: #179e00;
+    transform: translateY(-1px);
 }
 
 .oauthButtonKakao {
-    background-color: #FEE500; /* 카카오 노란색 */
-    color: #3C1E1E; /* 카카오 텍스트 색상 */
+    background-color: #fee500;
+    color: #3c1e1e; /* 카카오 로고 색상에 맞춤 */
 }
 .oauthButtonKakao:hover {
-    background-color: #e6cb00;
-    transform: translateY(-2px);
+    background-color: #e5cc00;
+    transform: translateY(-1px);
 }
 
 .oauthButtonGoogle {
-    background-color: #DB4437; /* 구글 빨간색 */
+    background-color: #db4437;
+    color: white; /* 구글 버튼 텍스트 색상 */
 }
 .oauthButtonGoogle:hover {
-    background-color: #c0392b;
-    transform: translateY(-2px);
+    background-color: #c23b30;
+    transform: translateY(-1px);
 }
 
-/* 회원가입 링크 텍스트 스타일 */
 .signupLinkText {
-    margin-top: 15px;
-    text-align: center;
-    width: 100%;
+    margin-top: 20px;
+    color: #666;
+    font-size: 0.9em;
 }
 
 .signupLink {
-    text-decoration: none;
     color: #007bff;
+    text-decoration: none;
+    font-weight: 600;
+    transition: color 0.2s ease;
 }
 
-/* 모달 스타일 (기존 모달 스타일 유지) */
+.signupLink:hover {
+    color: #0056b3;
+    text-decoration: underline;
+}
+
+/* 메시지 스타일 */
+.successMessage {
+    color: #28a745; /* 녹색 */
+    font-weight: 500;
+    margin-top: -10px;
+    margin-bottom: 15px;
+    text-align: center;
+}
+
+.errorMessage {
+    color: #dc3545; /* 빨간색 */
+    font-weight: 500;
+    margin-top: -10px;
+    margin-bottom: 15px;
+    text-align: center;
+}
+
+/* 모달 스타일 */
 .modalOverlay {
     position: fixed;
     top: 0;
     left: 0;
     width: 100%;
     height: 100%;
-    background-color: rgba(0,0,0,0.5);
+    background-color: rgba(0, 0, 0, 0.6);
     display: flex;
     justify-content: center;
     align-items: center;
@@ -191,39 +231,179 @@
 }
 
 .modalContent {
-    background-color: white;
-    padding: 20px;
-    border-radius: 8px;
-    box-shadow: 0 4px 8px rgba(0,0,0,0.2);
-    max-width: 300px;
+    background-color: #fff;
+    padding: 30px;
+    border-radius: 12px;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
     text-align: center;
+    max-width: 400px;
+    width: 90%;
+    animation: fadeInScale 0.3s ease-out;
+}
+
+.modalContent h3 {
+    color: #333;
+    margin-bottom: 20px;
+    font-size: 1.8em;
+    font-weight: 700;
+}
+
+.modalContent p {
+    margin-bottom: 30px;
+    font-size: 1.1em;
+    line-height: 1.6;
+    color: #555;
 }
 
 .modalButton {
-    padding: 8px 15px;
     background-color: #007bff;
     color: white;
+    padding: 12px 25px;
     border: none;
-    border-radius: 4px;
+    border-radius: 8px;
+    font-size: 1.1em;
     cursor: pointer;
-    margin-top: 15px;
-    transition: background-color 0.3s ease;
+    transition: background-color 0.3s ease, transform 0.2s ease;
+    box-shadow: 0 4px 15px rgba(0, 123, 255, 0.2);
 }
 
 .modalButton:hover {
     background-color: #0056b3;
+    transform: translateY(-1px);
 }
 
-/* 모바일 반응형 */
+@keyframes fadeInScale {
+    from {
+        opacity: 0;
+        transform: scale(0.9);
+    }
+    to {
+        opacity: 1;
+        transform: scale(1);
+    }
+}
+
+/* SimpleJoinPage 전용 스타일 */
+.simpleJoinPageContainer {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+    background-color: #f0f2f5;
+    padding: 20px;
+    box-sizing: border-box;
+    font-family: 'Inter', sans-serif;
+}
+
+.simpleJoinPageTitle {
+    color: #333;
+    margin-bottom: 25px;
+    font-size: 2.2em;
+    font-weight: 700;
+    text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.05);
+}
+
+.simpleJoinPageDescription {
+    color: #666;
+    margin-bottom: 30px;
+    text-align: center;
+    font-size: 1.1em;
+    line-height: 1.5;
+}
+
+.simpleJoinForm {
+    background-color: #ffffff;
+    padding: 40px;
+    border-radius: 15px;
+    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.1);
+    width: 100%;
+    max-width: 450px; /* 간편 가입 폼 너비 조정 */
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.submitButton {
+    background: linear-gradient(135deg, #28a745, #218838); /* 초록색 계열 */
+    color: white;
+    padding: 15px 25px;
+    border: none;
+    border-radius: 8px;
+    font-size: 1.1em;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    width: 100%;
+    box-shadow: 0 4px 15px rgba(40, 167, 69, 0.3);
+}
+
+.submitButton:hover {
+    background: linear-gradient(135deg, #218838, #1e7e34);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(40, 167, 69, 0.4);
+}
+
+.submitButton:disabled {
+    background: #cccccc;
+    cursor: not-allowed;
+    box-shadow: none;
+    transform: none;
+}
+
+/* 반응형 디자인 */
 @media (max-width: 768px) {
-    .authContainer {
-        max-width: 350px;
-        padding: 15px;
+    .authForm, .simpleJoinForm, .oauthButtonsContainer, .divider {
+        max-width: 95%;
+        padding: 25px;
     }
-    .oauthButtonsContainer {
-        max-width: 250px;
+
+    .authContainer h2, .simpleJoinPageTitle {
+        font-size: 1.8em;
     }
-    .primaryButton {
-        width: 100%;
+
+    .primaryButton, .submitButton, .oauthButtonNaver, .oauthButtonKakao, .oauthButtonGoogle {
+        padding: 12px 20px;
+        font-size: 1em;
+    }
+
+    .modalContent {
+        padding: 20px;
+    }
+    .modalContent h3 {
+        font-size: 1.5em;
+    }
+    .modalContent p {
+        font-size: 1em;
+    }
+    .modalButton {
+        padding: 10px 20px;
+        font-size: 1em;
+    }
+
+
+    /* 소셜별 가입 버튼 색상 */
+    .kakaoSubmit {
+        background-color: #fee500;
+        color: #3c1e1e;
+    }
+    .kakaoSubmit:hover {
+        background-color: #e5cc00;
+    }
+
+    .googleSubmit {
+        background-color: #db4437;
+        color: white;
+    }
+    .googleSubmit:hover {
+        background-color: #c23b30;
+    }
+
+    .naverSubmit {
+        background-color: #1ec800;
+        color: white;
+    }
+    .naverSubmit:hover {
+        background-color: #179e00;
     }
 }

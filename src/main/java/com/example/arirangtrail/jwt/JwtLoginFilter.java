@@ -1,6 +1,10 @@
 package com.example.arirangtrail.jwt;
 
+import com.example.arirangtrail.data.entity.UserEntity;
+import com.example.arirangtrail.jwt.customuserdetails.CustomUserDetails;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializationFeature;
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.Cookie;
@@ -33,10 +37,8 @@ public class JwtLoginFilter extends UsernamePasswordAuthenticationFilter {
 
     @Override
     public Authentication attemptAuthentication(HttpServletRequest request, HttpServletResponse response) throws AuthenticationException {
-//        setFilterProcessesUrl("/admin-login");
         String username = obtainUsername(request);
         String password = obtainPassword(request);
-        //클라이언트 요청에서 username, password 추출
 
         UsernamePasswordAuthenticationToken authRequest = new UsernamePasswordAuthenticationToken(username, password, null);
         //스프링 시큐리티에서 username과 password를 검증하기 위해서는 token에 담아야 함
@@ -45,24 +47,36 @@ public class JwtLoginFilter extends UsernamePasswordAuthenticationFilter {
 
     @Override
     public void successfulAuthentication(HttpServletRequest request, HttpServletResponse response, FilterChain chain, Authentication authResult) throws IOException, ServletException {
-        UserDetails userDetails = (UserDetails) authResult.getPrincipal();
+        CustomUserDetails userDetails = (CustomUserDetails) authResult.getPrincipal();
+        // CustomUserDetails에서 UserEntity를 꺼냄
+        UserEntity userEntity = userDetails.getUserEntity();
 
-        String username = userDetails.getUsername();
-        Collection<? extends GrantedAuthority> grantedAuthorities = userDetails.getAuthorities();
-        Iterator<? extends GrantedAuthority> iterator = grantedAuthorities.iterator();
-        GrantedAuthority grantedAuthority = iterator.next();
-        String role = grantedAuthority.getAuthority();
+        String username = userEntity.getUsername();
+        String role = userEntity.getRole();
 
+        // --- 응답 본문에 필요한 모든 정보를 담습니다 ---
         Map<String, Object> responseData = new HashMap<>();
+        responseData.put("username", username);
         responseData.put("role", role);
+        responseData.put("email", userEntity.getEmail());
+        responseData.put("firstname", userEntity.getFirstname());
+        responseData.put("lastname", userEntity.getLastname());
+        responseData.put("nickname", userEntity.getNickname());
+        responseData.put("imageUrl", userEntity.getImageurl());
+        responseData.put("birthdate", userEntity.getBirthdate()); // LocalDate도 ObjectMapper가 변환해 줌
 
         ObjectMapper mapper = new ObjectMapper();
+        // Java 8 날짜/시간 타입을 위한 모듈 등록 (필요 시)
+        mapper.registerModule(new JavaTimeModule());
+        mapper.disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
         String jsonMessage = mapper.writeValueAsString(responseData);
 
-        String access_token = this.jwtUtil.createToken("access", username, role, 5 * 1000L);
+        String access_token = this.jwtUtil.createToken("access", username, role, 300 * 1000L);// 5초
         String refresh_token = this.jwtUtil.createToken("refresh", username, role, 60 * 60 * 24 * 1000L);
+
         response.addHeader("Authorization", "Bearer " + access_token);
         response.addCookie(this.createCookie("refresh", refresh_token));
+        response.setContentType("application/json");
         response.setCharacterEncoding("UTF-8");
         response.getWriter().write(jsonMessage);
     }

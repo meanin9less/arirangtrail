@@ -6,8 +6,10 @@ import com.example.arirangtrail.jwt.JwtUtil;
 import com.example.arirangtrail.service.Oauth2.CustomOAuth2UserService;
 import com.example.arirangtrail.service.Oauth2.OAuth2SuccessHandler;
 import lombok.RequiredArgsConstructor;
+import org.springframework.boot.autoconfigure.security.servlet.PathRequest;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.RequestEntity;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -20,6 +22,7 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.filter.ForwardedHeaderFilter;
 
+import java.util.Collections;
 import java.util.List;
 
 @Configuration
@@ -46,18 +49,20 @@ public class SecurityConfig {
         return new ForwardedHeaderFilter();
     }
 
+
+
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+
+        JwtLoginFilter jwtLoginFilter = new JwtLoginFilter(authenticationManager(authenticationConfiguration), jwtUtil);
+        jwtLoginFilter.setFilterProcessesUrl("/api/login");
+
         http.csrf(csrf->csrf.disable())
                 .formLogin(formLogin->formLogin.disable())
                 .httpBasic(httpBasic->httpBasic.disable())
 
                 .authorizeHttpRequests(authorizeHttpRequests->{
-                    authorizeHttpRequests.requestMatchers("/", "/api/join", "/api/login", "/api/reissue", "/api/naver", "/api/kakao",
-                            "/api/login/oauth2/code/*", "/api/redis/**", "/api/reviews", "/api/reviews/", "/api/**").permitAll();
-                    authorizeHttpRequests.requestMatchers("/", "/api/join", "/api/login", "/api/reissue", "/api/naver", "/api/kakao", "/api/login/oauth2/code/*","/api/chat/**", "/ws-stomp/**").permitAll();
-                    authorizeHttpRequests.requestMatchers("/api/admin").hasRole("ADMIN");
-//                    authorizeHttpRequests.anyRequest().authenticated();
+                    authorizeHttpRequests.anyRequest().permitAll();
                 })
 
                 .cors(cors->cors.configurationSource(request -> {
@@ -76,13 +81,10 @@ public class SecurityConfig {
 
                 .addFilterBefore(new JwtFilter(jwtUtil), JwtLoginFilter.class)
 
-                .addFilterAt(new JwtLoginFilter(authenticationManager(authenticationConfiguration), jwtUtil), UsernamePasswordAuthenticationFilter.class)
+                .addFilterAt(jwtLoginFilter, UsernamePasswordAuthenticationFilter.class)
 
                 .oauth2Login(oauth2->
                         oauth2
-                                .redirectionEndpoint(endpoint ->
-                                        endpoint.baseUri("/api/login/oauth2/code")
-                                )
                                 .userInfoEndpoint(userInfo->{
                                     userInfo.userService(customOAuth2UserService);
                                 })

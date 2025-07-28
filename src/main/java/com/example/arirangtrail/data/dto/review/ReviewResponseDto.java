@@ -1,65 +1,36 @@
 // src/main/java/com/example/arirangtrail/data/dto/review/ReviewResponseDto.java
 package com.example.arirangtrail.data.dto.review;
 
-import com.example.arirangtrail.data.entity.ReviewEntity;
-import com.example.arirangtrail.data.entity.ReviewphotoEntity; // ReviewphotoEntity 임포트
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
-import java.time.Instant; // Instant 임포트
-import java.time.LocalDate; // LocalDate 임포트
-import java.math.BigDecimal; // BigDecimal 임포트
+import java.math.BigDecimal;
+import java.time.Instant;
+import java.time.LocalDate;
 import java.util.List;
-import java.util.stream.Collectors;
 
-@Getter
-@Setter
-@NoArgsConstructor
-@AllArgsConstructor
-@Builder
+/**
+ * 리뷰 응답을 위한 DTO 클래스입니다.
+ * 클라이언트에게 리뷰 정보를 전달할 때 사용됩니다.
+ */
+@Getter // 모든 필드에 대한 getter 메서드를 자동으로 생성합니다.
+@Setter // 모든 필드에 대한 setter 메서드를 자동으로 생성합니다.
+@NoArgsConstructor // 인자 없는 기본 생성자를 자동으로 생성합니다.
+@AllArgsConstructor // 모든 필드를 인자로 받는 생성자를 자동으로 생성합니다.
+@Builder // 빌더 패턴을 사용하여 객체를 생성할 수 있도록 합니다.
 public class ReviewResponseDto {
-    private Long reviewid; // ReviewEntity의 id (Long)
-    private String username;
-    private Long contentid; // contentid (Long)
-    private String contenttitle;
-    private String title;
-    private String content;
-    private BigDecimal rating; // rating (BigDecimal)
-    private LocalDate visitdate; // visitdate (LocalDate)
-    private String imageurl; // ReviewphotoEntity에서 가져올 단일 이미지 URL
-    private String caption; // ReviewphotoEntity에서 가져올 캡션
-    private Instant createdat; // Instant로 변경
-    private Instant updatedat; // Instant로 변경
-
-    // ReviewEntity로부터 DTO를 생성하는 정적 팩토리 메서드
-    public static ReviewResponseDto fromEntity(ReviewEntity reviewEntity) {
-        String imageUrl = null;
-        String caption = null;
-        if (reviewEntity.getReviewphotos() != null && !reviewEntity.getReviewphotos().isEmpty()) {
-            // Set을 List로 변환하여 첫 번째 요소에 접근
-            ReviewphotoEntity firstPhoto = reviewEntity.getReviewphotos().stream().findFirst().orElse(null);
-            if (firstPhoto != null) {
-                imageUrl = firstPhoto.getImageurl();
-                caption = firstPhoto.getCaption();
-            }
-        }
-
-        return ReviewResponseDto.builder()
-                .reviewid(reviewEntity.getId())
-                .username(reviewEntity.getUsername())
-                .contentid(reviewEntity.getContentid())
-                .contenttitle(reviewEntity.getContenttitle())
-                .title(reviewEntity.getTitle())
-                .content(reviewEntity.getContent())
-                .rating(reviewEntity.getRating())
-                .visitdate(reviewEntity.getVisitdate())
-                .imageurl(imageUrl)
-                .caption(caption)
-                .createdat(reviewEntity.getCreatedat())
-                .updatedat(reviewEntity.getUpdatedat())
-                .build();
-    }
+    private Long reviewId; // 리뷰 ID
+    private String username; // 사용자 이름
+    private Long contentId; // 콘텐츠 ID (예: 아리랑 트레일 코스 ID)
+    private String contentTitle; // 콘텐츠 제목 (예: 아리랑 트레일 코스 이름)
+    private String title; // 리뷰 제목
+    private String content; // 리뷰 내용
+    private BigDecimal rating; // 평점 (예: 1.0 ~ 5.0)
+    private LocalDate visitDate; // 방문일
+    private Instant createdAt; // 생성일시
+    private Instant updatedAt; // 수정일시
+    private List<ReviewPhotoResponseDto> photos; // 리뷰 사진 목록 (분리된 DTO 사용)
 }

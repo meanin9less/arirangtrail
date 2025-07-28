@@ -1,9 +1,10 @@
-package com.example.arirangtrail.chat;
+package com.example.arirangtrail.data.document;
 
-import lombok.Getter;
-import lombok.Setter;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
+import lombok.Getter;
+import lombok.Setter;
 import java.time.LocalDateTime;
 
 @Getter
@@ -12,8 +13,13 @@ import java.time.LocalDateTime;
 public class ChatMessage {
     @Id
     private String id;
-    private String roomId;
+
+    private Long roomId;
+    private Long messageSeq;
     private String sender;
     private String message;
+    @JsonProperty("type")
+    private String messageType;
+
     private LocalDateTime timestamp;
 }
