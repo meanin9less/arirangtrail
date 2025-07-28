@@ -17,7 +17,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
-import java.time.Instant;
+//import java.time.Instant;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -50,8 +50,8 @@ public class ReviewService {
         reviewEntity.setRating(createDto.getRating());
         reviewEntity.setVisitdate(createDto.getVisitdate());
 
-        reviewEntity.setCreatedat(Instant.now());
-        reviewEntity.setUpdatedat(Instant.now());
+//        reviewEntity.setCreatedat(Instant.now());
+//        reviewEntity.setUpdatedat(Instant.now());
 
         if (photoFiles != null && !photoFiles.isEmpty()) {
             log.info("createReview: 업로드할 파일 개수: {}", photoFiles.size()); // 로그 추가
@@ -157,8 +157,8 @@ public class ReviewService {
                 .content(entity.getContent())
                 .rating(entity.getRating()) // BigDecimal 타입
                 .visitDate(entity.getVisitdate()) // LocalDate 타입
-                .createdAt(entity.getCreatedat()) // Instant 타입
-                .updatedAt(entity.getUpdatedat()) // Instant 타입
+                .createdAt(entity.getCreatedat()) // LocalDate 타입
+                .updatedAt(entity.getUpdatedat()) // LocalDate 타입
                 .photos(photos) // 변환된 사진 목록 추가
                 .build();
     }

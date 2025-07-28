@@ -8,6 +8,8 @@ import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 import lombok.*;
 import org.hibernate.annotations.ColumnDefault;
+import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.UpdateTimestamp;
 
 import java.time.Instant;
 import java.time.LocalDate;
@@ -59,14 +61,12 @@ public class UserEntity {
     @Column(name = "imageurl")
     private String imageurl;
 
-    @NotNull
-    @ColumnDefault("CURRENT_TIMESTAMP")
-    @Column(name = "createdat", nullable = false)
+    @CreationTimestamp // INSERT 시 Hibernate가 자동으로 현재 시간을 넣어줌
+    @Column(nullable = false, updatable = false)
     private Instant createdat;
 
-    @NotNull
-    @ColumnDefault("CURRENT_TIMESTAMP")
-    @Column(name = "updatedat", nullable = false)
+    @UpdateTimestamp // UPDATE 시 Hibernate가 자동으로 현재 시간을 넣어줌
+    @Column(nullable = false)
     private Instant updatedat;
 
     @Column(name = "birthdate")
