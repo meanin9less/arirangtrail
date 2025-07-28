@@ -45,27 +45,28 @@ public class FestivalService {
         Double score = redisTemplate.opsForZSet().score(festivalLikesKey, username);
 
         // isMember 검사 시에도 String 타입을 사용해야 합니다.
-        if (score == null){
-            // 좋아요 취소
-            // remove 시에도 String 타입을 사용해야 합니다.
-            // 둘 다 제거
-            redisTemplate.opsForZSet().remove(festivalLikesKey, username);
-            redisTemplate.opsForSet().remove(userLikesKey, contentIdStr);
-
-            redisTemplate.opsForHash().increment(festivalMetaKey, "like_count", -1);
-            likeRepository.deleteByUser_UsernameAndContentid(username, contentid);
-            return false; // 좋아요 취소됨
-        } else {
+        if (score == null) {
             // 좋아요 추가
-            redisTemplate.opsForHash().increment(festivalMetaKey, "like_count", 1);
+            redisTemplate.opsForZSet().add(festivalLikesKey, username, System.currentTimeMillis());
             redisTemplate.opsForSet().add(userLikesKey, contentIdStr);
             redisTemplate.opsForHash().increment(festivalMetaKey, "like_count", 1);
+
             LikeEntity newLike = new LikeEntity();
             newLike.setUser(user);
-            newLike.setContentid(contentid); // RDB에는 원래 타입인 Long을 저장합니다.
+            newLike.setContentid(contentid);
             newLike.setCreatedat(Instant.now());
             likeRepository.save(newLike);
-            return true; // 좋아요 추가됨
+
+            return true;
+        } else {
+            // 좋아요 취소
+            redisTemplate.opsForZSet().remove(festivalLikesKey, username);
+            redisTemplate.opsForSet().remove(userLikesKey, contentIdStr);
+            redisTemplate.opsForHash().increment(festivalMetaKey, "like_count", -1);
+
+            likeRepository.deleteByUser_UsernameAndContentid(username, contentid);
+
+            return false;
         }
     }
 
