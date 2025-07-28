@@ -5,4 +5,5 @@ RUN chmod +x ./gradlew
 RUN ./gradlew bootJar
 ENV JAR_PATH=/app/build/libs
 RUN mv ${JAR_PATH}/*.jar /app/app.jar
-ENTRYPOINT ["java", "-jar", "app.jar"]
+# prod 프로필 활성화
+ENTRYPOINT ["java", "-jar", "-Dspring.profiles.active=prod", "app.jar"]
