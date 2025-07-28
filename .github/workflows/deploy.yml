@@ -5,7 +5,7 @@ name: Build and Push Docker Images
 on:
   push:
     branches:
-      - main # backend 브랜치에 푸시될 때 실행
+      - check-past-commit # backend 브랜치에 푸시될 때 실행
 
 # 실행될 작업 정의
 jobs:
