@@ -105,8 +105,6 @@ public class JwtFilter extends OncePerRequestFilter {
 
         // 4. 이 "진짜" 정보가 담긴 인증 객체를 SecurityContext에 저장합니다.
         SecurityContextHolder.getContext().setAuthentication(authToken);
-
-
         filterChain.doFilter(request, response);
     }
 }

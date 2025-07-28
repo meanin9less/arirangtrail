@@ -84,7 +84,7 @@ DROP TABLE IF EXISTS `users`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!50503 SET character_set_client = utf8mb4 */;
 CREATE TABLE `users` (
-  `username` varchar(20) NOT NULL COMMENT '사용자 고유 ID',
+  `username` varchar(255) NOT NULL COMMENT '사용자 고유 ID',
   `password` varchar(255) NOT NULL COMMENT '비밀번호 (해시하여 저장)',
   `role` varchar(45) NOT NULL,
   `email` varchar(255) NOT NULL COMMENT '이메일 (로그인 ID)',
