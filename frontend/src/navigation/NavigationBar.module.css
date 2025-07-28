@@ -1,6 +1,19 @@
 /* NavigationBar.module.css */
 
 /* 1. 내비게이션 바 전체 스타일 */
+.navbar {
+    background-color: #2d3748;
+    text-decoration: none;
+    padding: 10px 15px;
+    position: relative;
+    transition: all 0.3s ease-in-out;
+    display: flex;
+    align-items: center;
+    gap: 8px; /* 아이콘과 텍스트 사이의 간격 (홈 링크용) */
+    box-sizing: border-box;
+}
+
+/* 1. 내비게이션 바 전체 스타일 */
 .navbar.transparent {
     z-index: 1000; /* ✨ 변경: z-index를 100에서 1000으로 높여 다른 요소 위에 오도록 함 */
     width: 100%;
@@ -136,9 +149,9 @@
 
 /* 아리랑 아이콘 전용 스타일 추가 */
 .arirangicon {
-    height: 70px;
-    width: 80px;
     object-fit: contain;
+    height: 100px;
+    width: 120px;
     filter: invert(100%);
 }
 
@@ -210,13 +223,20 @@
 .dropdownItem {
     color: white;
     text-decoration: none;
-    padding: 10px 15px;
-    text-align: left;
+    padding: 10px;
+    text-align: center;
     transition: background-color 0.2s ease;
     border: none;
     background: none;
-    width: 100%;
+    width: 130px;
     cursor: pointer;
+
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 15px;
+    line-height: 1;
+    box-sizing: border-box;
 }
 
 .dropdownItem:hover {

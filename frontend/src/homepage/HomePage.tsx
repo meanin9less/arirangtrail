@@ -55,7 +55,6 @@ const HomePage = () => {
                     }
                 });
 
-                console.log("TourAPI 응답 데이터 (축제 목록):", response.data);
                 const items = response.data.response?.body?.items?.item || [];
 
                 // 유효한 이미지 URL만 필터링하고 'url()' 형식으로 변환
@@ -102,7 +101,7 @@ const HomePage = () => {
     if (isLoading) {
         return (
             <div className={styles.messageContainer}>
-                <p>이미지를 불러오는 중입니다...</p>
+                <p>Loading Data..</p>
             </div>
         );
     }

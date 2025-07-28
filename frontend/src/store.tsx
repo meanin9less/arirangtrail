@@ -1,4 +1,6 @@
-import { configureStore, createSlice, PayloadAction } from "@reduxjs/toolkit";
+import { combineReducers, configureStore, createSlice, PayloadAction } from '@reduxjs/toolkit';
+import storage from 'redux-persist/lib/storage';
+import { persistReducer, persistStore } from 'redux-persist';
 
 // 1. 상태(State)의 타입을 정의합니다.
 // 'token' 슬라이스의 상태 구조를 명확히 합니다.
@@ -47,16 +49,28 @@ const tokenSlice = createSlice({
     },
 });
 
-// 4. configureStore를 사용하여 Redux 스토어를 설정합니다.
-// 여기에 애플리케이션의 모든 리듀서가 결합됩니다.
-const store = configureStore({
-    reducer: {
-        token: tokenSlice.reducer, // 'token' 슬라이스의 리듀서를 스토어에 추가합니다.
-    },
+// 영속화 설정
+const persistConfig = {
+    key: 'root',
+    storage,
+    whitelist: ['token'],
+};
+
+// 리듀서 결합
+const rootReducer = combineReducers({
+    token: tokenSlice.reducer,
 });
 
-// 5. 스토어의 전체 상태(RootState) 타입을 추론하고 내보냅니다.
-// 이 타입은 useSelector 훅 사용 시 타입 안정성을 제공합니다.
+// 영속화된 리듀서
+const persistedReducer = persistReducer(persistConfig, rootReducer);
+
+// 스토어 설정
+const store = configureStore({
+    reducer: persistedReducer,
+    middleware: (getDefaultMiddleware) => getDefaultMiddleware({ serializableCheck: false }),
+});
+
+export const persistor = persistStore(store);
 export type RootState = ReturnType<typeof store.getState>;
 
 // 6. 스토어의 디스패치(Dispatch) 타입을 추론하고 내보냅니다.
