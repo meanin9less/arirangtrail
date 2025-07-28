@@ -1,6 +1,9 @@
 package com.example.arirangtrail.config;
 
+import com.example.arirangtrail.config.websocketHandler.StompHandler;
+import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.messaging.simp.config.ChannelRegistration;
 import org.springframework.messaging.simp.config.MessageBrokerRegistry;
 import org.springframework.web.socket.config.annotation.EnableWebSocketMessageBroker;
 import org.springframework.web.socket.config.annotation.StompEndpointRegistry;
@@ -8,7 +11,9 @@ import org.springframework.web.socket.config.annotation.WebSocketMessageBrokerCo
 
 @Configuration
 @EnableWebSocketMessageBroker
+@RequiredArgsConstructor
 public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
+    private final StompHandler stompHandler;
 
     @Override
     public void registerStompEndpoints(StompEndpointRegistry registry) {
@@ -24,5 +29,11 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
         registry.enableSimpleBroker("/sub"); // api 호출이 아니라 듣는 대상자 지정의 영향이라 api 안 붙임.
         // 클라이언트에서 서버로 메시지를 보낼 때 사용할 프리픽스를 지정합니다.
         registry.setApplicationDestinationPrefixes("/api/pub"); // 직접 api 호출하여 메세지 보내는 흐름이라 기본 url 추가.
+    }
+
+    //인터셉트 등록
+    @Override
+    public void configureClientInboundChannel(ChannelRegistration registration) {
+        registration.interceptors(stompHandler);
     }
 }

@@ -2,7 +2,7 @@ import React, { useEffect, useRef } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import { Client } from '@stomp/stompjs';
 import SockJS from 'sockjs-client';
-import {RootState} from "./store";
+import store, {RootState, updateLobby} from "./store";
 // 나중에 만들 Redux action들을 임포트한다고 가정
 // import { updateLobby, updateUnreadCount } from './store';
 
@@ -13,6 +13,11 @@ function WebSocketManager() {
     const clientRef = useRef<Client | null>(null);
 
     useEffect(() => {
+        const token = store.getState().token.token;
+        if (!userName || !token) {
+            return;
+        }
+
         if (!userName) {
             // 로그아웃 상태이면 기존 연결을 끊고 종료
             if (clientRef.current) {
@@ -28,6 +33,10 @@ function WebSocketManager() {
         }
 
         const client = new Client({
+            connectHeaders: {
+                // ★★★ 여기에 Authorization 헤더를 추가합니다. ★★★
+                Authorization: `${store.getState().token.token}`, // Redux에서 토큰 가져오기
+            },
             webSocketFactory: () => new SockJS(`${process.env.REACT_APP_API_URL}/ws-stomp`),
             reconnectDelay: 10000,
             onConnect: () => {
@@ -36,7 +45,7 @@ function WebSocketManager() {
 
                 client.subscribe('/sub/chat/lobby', (message) => {
                     console.log('로비 업데이트 수신:', message.body);
-                    // TODO: Redux dispatch(updateLobby(message.body));
+                    dispatch(updateLobby());
                 });
 
                 client.subscribe(`/sub/user/${userName}`, (message) => {
