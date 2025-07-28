@@ -47,36 +47,39 @@ const MyPage: React.FC = () => {
             const fetchUserInfo = async () => {
                 try {
                     setLoadingUserInfo(true);
-                    setUserInfoError(null); // 새로운 요청 전에 에러 초기화
-                    // ✨ UserProfileResponseDto 타입을 명시하여 response.data의 구조를 TypeScript에 알립니다.
-                    const response = await apiClient.get<UserProfileResponseDto>('/mypage/profile');
+                    setUserInfoError(null);
 
-                    // 백엔드에서 받은 실제 데이터를 상태에 저장
+                    // ✅ username 파라미터 제거
+                    const response = await apiClient.get<UserProfileResponseDto>('/userinfo');
+
                     setUserName(response.data.nickname || response.data.username);
                     setUserEmail(response.data.email);
-                    setUserProfileImage(response.data.imageUrl || 'https://placehold.co/100x100/cccccc/ffffff?text=User'); // 기본 이미지 폴백
+                    setUserProfileImage(
+                        response.data.imageUrl || 'https://placehold.co/100x100/cccccc/ffffff?text=User'
+                    );
 
                     setLoadingUserInfo(false);
                 } catch (error: any) {
                     console.error('사용자 정보 불러오기 오류:', error);
                     let errorMessage = '사용자 정보를 불러오는 데 실패했습니다: 네트워크 오류 또는 알 수 없는 오류';
                     if (axios.isAxiosError(error) && error.response) {
-                        errorMessage = error.response.data?.message || '사용자 정보를 불러오는 데 실패했습니다: 서버 오류';
+                        errorMessage =
+                            error.response.data?.message || '사용자 정보를 불러오는 데 실패했습니다: 서버 오류';
                     }
                     setUserInfoError(errorMessage);
                     setLoadingUserInfo(false);
                 }
             };
+
             fetchUserInfo();
         } else {
-            // 로그인 안 된 상태면 로딩 종료 및 정보 초기화
             setUserName(null);
             setUserEmail(null);
             setUserProfileImage(null);
             setLoadingUserInfo(false);
             setUserInfoError(null);
         }
-    }, [isLoggedIn, storedUserProfile]); // isLoggedIn과 storedUserProfile 변경 시 실행
+    }, [isLoggedIn]); // isLoggedIn과 storedUserProfile 변경 시 실행
 
     // 비밀번호 인증 섹션 표시 여부
     const [showPasswordAuth, setShowPasswordAuth] = useState(false);
@@ -113,7 +116,7 @@ const MyPage: React.FC = () => {
         try {
             // ✨ 백엔드 API 호출로 대체합니다.
             const requestBody: PasswordVerificationRequestDto = { password: currentPassword };
-            const response = await apiClient.post<PasswordVerificationResponseDto>('/mypage/verify-password', requestBody);
+            const response = await apiClient.post<PasswordVerificationResponseDto>('/compare-password', requestBody);
 
             setAuthMessage(response.data.message);
 
