@@ -1,5 +1,7 @@
 package com.example.arirangtrail.jwt;
 
+import com.example.arirangtrail.jwt.customuserdetails.CustomUserDetails;
+import com.example.arirangtrail.jwt.customuserdetails.CustomUserDetailsService;
 import io.jsonwebtoken.ExpiredJwtException;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
@@ -24,6 +26,8 @@ import java.util.List;
 @RequiredArgsConstructor
 public class JwtFilter extends OncePerRequestFilter {
     private final JwtUtil jwtUtil;
+    // ★★★ 1. CustomUserDetailsService를 주입받습니다. ★★★
+    private final CustomUserDetailsService customUserDetailsService;
     private final AntPathMatcher antPathMatcher = new AntPathMatcher();
 
 //    // ★ 4. 토큰 검사를 건너뛸 경로 목록 정의
@@ -85,16 +89,24 @@ public class JwtFilter extends OncePerRequestFilter {
             response.setCharacterEncoding("UTF-8");
             return;
         }
+        // 기존 토큰 통과시 만드는 정보가 유저네임만 있고 userdetails의 세부정보를 반영못함,
 
-        String username = this.jwtUtil.getUserName(token);
-        String role = this.jwtUtil.getRole(token);
+        String username = jwtUtil.getUserName(token);
 
-        List<GrantedAuthority> authorities = new ArrayList<>();
-        authorities.add(new SimpleGrantedAuthority(role));
+        // 2. ★ (가장 중요) CustomUserDetailsService를 사용하여 DB에서 실제 사용자 정보를 조회합니다.
+        //    이제 userDetails 객체 안에는 username, password(암호화된), role, nickname 등 모든 정보가 담겨 있습니다.
+        CustomUserDetails userDetails = (CustomUserDetails) customUserDetailsService.loadUserByUsername(username);
 
-        User user = new User(username, "", authorities);
-        Authentication auth = new UsernamePasswordAuthenticationToken(user, null, authorities);
-        SecurityContextHolder.getContext().setAuthentication(auth);
+        // 3. ★ (중요) DB에서 가져온 "진짜" 사용자 정보(userDetails)를 통째로 사용하여 인증 객체를 만듭니다.
+        Authentication authToken = new UsernamePasswordAuthenticationToken(
+                username, // <--- 이 부분을 userDetails에서 username으로 변경!
+                null,
+                userDetails.getAuthorities());
+
+        // 4. 이 "진짜" 정보가 담긴 인증 객체를 SecurityContext에 저장합니다.
+        SecurityContextHolder.getContext().setAuthentication(authToken);
+
+
         filterChain.doFilter(request, response);
     }
 }

@@ -3,7 +3,6 @@
 /* 메인 컨테이너 스타일 */
 .homeContainer {
     position: relative;
-    width: 100vw; /* 뷰포트 너비 꽉 채우기 */
     height: calc(100vh - 70px); /* 내비게이션 바 높이 제외 (대략 60px) */
     overflow: hidden; /* 넘치는 부분 숨김 */
     display: flex;
@@ -27,6 +26,231 @@
     height: 100%;
     background-color: rgba(0, 0, 0, 0.5); /* 검은색 50% 투명도 오버레이 */
     z-index: 1; /* 콘텐츠보다 아래에 위치 */
+}
+
+/* 1. 홈 네비게이션 바 */
+.navbar {
+    z-index: 100;
+    color: white;
+    position: fixed;
+    top: 0;
+    left: 0;
+    padding: 15px 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    min-height: 60px;
+    flex-wrap: wrap;
+    box-sizing: border-box;
+}
+
+.navGroupCenter {
+    display: flex;
+    flex-direction: column;
+    gap: 30px;
+    flex-wrap: wrap;
+    justify-content: center;
+    align-items: flex-end;
+}
+
+.navGroupRight {
+    position: fixed;
+    top: 0;
+    right: 0;
+}
+
+/* 3. 모든 일반 링크 기본 스타일 */
+.navLink, .homeLink {
+    color: white;
+    text-decoration: none;
+    padding: 10px 15px;
+    border-radius: 5px;
+    position: relative;
+    overflow: hidden;
+    transition: all 0.3s ease-in-out;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 50px;
+    font-weight: 700;
+    opacity: 0.8;
+}
+
+/* 4. 홈 링크 특정 스타일 */
+.homeLink {
+    font-weight: bold;
+    font-size: 1.2em;
+}
+
+/* 5. 로그인 링크 특정 스타일 (로그아웃 상태일 때 텍스트만 있는 링크) */
+.loginLinkTextOnly {
+    color: white;
+    text-decoration: none;
+    background-color: transparent; /* ✨ 변경: 배경색 투명으로 설정 */
+    padding: 10px 15px;
+    border-radius: 5px;
+    transition: all 0.3s ease-in-out;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    white-space: nowrap;
+}
+
+/* ---------------------------------------------------------------------------------- */
+/* 6. 마우스 오버 (Hover) 애니메이션 효과 */
+/* ---------------------------------------------------------------------------------- */
+
+.navLink:hover,
+.homeLink:hover {
+    transform: translateY(-2px) scale(1.02);
+}
+
+.loginLinkTextOnly:hover {
+    transform: translateY(-2px) scale(1.02);
+    background-color: rgba(255, 255, 255, 0.1); /* ✨ 변경: 호버 시 배경색을 홈 링크와 동일하게 설정 */
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+}
+
+
+/* 밑줄 애니메이션 (::after 가상 요소를 사용) */
+.navLink::after,
+.loginLinkTextOnly::after,
+.userProfileButton::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 0;
+    height: 2px;
+    background-color: rgb(255, 255, 255);
+    transition: width 0.3s ease-out;
+}
+
+.navLink:hover::after,
+.homeLink:hover::after,
+.loginLinkTextOnly:hover::after,
+.userProfileButton:hover::after {
+    width: 100%;
+}
+
+.loginLinkTextOnly::after {
+    background-color: rgba(0, 123, 255, 0.8);
+}
+
+/* 7. 아이콘 이미지 스타일 (홈 아이콘에만 적용) */
+.icon {
+    height: 30px;
+    width: 30px;
+    object-fit: contain;
+    filter: invert(100%);
+    transition: transform 0.3s ease;
+}
+
+/* 아리랑 아이콘 전용 스타일 추가 */
+.arirangicon {
+    object-fit: contain;
+    height: 700px;
+    width: 1200px;
+    filter: invert(100%) opacity(0.8);
+
+}
+
+.homeLink:hover .icon {
+    transform: scale(1.1);
+}
+
+/* ✨ 9-1. 사용자 프로필 버튼 스타일 (로그인 상태일 때 프로필 이미지+닉네임 버튼) */
+.userProfileButton {
+    background-color: transparent; /* ✨ 변경: 배경색 투명으로 설정 */
+    color: white;
+    border: none;
+    padding: 10px 30px; /* 패딩 조정 */
+    border-radius: 5px;
+    cursor: pointer;
+    transition: all 0.3s ease-in-out;
+    display: flex; /* 내부 요소 (이미지, 닉네임) 정렬 */
+    align-items: center;
+    gap: 8px; /* 이미지와 닉네임 사이 간격 */
+    white-space: nowrap;
+}
+
+.userProfileButton:hover {
+    transform: translateY(-2px) scale(1.02);
+    background-color: rgba(255, 255, 255, 0.1); /* ✨ 변경: 호버 시 배경색을 홈 링크와 동일하게 설정 */
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+}
+
+/* ✨ 9-2. 프로필 이미지 (작은 원형) 스타일 */
+.profileImageSmall {
+    width: 60px; /* 작은 원형 프로필 이미지 크기 */
+    height: 60px;
+    border-radius: 50%; /* 원형 */
+    object-fit: cover; /* 이미지 비율 유지하며 채우기 */
+    border: 1px solid rgba(255, 255, 255, 0.5); /* 흰색 테두리 */
+}
+
+/* ✨ 9-3. 프로필 닉네임 텍스트 스타일 */
+.profileNickname {
+    font-weight: bold;
+    font-size: 1em;
+}
+
+
+/* 10. 사용자 드롭다운 메뉴 컨테이너 */
+.userMenuContainer {
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+/* 11. 드롭다운 메뉴 스타일 */
+.userDropdownMenu {
+    position: absolute;
+    top: 100%;
+    right: 0;
+    background-color: #444; /* 메뉴 배경색 */
+    border-radius: 5px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+    display: flex;
+    flex-direction: column;
+    padding: 10px 0;
+    z-index: 100;
+    animation: fadeIn 0.2s ease-out;
+}
+
+/* 12. 드롭다운 메뉴 항목 스타일 */
+.dropdownItem {
+    color: white;
+    text-decoration: none;
+    padding: 10px;
+    text-align: center;
+    transition: background-color 0.2s ease;
+    border: none;
+    background: none;
+    width: 130px;
+    cursor: pointer;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 15px;
+    line-height: 1;
+    box-sizing: border-box;
+}
+
+.dropdownItem:hover {
+    background-color: rgba(255, 255, 255, 0.1); /* 호버 시 배경색 변경 (기존 스타일) */
+}
+
+/* 13. 애니메이션 키프레임 */
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
 }
 
 /* 로딩 및 오류 메시지 스타일 */

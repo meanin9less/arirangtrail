@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import {useParams, useNavigate, useSearchParams} from 'react-router-dom';
 import axios from 'axios';
 import styles from './User.module.css';
+import apiClient from "../api/axiosInstance";
 
 const SimpleJoinPage: React.FC = () => {
     const [searchParams] = useSearchParams();
@@ -18,6 +19,7 @@ const SimpleJoinPage: React.FC = () => {
     const [nickname, setNickname] = useState('');
     const [error, setError] = useState('');
     const [success, setSuccess] = useState('');
+    const [password, setPassword] = useState('');
 
     // 소셜 로그인별로 case변경
     const getSubmitButtonClass = (provider: string) => {
@@ -39,12 +41,13 @@ const SimpleJoinPage: React.FC = () => {
         setSuccess('');
 
         try {
-            const response = await axios.post('/simplejoin', {
+            const response = await apiClient.post('/simplejoin', {
                 username,
                 email,
+                password: password ? password : null,
                 firstname,
                 lastname,
-                birthdate,
+                birthdate: birthdate ? birthdate : null,  // 빈 문자열일 경우 null로 변환
                 nickname,
             });
 
