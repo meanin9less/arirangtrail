@@ -19,6 +19,7 @@ const SimpleJoinPage: React.FC = () => {
     const [nickname, setNickname] = useState('');
     const [error, setError] = useState('');
     const [success, setSuccess] = useState('');
+    const [password, setPassword] = useState('');
 
     // 소셜 로그인별로 case변경
     const getSubmitButtonClass = (provider: string) => {
@@ -43,7 +44,7 @@ const SimpleJoinPage: React.FC = () => {
             const response = await apiClient.post('/simplejoin', {
                 username,
                 email,
-                password:null,
+                password,
                 firstname,
                 lastname,
                 birthdate,
