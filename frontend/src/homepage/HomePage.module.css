@@ -159,7 +159,7 @@
     object-fit: contain;
     height: 700px;
     width: 1200px;
-    filter: brightness(0) invert(1) drop-shadow(0 2px 4px rgba(0,0,0,0.5));
+    filter: brightness(0) invert(1) drop-shadow(0 2px 4px rgba(0, 0, 0, 0.5));
 
 }
 
@@ -277,6 +277,13 @@
 .errorMessage {
     color: red;
 }
+
+.communityLinkContainer {
+    color: white;
+    width: 100px;
+
+}
+
 
 /* 모바일 반응형 (선택 사항: 필요시 추가) */
 @media (max-width: 768px) {
