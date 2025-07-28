@@ -1,27 +1,28 @@
 import React, { useState } from 'react';
-import {useParams, useNavigate, useSearchParams} from 'react-router-dom';
-import axios from 'axios';
-import styles from './User.module.css';
+import { useNavigate, useSearchParams} from 'react-router-dom';
 import apiClient from "../api/axiosInstance";
+import styles from './User.module.css';
+import {useDispatch} from "react-redux";
+import { setToken, setUserProfile, setTotalUnreadCount, AppDispatch } from '../store';
 
 const SimpleJoinPage: React.FC = () => {
     const [searchParams] = useSearchParams();
+    const dispatch = useDispatch();
 
     const username = searchParams.get("username") ?? "";
     const email = searchParams.get("email") ?? "";
 
     const navigate = useNavigate();
-    const provider = searchParams.get("provider") ?? ""; // kakao, google, naver 소셜 로그인 파라미터받기
+    const provider = searchParams.get("provider") ?? "";
 
     const [firstname, setFirstName] = useState('');
     const [lastname, setLastName] = useState('');
     const [birthdate, setBirthDate] = useState('');
     const [nickname, setNickname] = useState('');
+    const [password, setPassword] = useState('');
     const [error, setError] = useState('');
     const [success, setSuccess] = useState('');
-    const [password, setPassword] = useState('');
 
-    // 소셜 로그인별로 case변경
     const getSubmitButtonClass = (provider: string) => {
         switch (provider) {
             case "kakao":
@@ -47,19 +48,31 @@ const SimpleJoinPage: React.FC = () => {
                 password: password ? password : null,
                 firstname,
                 lastname,
-                birthdate: birthdate ? birthdate : null,  // 빈 문자열일 경우 null로 변환
+                birthdate,
                 nickname,
             });
 
             if (response.status === 200) {
+                dispatch(setUserProfile(response.data)); // 정보를 저장
                 setSuccess('가입이 완료되었습니다.');
                 setTimeout(() => {
                     navigate('/');
                 }, 1500);
             }
-        } catch (err) {
+        } catch (err: any) {
             console.error('가입 실패:', err);
-            setError('가입 중 오류가 발생했습니다. 다시 시도해주세요.');
+
+            if (err.response) {
+                console.error('Response status:', err.response.status);
+                console.error('Response data:', err.response.data);
+                setError(`서버 오류: ${err.response.status} - ${JSON.stringify(err.response.data)}`);
+            } else if (err.request) {
+                console.error('No response received:', err.request);
+                setError('서버 응답이 없습니다.');
+            } else {
+                console.error('Error', err.message);
+                setError('알 수 없는 오류가 발생했습니다.');
+            }
         }
     };
 

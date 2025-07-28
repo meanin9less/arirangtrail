@@ -21,7 +21,7 @@ import java.time.LocalDate;
 @Table(name = "users")
 public class UserEntity {
     @Id
-    @Size(max = 20)
+    @Size(max = 255)
     @Column(name = "username", nullable = false, length = 20)
     private String username;
 
