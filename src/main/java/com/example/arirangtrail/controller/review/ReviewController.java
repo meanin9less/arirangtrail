@@ -10,6 +10,7 @@ import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -77,7 +78,7 @@ public class ReviewController {
     // ✨ ✨ ✨ 추가: 모든 리뷰 조회 엔드포인트 ✨ ✨ ✨
     @GetMapping
     public ResponseEntity<ReviewListResponseDto> getAllReviews(
-            @PageableDefault(size = 20, sort = "createdat,desc") Pageable pageable) {
+            @PageableDefault(size = 20, sort = "createdat", direction = Sort.Direction.DESC) Pageable pageable) {
         ReviewListResponseDto reviewListResponse = reviewService.getAllReviews(pageable);
         return ResponseEntity.ok(reviewListResponse);
     }
