@@ -90,11 +90,24 @@
     flex-shrink: 0; /* 이미지가 줄어들지 않도록 함 */
 }
 
+.reviewInfo {
+    padding: 10px;
+}
+
+.reviewMeta {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 10px;
+    font-size: 0.9em;
+    color: #555;
+}
+
 .reviewDate {
     font-size: 0.8em;
     color: #666;
     text-align: right;
-    margin-top: auto; /* 날짜를 카드 하단에 위치시킴 */
+    margin-top: 10px;
 }
 
 .loader {

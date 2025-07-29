@@ -1,8 +1,13 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import apiClient from '../api/axiosInstance';
-import axios from 'axios';
 import { useNavigate, Link } from 'react-router-dom';
 import styles from './Review.module.css';
+import { Swiper, SwiperSlide } from 'swiper/react';
+import 'swiper/css';
+import 'swiper/css/navigation';
+import 'swiper/css/pagination';
+import './swiper-custom.css';
+import { Navigation, Pagination } from 'swiper/modules';
 
 interface Photo {
     photoId: number;
@@ -27,8 +32,6 @@ interface Review {
 // 백엔드의 ReviewListResponseDto와 일치하는 인터페이스
 interface GetReviewsResponse {
     reviews: Review[];
-    // 백엔드에서 last, totalPages 같은 추가 정보를 보내준다면 여기에 추가할 수 있습니다.
-    // 예: isLast: boolean;
 }
 
 function ReviewPage() {
@@ -44,7 +47,7 @@ function ReviewPage() {
         setLoading(true);
         try {
             // 페이지 번호를 사용하여 데이터 요청
-            const response = await apiClient.get<GetReviewsResponse>(`/reviews?page=${page}`);
+            const response = await apiClient.get<GetReviewsResponse>(`/api/reviews?page=${page}`);
             const newReviews = response.data.reviews || [];
 
             setReviews(prevReviews => [...prevReviews, ...newReviews]); // 기존 리뷰에 새로운 리뷰 추가
@@ -103,22 +106,34 @@ function ReviewPage() {
                 <div className={styles.reviewList}>
                     {reviews.map(review => (
                         <div key={review.reviewId} className={styles.reviewItem}>
-                            <p className={styles.reviewTitleLink}>
-                                <Link to={`/review/detail/${review.reviewId}`}>
-                                    <strong>{review.title}</strong>
-                                </Link>
-                            </p>
-                            <p><strong>작성자:</strong> {review.username}</p>
-                            <p><strong>별점:</strong> {'⭐'.repeat(review.rating)}</p>
-                            <p className={styles.reviewContentPreview}>
-                                {review.content.length > 100 ? review.content.substring(0, 100) + '...' : review.content}
-                            </p>
-                            {review.photos && review.photos.map(photo => (
-                                <div key={photo.photoId} className={styles.reviewImageContainer}>
-                                    <img src={photo.photoUrl} alt={review.caption || review.title} className={styles.reviewImage} />
+                            {review.photos && review.photos.length > 0 && (
+                                <Swiper
+                                    modules={[Navigation, Pagination]}
+                                    spaceBetween={50}
+                                    slidesPerView={1}
+                                    navigation
+                                    pagination={{ clickable: true }}
+                                    className="review-swiper"
+                                >
+                                    {review.photos.map(photo => (
+                                        <SwiperSlide key={photo.photoId}>
+                                            <img src={photo.photoUrl} alt={review.caption || review.title} className={styles.reviewImage} />
+                                        </SwiperSlide>
+                                    ))}
+                                </Swiper>
+                            )}
+                            <div className={styles.reviewInfo}>
+                                <p className={styles.reviewTitleLink}>
+                                    <Link to={`/review/detail/${review.reviewId}`}>
+                                        <strong>{review.title}</strong>
+                                    </Link>
+                                </p>
+                                <div className={styles.reviewMeta}>
+                                    <span>{review.username}</span>
+                                    <span>⭐ {review.rating}</span>
                                 </div>
-                            ))}
-                            <p className={styles.reviewDate}>작성일: {new Date(review.createdAt).toLocaleString()}</p>
+                                <p className={styles.reviewDate}>{new Date(review.createdAt).toLocaleDateString()}</p>
+                            </div>
                         </div>
                     ))}
                 </div>
