@@ -1,21 +1,27 @@
 import React, { useState } from 'react';
-import styles from './MyPage.module.css'; // 스타일 공유 가능
+import styles from './MyPage.module.css';
 import apiClient from '../api/axiosInstance';
 import axios from 'axios';
-import { useDispatch } from 'react-redux';
+import { useDispatch, useSelector } from 'react-redux';
+import { RootState } from '../store';
 import { useNavigate } from 'react-router-dom';
 
-interface DeleteAccountSectionProps {
-    username: string;
-    onCancel: () => void;
-}
+const DeleteAccountPage: React.FC = () => {
+    const dispatch = useDispatch();
+    const navigate = useNavigate();
+    const username = useSelector((state: RootState) => state.token.userProfile?.username);
 
-const DeleteAccountSection: React.FC<DeleteAccountSectionProps> = ({ username, onCancel }) => {
     const [password, setPassword] = useState('');
     const [message, setMessage] = useState<string | null>(null);
     const [loading, setLoading] = useState(false);
-    const dispatch = useDispatch();
-    const navigate = useNavigate();
+
+    if (!username) {
+        return <p>로그인 정보가 없습니다.</p>;
+    }
+
+    const handleCancel = () => {
+        navigate('/mypage'); // 마이페이지로 돌아가기
+    };
 
     const handleDelete = async () => {
         setLoading(true);
@@ -70,7 +76,7 @@ const DeleteAccountSection: React.FC<DeleteAccountSectionProps> = ({ username, o
             <button onClick={handleDelete} className={styles.authButton} disabled={loading}>
                 {loading ? '진행 중...' : '회원 탈퇴'}
             </button>
-            <button onClick={onCancel} className={styles.cancelButton} disabled={loading}>
+            <button onClick={handleCancel} className={styles.cancelButton} disabled={loading}>
                 취소
             </button>
             {message && (
@@ -82,4 +88,4 @@ const DeleteAccountSection: React.FC<DeleteAccountSectionProps> = ({ username, o
     );
 };
 
-export default DeleteAccountSection;
+export default DeleteAccountPage;
