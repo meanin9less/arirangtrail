@@ -36,4 +36,13 @@ public class ChatFileController {
             return ResponseEntity.internalServerError().body(Map.of("message", "파일 업로드에 실패했습니다."));
         }
     }
+
+    @GetMapping("/health")
+    public ResponseEntity<?> health() {
+        return ResponseEntity.ok(Map.of(
+                "status", "UP",
+                "fileStore", fileStore != null ? "AVAILABLE" : "NULL",
+                "bucket", bucket
+        ));
+    }
 }
