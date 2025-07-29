@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import axios from 'axios';
+import apiClient from "../api/axiosInstance";
 // import './ChangePasswordPage.css';
 
 const ChangePasswordPage = () => {
@@ -21,7 +22,7 @@ const ChangePasswordPage = () => {
         }
 
         try {
-            const response = await axios.post('/api/auth/change-password', {
+            const response = await apiClient.post('/reset-pw', {
                 username,
                 email,
                 password
