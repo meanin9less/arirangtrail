@@ -23,6 +23,7 @@ import ReviewWritePage from "./review/ReviewWritePage";
 import ReviewDetailPage from './review/ReviewDetailPage';
 import SimpleJoinPage from "./user/SimpleJoinPage";
 import SimpleLoginPage from "./user/SimpleLoginPage";
+import PasswordChangePage from "./user/PasswordChangePage";
 
 function App() {
     return (
@@ -40,6 +41,7 @@ function App() {
                             <Route path="logout" element={<LogoutPage />} />
                             <Route path="mypage" element={<MyPage />} />
                             <Route path="mypage/editinfo" element={<EditInfoPage />} />
+                            <Route path="mypage/passwordchange" element={<PasswordChangePage/>}></Route>
                             <Route path="calender" element={<CalenderPage />} />
                             <Route path="calender/:festivalId" element={<DetailPage />} />
                             <Route path="community" element={<CommunityPage />} />
