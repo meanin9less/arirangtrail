@@ -1,6 +1,6 @@
 .review-swiper {
     width: 100%;
-    height: 300px; /* 원하는 높이로 조절하세요 */
+    height: 200px; /* 이미지 높이와 동일하게 200px로 수정 */
     margin-bottom: 1rem;
 }
 
