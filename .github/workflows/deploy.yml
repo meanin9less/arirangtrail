@@ -66,7 +66,6 @@ jobs:
       - name: Push Frontend Docker image
         run: |
           docker push ${{ secrets.DOCKERHUB_USERNAME }}/arirangfrontend
-
       # 7. Backend Docker 이미지 빌드 및 푸시
       # ================== 👇👇👇 여기부터 추가 👇👇👇 ==================
       - name: 🕵️ Check files in workspace
@@ -81,6 +80,7 @@ jobs:
       - name: Build Backend Docker image
         run: |
           docker build -t ${{ secrets.DOCKERHUB_USERNAME }}/arirangbackend .
+
       - name: Push Backend Docker image
         run: |
           docker push ${{ secrets.DOCKERHUB_USERNAME }}/arirangbackend
