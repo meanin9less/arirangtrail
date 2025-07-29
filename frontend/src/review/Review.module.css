@@ -85,6 +85,7 @@
     justify-content: space-between;
     align-items: center;
     margin-top: 10px;
+    margin-bottom: 10px; /* 작성일과의 여백 추가 */
     font-size: 0.9em;
     color: #555;
 }
