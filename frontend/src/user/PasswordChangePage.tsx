@@ -1,93 +1,88 @@
-import React, { useState } from "react";
-import apiClient from '../api/axiosInstance'; // API 클라이언트 임포트
-import { useSelector } from "react-redux";
-import { useNavigate } from "react-router-dom";
-import { RootState } from '../store'; // Redux RootState 임포트
+import React, { useState } from 'react';
+import { useParams, useNavigate } from 'react-router-dom';
+import axios from 'axios';
+import style from './PasswordChangePage.module.css'; // CSS 모듈 임포트
 
-const PasswordChangePage: React.FC = () => {
-    const [step, setStep] = useState<"verify" | "change">("verify");
-    const [currentPassword, setCurrentPassword] = useState("");
-    const [newPassword, setNewPassword] = useState("");
-    const [confirmPassword, setConfirmPassword] = useState("");
-    const [error, setError] = useState("");
-    const username = useSelector((state: RootState) => state.token.userProfile?.username);
+const ChangePasswordPage = () => {
+    const { username, email } = useParams();
     const navigate = useNavigate();
 
-    const handleVerify = async () => {
-        try {
-            setError("");
-            const res = await apiClient.post("/compare-password", null, {
-                params: {
-                    username,
-                    password: currentPassword,
-                },
-            });
+    const [password, setPassword] = useState('');
+    const [confirmPassword, setConfirmPassword] = useState('');
+    const [error, setError] = useState('');
+    const [success, setSuccess] = useState('');
 
-            if (res.data === true) {
-                setStep("change");
-            } else {
-                setError("비밀번호가 일치하지 않습니다.");
-            }
-        } catch (err) {
-            setError("비밀번호 확인 중 오류가 발생했습니다.");
-        }
-    };
+    const handleSubmit = async (e: React.FormEvent) => {
+        e.preventDefault();
 
-    const handleChangePassword = async () => {
-        if (newPassword !== confirmPassword) {
-            setError("새 비밀번호가 일치하지 않습니다.");
+        if (password !== confirmPassword) {
+            setError('비밀번호가 일치하지 않습니다.');
+            setSuccess('');
             return;
         }
 
         try {
-            setError("");
-            await apiClient.put("/reset-pw", null, {
-                params: {
-                    username,
-                    password: newPassword,
-                },
+            const response = await axios.post('/api/auth/change-password', {
+                username,
+                email,
+                password
             });
-            alert("비밀번호가 성공적으로 변경되었습니다.");
-            navigate("/mypage");
+
+            if (response.status === 200) {
+                setSuccess('비밀번호가 성공적으로 변경되었습니다.');
+                setError('');
+                setTimeout(() => {
+                    navigate('/login');
+                }, 2000);
+            }
         } catch (err) {
-            setError("비밀번호 변경에 실패했습니다.");
+            setError('비밀번호 변경에 실패했습니다. 다시 시도해주세요.');
+            setSuccess('');
         }
     };
 
     return (
-        <div style={{ padding: "2rem" }}>
-            <h2>비밀번호 변경</h2>
-            {error && <p style={{ color: "red" }}>{error}</p>}
-
-            {step === "verify" ? (
-                <>
-                    <label>현재 비밀번호</label>
+        <div className={style.changePasswordContainer}>
+            <h2 className={style.pageTitle}>비밀번호 변경</h2>
+            <form onSubmit={handleSubmit}>
+                <div className={style.formGroup}>
+                    <label className={style.label}>새 비밀번호</label>
                     <input
                         type="password"
-                        value={currentPassword}
-                        onChange={(e) => setCurrentPassword(e.target.value)}
+                        className={style.inputField}
+                        value={password}
+                        onChange={(e) => setPassword(e.target.value)}
+                        required
                     />
-                    <button onClick={handleVerify}>확인</button>
-                </>
-            ) : (
-                <>
-                    <label>새 비밀번호</label>
+                </div>
+                <div className={style.formGroup}>
+                    <label className={style.label}>비밀번호 확인</label>
                     <input
                         type="password"
-                        value={newPassword}
-                        onChange={(e) => setNewPassword(e.target.value)}
-                    />
-                    <label>새 비밀번호 확인</label>
-                    <input
-                        type="password"
+                        className={style.inputField}
                         value={confirmPassword}
                         onChange={(e) => setConfirmPassword(e.target.value)}
+                        required
                     />
-                    <button onClick={handleChangePassword}>비밀번호 변경</button>
-                </>
-            )}
+                </div>
+                {error && <div className={style.errorMessage}>{error}</div>}
+                {success && <div className={style.successMessage}>{success}</div>}
+
+                <div className={style.buttonContainer}>
+                    <button type="submit" className={style.submitButton}>
+                        비밀번호 변경
+                    </button>
+                    <button
+                        type="button"
+                        className={style.cancelButton}
+                        onClick={() => navigate('/mypage')}
+                    >
+                        취소
+                    </button>
+                </div>
+            </form>
         </div>
     );
 };
 
-export default PasswordChangePage;
+export default ChangePasswordPage;
