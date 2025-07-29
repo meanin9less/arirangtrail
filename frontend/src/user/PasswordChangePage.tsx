@@ -62,7 +62,7 @@ const ChangePasswordPage = () => {
             if (response.status === 200) {
                 setSuccess('비밀번호가 성공적으로 변경되었습니다.');
                 setTimeout(() => {
-                    navigate('/login');
+                    navigate('/mypage');
                 }, 2000);
             }
         } catch (err) {
