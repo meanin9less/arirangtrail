@@ -7,18 +7,18 @@ import styles from './Review.module.css';
 
 // 데이터 모델 정의 (DB 스키마에 맞춰 업데이트)
 interface Review {
-    reviewid: string; // DB의 reviewid (bigint)
+    reviewId: string; // DB의 reviewid (bigint)
     username: string; // DB의 username
-    contentid: string; // DB의 contentid (bigint)
-    contenttitle: string; // DB의 contenttitle
+    contentId: string; // DB의 contentid (bigint)
+    contentTitle: string; // DB의 contenttitle
     title: string; // DB의 title
     content: string; // DB의 content
     rating: number; // DB의 rating (decimal 2,1)
-    visitdate?: string; // DB의 visitdate (date) - 선택 사항
-    imageurl?: string; // 단일 이미지 URL (reviewphotos에서 가져올 경우)
+    visitDate?: string; // DB의 visitdate (date) - 선택 사항
+    imageUrl?: string; // 단일 이미지 URL (reviewphotos에서 가져올 경우)
     caption?: string; // DB의 caption (reviewphotos에서 가져올 경우)
-    createdat: string;
-    updatedat: string;
+    createdAt: string;
+    updatedAt: string;
 }
 
 interface GetReviewsResponse {
@@ -46,7 +46,7 @@ function ReviewPage() {
         try {
             // [백엔드 연동 필요] 실제 API 엔드포인트
             // 백엔드에서 /reviews GET 요청 시 Review[] 배열을 포함하는 JSON을 반환해야 합니다.
-            const response = await apiClient.get<GetReviewsResponse>('/reviews');
+            const response = await apiClient.get<GetReviewsResponse>('/reviews&page=0');
             setReviews(response.data.reviews || []); // reviews 배열이 없으면 빈 배열로 설정
             setMessage('리뷰를 성공적으로 가져왔습니다.');
             console.log("Reviews fetched successfully:", response.data.reviews); // 디버그 로그
@@ -95,10 +95,10 @@ function ReviewPage() {
             ) : (
                 <div className={styles.reviewList}>
                     {reviews.map(review => (
-                        <div key={review.reviewid} className={styles.reviewItem}>
+                        <div key={review.reviewId} className={styles.reviewItem}>
                             {/* 제목에 Link 추가 */}
                             <p className={styles.reviewTitleLink}>
-                                <Link to={`/review/detail/${review.reviewid}`}>
+                                <Link to={`/review/detail/${review.reviewId}`}>
                                     <strong>{review.title}</strong>
                                 </Link>
                             </p>
@@ -108,13 +108,13 @@ function ReviewPage() {
                             <p className={styles.reviewContentPreview}>
                                 {review.content.length > 100 ? review.content.substring(0, 100) + '...' : review.content}
                             </p>
-                            {review.imageurl && ( // 이미지 URL이 있을 경우 이미지 표시
+                            {review.imageUrl && ( // 이미지 URL이 있을 경우 이미지 표시
                                 <div className={styles.reviewImageContainer}>
-                                    <img src={review.imageurl} alt={review.caption || review.title} className={styles.reviewImage} />
+                                    <img src={review.imageUrl} alt={review.caption || review.title} className={styles.reviewImage} />
                                     {review.caption && <p className={styles.imageCaption}>{review.caption}</p>}
                                 </div>
                             )}
-                            <p className={styles.reviewDate}>작성일: {new Date(review.createdat).toLocaleString()}</p>
+                            <p className={styles.reviewDate}>작성일: {new Date(review.createdAt).toLocaleString()}</p>
                         </div>
                     ))}
                 </div>
