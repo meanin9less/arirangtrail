@@ -1,91 +1,88 @@
-import React, { useState, ChangeEvent, FormEvent } from 'react';
+import React, { useState, ChangeEvent, FormEvent, useEffect } from 'react'; // <<< 추가된 부분: useEffect
 import apiClient from '../api/axiosInstance';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
-import styles from './ReviewWrite.module.css'; // CSS 모듈 임포트 경로 변경
+import styles from './ReviewWrite.module.css';
 
-// 데이터 모델 정의 (DB 스키마에 맞춰 업데이트 - 불필요한 필드 제거)
-interface Review {
-    reviewid: string; // DB의 reviewid (bigint)
-    username: string; // DB의 username
-    title: string; // DB의 title
-    content: string; // DB의 content
-    rating: number; // DB의 rating (decimal 2,1)
-    visitdate?: string; // DB의 visitdate (date) - 선택 사항
-    imageurl?: string; // 단일 이미지 URL (reviewphotos에서 가져올 경우)
-    caption?: string; // DB의 caption (reviewphotos에서 가져올 경우)
-    createdat: string;
-    updatedat: string;
-}
-
-interface ReviewFormData {
-    // FormData로 보낼 필드들 (텍스트 데이터 - 불필요한 필드 제거)
-    username: string; // 작성자 ID (현재는 임시, 실제로는 백엔드에서 인증된 사용자 ID 사용)
+// <<< 추가된 부분: API 응답으로 받을 여행지 데이터 타입 정의 (필요시 수정하세요)
+interface Location {
+    contentid: string;
     title: string;
-    content: string;
-    rating: number;
-    caption?: string; // 이미지 캡션 (선택 사항)
-}
-
-interface PostReviewResponse {
-    message: string;
-    review?: Review;
 }
 
 function ReviewWritePage() {
     const navigate = useNavigate();
 
-    // 상태 관리 (DB 스키마 필드에 맞춰 추가 - 불필요한 필드 제거)
-    const [reviewTitle, setReviewTitle] = useState<string>(''); // 리뷰 제목
-    const [newReviewContent, setNewReviewContent] = useState<string>(''); // 리뷰 내용
-    const [newReviewRating, setNewReviewRating] = useState<number>(5); // 별점
-    const [imageCaption, setImageCaption] = useState<string>(''); // 이미지 캡션
+    const [title, setTitle] = useState<string>('');
+    const [content, setContent] = useState<string>('');
+    const [rating, setRating] = useState<number>(5);
+    const [visitDate, setVisitDate] = useState<string>('');
+    const [photos, setPhotos] = useState<File[]>([]);
+    const [imagePreviews, setImagePreviews] = useState<string[]>([]);
+
+    // <<< 추가된 부분: API로부터 받은 여행지 목록과 선택된 여행지 정보를 위한 상태
+    const [locations, setLocations] = useState<Location[]>([]);
+    const [selectedLocation, setSelectedLocation] = useState<string>(''); // contentid를 저장
 
     const [loading, setLoading] = useState<boolean>(false);
     const [showModal, setShowModal] = useState<boolean>(false);
     const [modalMessage, setModalMessage] = useState<string>('');
     const [messageType, setMessageType] = useState<'success' | 'error' | null>(null);
 
-    // 이미지 파일 관련 상태
-    const [selectedFile, setSelectedFile] = useState<File | null>(null);
-    const [imagePreviewUrl, setImagePreviewUrl] = useState<string | null>(null);
+    // <<< 추가된 부분: 방문 날짜가 변경될 때 API를 호출하는 함수
+    useEffect(() => {
+        if (visitDate) {
+            const fetchLocations = async () => {
+                setLoading(true);
+                try {
+                    const SERVICE_KEY = "WCIc8hzzBS3Jdod%2BVa357JmB%2FOS0n4D2qPHaP9PkN4bXIfcryZyg4iaZeTj1fEYJ%2B8q2Ol8FIGe3RkW3d72FHA%3D%3D";
+                    const API_URL =
+                        `https://apis.data.go.kr/B551011/KorService2/searchFestival2?serviceKey=${SERVICE_KEY}&MobileApp=AppTest&MobileOS=ETC&_type=json`;
+                    const today = new Date();
+                    const date = `${today.getFullYear()}${String(today.getMonth() + 1).padStart(2, '0')}${String(today.getDate()).padStart(2, '0')}`;
+                    const response = await apiClient.get(API_URL, {
+                        params: { // 요청 파라미터
+                            numOfRows: 150,
+                            pageNo: 1,
+                            arrange: "B", // 조회순
+                            eventStartDate: date, // 오늘부터 시작하는 행사만 요청
+                            eventEndDate: date
+                        },
+                    });
+                    console.log(response.data);
+                    // setLocations(response.data);
+                    setLoading(false);
+                } catch (error) {
+                    console.error('여행지 정보 조회 오류:', error);
+                    setModalMessage('해당 날짜의 여행지 정보를 불러오는 데 실패했습니다.');
+                    setMessageType('error');
+                    setShowModal(true);
+                    setLocations([]); // 오류 발생 시 목록 초기화
+                    setLoading(false);
+                }
+            };
+            fetchLocations();
+        }
+    }, [visitDate]); // visitDate가 변경될 때마다 이 useEffect가 실행됩니다.
 
-    // 입력 필드 값 변경 핸들러
-    const handleTitleChange = (e: ChangeEvent<HTMLInputElement>) => {
-        setReviewTitle(e.target.value);
-    };
-    const handleContentChange = (e: ChangeEvent<HTMLTextAreaElement>) => {
-        setNewReviewContent(e.target.value);
-    };
-    const handleRatingChange = (e: ChangeEvent<HTMLSelectElement>) => {
-        setNewReviewRating(Number(e.target.value));
-    };
-    const handleImageCaptionChange = (e: ChangeEvent<HTMLInputElement>) => {
-        setImageCaption(e.target.value);
-    };
-
-    // 파일 입력 필드 변경 핸들러
     const handleFileChange = (e: ChangeEvent<HTMLInputElement>) => {
-        if (e.target.files && e.target.files[0]) {
-            const file = e.target.files[0];
-            setSelectedFile(file);
-            setImagePreviewUrl(URL.createObjectURL(file));
-        } else {
-            setSelectedFile(null);
-            setImagePreviewUrl(null);
+        if (e.target.files) {
+            const files = Array.from(e.target.files);
+            setPhotos(files);
+
+            const previewUrls = files.map(file => URL.createObjectURL(file));
+            setImagePreviews(previewUrls);
         }
     };
 
-    // 모달 닫기 핸들러
     const handleCloseModal = () => {
         setShowModal(false);
         setModalMessage('');
         if (messageType === 'success') {
-            navigate('/review'); // 성공 시 리뷰 목록 페이지로 돌아가기
+            navigate('/review');
         }
     };
 
-    // 리뷰 제출 핸들러 (POST 요청)
     const handleSubmitReview = async (e: FormEvent<HTMLFormElement>) => {
         e.preventDefault();
 
@@ -93,43 +90,35 @@ function ReviewWritePage() {
         setModalMessage('');
         setMessageType(null);
 
-        // 클라이언트 측 유효성 검사 (필수 필드)
-        if (!reviewTitle.trim() || !newReviewContent.trim()) { // 유효성 검사 필드 조정
-            setModalMessage('제목과 리뷰 내용을 모두 입력해주세요.');
-            setMessageType('error');
-            setShowModal(true);
-            setLoading(false);
-            return;
-        }
-        if (newReviewRating < 1 || newReviewRating > 5) {
-            setModalMessage('별점은 1점에서 5점 사이로 입력해주세요.');
+        if (!title.trim() || !content.trim() || !visitDate || !selectedLocation) {
+            setModalMessage('모든 필드를 입력해주세요.');
             setMessageType('error');
             setShowModal(true);
             setLoading(false);
             return;
         }
 
-        // FormData 객체 생성: 텍스트 데이터와 파일 데이터를 함께 보낼 때 사용
-        const formDataToSend = new FormData();
-        // [백엔드 연동 필요] username은 실제 로그인된 사용자 ID를 사용해야 합니다.
-        formDataToSend.append('username', 'currentLoggedInUser'); // 임시 사용자 이름
-        formDataToSend.append('title', reviewTitle);
-        formDataToSend.append('content', newReviewContent);
-        formDataToSend.append('rating', newReviewRating.toString());
-        if (selectedFile) {
-            formDataToSend.append('image', selectedFile); // 'image'는 백엔드에서 파일을 받을 때 사용할 필드 이름
-            if (imageCaption) {
-                formDataToSend.append('caption', imageCaption); // 이미지 캡션
-            }
-        }
+        const formData = new FormData();
+        const createRequest = {
+            username: 'currentLoggedInUser', // 실제 사용자 이름으로 교체 필요
+            contentid: "",
+            contenttitle: "",
+            title,
+            content,
+            rating,
+            visitdate: visitDate,
+        };
+
+        formData.append('createRequest', new Blob([JSON.stringify(createRequest)], { type: "application/json" }));
+
+        photos.forEach(photo => {
+            formData.append('photos', photo);
+        });
 
         try {
-            // POST 요청으로 새로운 리뷰를 서버에 보냅니다.
-            // [백엔드 연동 필요] 실제 API 엔드포인트와 파일 업로드 방식에 맞춰 수정해야 합니다.
-            // axiosInstance가 'Content-Type': 'multipart/form-data' 헤더를 자동으로 처리해 줄 수 있습니다.
-            const response = await apiClient.post<PostReviewResponse>('/reviews', formDataToSend, {
+            const response = await apiClient.post('/api/reviews', formData, {
                 headers: {
-                    'Content-Type': 'multipart/form-data', // 파일 업로드 시 필수 헤더
+                    'Content-Type': 'multipart/form-data',
                 },
             });
 
@@ -139,12 +128,14 @@ function ReviewWritePage() {
             setShowModal(true);
 
             // 폼 초기화
-            setReviewTitle('');
-            setNewReviewContent('');
-            setNewReviewRating(5);
-            setImageCaption('');
-            setSelectedFile(null);
-            setImagePreviewUrl(null);
+            setTitle('');
+            setContent('');
+            setRating(5);
+            setVisitDate('');
+            setSelectedLocation('');
+            // setLocations([]);
+            setPhotos([]);
+            setImagePreviews([]);
 
         } catch (error: any) {
             console.error('리뷰 작성 오류:', error);
@@ -165,48 +156,72 @@ function ReviewWritePage() {
             <h2>새 리뷰 작성</h2>
 
             <form onSubmit={handleSubmitReview} className={styles.reviewForm}>
-                {/* 리뷰 제목 */}
+                <div className={styles.formGroup}>
+                    <label htmlFor="visitDate">방문 날짜:</label>
+                    <input
+                        type="date"
+                        id="visitDate"
+                        value={visitDate}
+                        onChange={(e) => setVisitDate(e.target.value)}
+                        required
+                        className={styles.inputField}
+                    />
+                </div>
+
+                {<select>
+                </select>}
+                <div className={styles.formGroup}>
+                    <label htmlFor="locationSelect">여행지 선택:</label>
+                    <select
+                        id="locationSelect"
+                        value={selectedLocation}
+                        onChange={(e) => setSelectedLocation(e.target.value)}
+                        required
+                        className={styles.selectField}
+                        disabled={!visitDate || locations.length === 0} // 날짜가 선택되고 여행지 목록이 있을 때만 활성화
+                    >
+                        <option value="">{visitDate ? '여행지를 선택하세요' : '방문 날짜를 먼저 선택하세요'}</option>
+                        {locations.map(location => (
+                            <option key={location.contentid} value={location.contentid}>
+                                {location.title}
+                            </option>
+                        ))}
+                    </select>
+                </div>
+
                 <div className={styles.formGroup}>
                     <label htmlFor="reviewTitle">리뷰 제목:</label>
                     <input
                         type="text"
                         id="reviewTitle"
-                        value={reviewTitle}
-                        onChange={handleTitleChange}
+                        value={title}
+                        onChange={(e) => setTitle(e.target.value)}
                         required
                         className={styles.inputField}
                         placeholder="리뷰 제목을 입력해주세요."
                     />
                 </div>
-
-                {/* 행사 ID 제거 */}
-                {/* 행사 제목 제거 */}
-
-                {/* 리뷰 내용 */}
                 <div className={styles.formGroup}>
                     <label htmlFor="reviewContent">리뷰 내용:</label>
                     <textarea
                         id="reviewContent"
-                        value={newReviewContent}
-                        onChange={handleContentChange}
+                        value={content}
+                        onChange={(e) => setContent(e.target.value)}
                         required
                         rows={6}
                         className={styles.textareaField}
                         placeholder="솔직한 리뷰를 남겨주세요."
                     ></textarea>
                 </div>
-
-                {/* 별점 */}
                 <div className={styles.formGroup}>
                     <label htmlFor="reviewRating">별점:</label>
                     <select
                         id="reviewRating"
-                        value={newReviewRating}
-                        onChange={handleRatingChange}
+                        value={rating}
+                        onChange={(e) => setRating(Number(e.target.value))}
                         required
                         className={styles.selectField}
                     >
-                        {/* 별 아이콘과 숫자 동시 표시, value는 숫자로 유지 */}
                         {[5, 4, 3, 2, 1].map(ratingValue => (
                             <option key={ratingValue} value={ratingValue}>
                                 {'⭐'.repeat(ratingValue)} {ratingValue}점
@@ -214,8 +229,6 @@ function ReviewWritePage() {
                         ))}
                     </select>
                 </div>
-
-                {/* 이미지 첨부 필드 */}
                 <div className={styles.formGroup}>
                     <label htmlFor="reviewImage">이미지 첨부 (선택 사항):</label>
                     <input
@@ -225,23 +238,13 @@ function ReviewWritePage() {
                         accept="image/*"
                         onChange={handleFileChange}
                         className={styles.fileInput}
+                        multiple
                     />
-                    {imagePreviewUrl && (
-                        <div className={styles.imagePreviewContainer}>
-                            <img src={imagePreviewUrl} alt="이미지 미리보기" className={styles.imagePreview} />
-                            {/* 이미지 캡션 입력 필드 */}
-                            <input
-                                type="text"
-                                value={imageCaption}
-                                onChange={handleImageCaptionChange}
-                                className={styles.inputField}
-                                placeholder="사진 설명 (선택 사항)"
-                            />
-                            <button type="button" onClick={() => { setSelectedFile(null); setImagePreviewUrl(null); setImageCaption(''); }} className={styles.removeImageButton}>
-                                이미지 제거
-                            </button>
-                        </div>
-                    )}
+                    <div className={styles.imagePreviewContainer}>
+                        {imagePreviews.map((preview, index) => (
+                            <img key={index} src={preview} alt={`이미지 미리보기 ${index + 1}`} className={styles.imagePreview} />
+                        ))}
+                    </div>
                 </div>
 
                 <div className={styles.buttonContainer}>
@@ -262,7 +265,6 @@ function ReviewWritePage() {
                 </div>
             </form>
 
-            {/* 커스텀 모달 컴포넌트 */}
             {showModal && (
                 <div className={styles.modalOverlay}>
                     <div className={styles.modalContent}>
