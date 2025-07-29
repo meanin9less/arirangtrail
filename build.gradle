@@ -1,7 +1,7 @@
 plugins {
     id 'java'
-    id 'org.springframework.boot' version '3.5.3'
-    id 'io.spring.dependency-management' version '1.1.7'
+    id 'org.springframework.boot' version '3.3.3'
+    id 'io.spring.dependency-management' version '1.1.8'
 }
 
 group = 'com.example'
@@ -12,6 +12,18 @@ java {
         languageVersion = JavaLanguageVersion.of(17)
     }
 }
+
+ext {
+    set('springCloudVersion', "2023.1.0")
+}
+
+dependencyManagement {
+    imports {
+        mavenBom "org.springframework.cloud:spring-cloud-dependencies:${springCloudVersion}"
+        mavenBom "io.awspring.cloud:spring-cloud-aws-dependencies:3.3.0"
+    }
+}
+
 
 configurations {
     compileOnly {
@@ -42,10 +54,7 @@ dependencies {
     annotationProcessor 'org.projectlombok:lombok'
     testImplementation 'org.springframework.boot:spring-boot-starter-test'
     testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
-    // AWS SDK for S3//261 확인
-    implementation 'com.amazonaws:aws-java-sdk-s3:1.12.261' // 버전은 최신 버전으로 확인 후 적용하는 것을 권장합니다.
-    // Spring Cloud AWS for simpler integration (Optional but recommended)
-    implementation 'org.springframework.cloud:spring-cloud-starter-aws:2.2.6.RELEASE'
+    implementation 'io.awspring.cloud:spring-cloud-aws-starter-s3'
 }
 
 tasks.named('test') {
