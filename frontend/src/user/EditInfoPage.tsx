@@ -154,36 +154,50 @@ const EditInfoPage: React.FC = () => {
         setError(null);
         setModalMessageType(null);
 
-        // FormData 객체를 사용하여 텍스트 데이터와 파일을 함께 전송
-        const formDataToSend = new FormData();
-        // 텍스트 필드 추가
-        Object.keys(formData).forEach(key => {
-            formDataToSend.append(key, (formData as any)[key]);
-        });
-
-        // 이미지 파일 추가: 'profileImage'는 백엔드에서 파일을 받을 때 사용할 필드 이름
-        if (selectedFile) {
-            formDataToSend.append('profileImage', selectedFile);
-        }
-        // ✨ 이미지 제거 로직: selectedFile이 null이고, 원래 이미지가 있었는데 현재 이미지가 null이면 이미지 제거 요청
-        else if (currentImageUrl === null && originalProfile?.imageUrl) {
-            formDataToSend.append('removeImage', 'true');
-        }
-
         try {
-            // [백엔드 연동 필요] PUT 요청으로 사용자 정보 업데이트
-            // FormData 사용 시 axios가 'Content-Type': 'multipart/form-data' 헤더를 자동으로 설정합니다.
-                const response = await apiClient.put<ApiResponse>('/update-inform', formDataToSend);
+            // 1단계: 텍스트 정보만 업데이트 (application/json)
+            const textData = {
+                email: formData.email,
+                firstname: formData.firstname,
+                lastname: formData.lastname,
+                birthdate: formData.birthdate,
+                nickname: formData.nickname,
+            };
 
-            setModalMessage(response.data.message || '정보가 성공적으로 수정되었습니다.');
+            const response1 = await apiClient.put<ApiResponse>(
+                '/update-inform',
+                textData
+            );
+
+            // 2단계: 이미지 변경이 있다면 업로드 (multipart/form-data)
+            if (selectedFile) {
+                if (!selectedFile) return;
+
+                if (!originalProfile) {
+                    console.error('originalProfile이 null입니다.');
+                    return;
+                }
+
+                const imageForm = new FormData();
+                imageForm.append('image', selectedFile);
+                imageForm.append('username', originalProfile?.username ?? ''); // 백에서 누군지 알아야 저장 가능/ 옵셔널 체이닝 사용
+
+                const imageRes = await axios.post<ApiResponse>(
+                    'http://arirangtrail.duckdns.org/api/upload-profile-image',
+                    imageForm,
+                    {
+                        headers: {
+                            Authorization: `Bearer ${jwtToken}`,
+                            'Content-Type': 'multipart/form-data',
+                        },
+                    }
+                );
+            }
+
+            // 성공 알림
+            setModalMessage('정보가 성공적으로 수정되었습니다.');
             setModalMessageType('success');
             setShowModal(true);
-
-            // 성공적으로 업데이트되면 원본 프로필도 업데이트 (선택 사항)
-            // 실제로는 백엔드에서 업데이트된 프로필 정보를 다시 받아와서 originalProfile을 갱신하는 것이 좋습니다.
-            // 여기서는 임시로 formData와 업데이트된 이미지 URL로 originalProfile을 갱신합니다.
-            setOriginalProfile(prev => prev ? { ...prev, ...formData, imageUrl: imagePreviewUrl || currentImageUrl || undefined } : null);
-            setCurrentImageUrl(imagePreviewUrl || currentImageUrl); // 현재 이미지 URL 업데이트
 
         } catch (err: any) {
             console.error('정보 수정 오류:', err);
