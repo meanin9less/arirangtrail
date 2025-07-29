@@ -8,5 +8,4 @@ import lombok.Setter;
 public class CreateRoomDTO {
     private String title;
     private String username;
-    private String subject;
 }
