@@ -3,7 +3,9 @@ import { Client } from '@stomp/stompjs';
 import SockJS from 'sockjs-client';
 import {useDispatch, useSelector} from 'react-redux';
 import store, {RootState, setTotalUnreadCount} from '../store'; // store 파일 경로에 맞게 수정해주세요.
+import axios from 'axios';
 import apiClient from '../api/axiosInstance';
+import axiosInstance from "../api/axiosInstance";
 
 // --- 타입 정의 ---
 interface ChatMessage {
@@ -229,7 +231,11 @@ const handleFileChange = async (e: ChangeEvent<HTMLInputElement>) => {
     formData.append('file', file);
 
     try {
-        const response = await apiClient.post<{ url: string }>(`files/upload`, formData);
+        const response = await axios.post<{ url: string }>(`${API_URL}/api/files/upload`, formData, {
+            headers: {
+                'Content-Type': 'multipart/form-data'
+            }
+        });
         const imageUrl = response.data.url;
 
         if (clientRef.current?.connected) {
