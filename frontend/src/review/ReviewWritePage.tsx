@@ -1,27 +1,69 @@
-import React, { useState, ChangeEvent, FormEvent } from 'react';
+import React, { useState, ChangeEvent, FormEvent, useEffect } from 'react'; // <<< 추가된 부분: useEffect
 import apiClient from '../api/axiosInstance';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 import styles from './ReviewWrite.module.css';
-import {useSelector} from "react-redux";
-import {RootState} from "../store";
+
+// <<< 추가된 부분: API 응답으로 받을 여행지 데이터 타입 정의 (필요시 수정하세요)
+interface Location {
+    contentid: string;
+    title: string;
+}
 
 function ReviewWritePage() {
     const navigate = useNavigate();
-    const username = useSelector((state : RootState) => state.token.userProfile.username);
+
     const [title, setTitle] = useState<string>('');
     const [content, setContent] = useState<string>('');
     const [rating, setRating] = useState<number>(5);
     const [visitDate, setVisitDate] = useState<string>('');
-    const [contentId, setContentId] = useState<string>('');
-    const [contentTitle, setContentTitle] = useState<string>('');
     const [photos, setPhotos] = useState<File[]>([]);
     const [imagePreviews, setImagePreviews] = useState<string[]>([]);
+
+    // <<< 추가된 부분: API로부터 받은 여행지 목록과 선택된 여행지 정보를 위한 상태
+    const [locations, setLocations] = useState<Location[]>([]);
+    const [selectedLocation, setSelectedLocation] = useState<string>(''); // contentid를 저장
 
     const [loading, setLoading] = useState<boolean>(false);
     const [showModal, setShowModal] = useState<boolean>(false);
     const [modalMessage, setModalMessage] = useState<string>('');
     const [messageType, setMessageType] = useState<'success' | 'error' | null>(null);
+
+    // <<< 추가된 부분: 방문 날짜가 변경될 때 API를 호출하는 함수
+    useEffect(() => {
+        if (visitDate) {
+            const fetchLocations = async () => {
+                setLoading(true);
+                try {
+                    const SERVICE_KEY = "WCIc8hzzBS3Jdod%2BVa357JmB%2FOS0n4D2qPHaP9PkN4bXIfcryZyg4iaZeTj1fEYJ%2B8q2Ol8FIGe3RkW3d72FHA%3D%3D";
+                    const API_URL =
+                        `https://apis.data.go.kr/B551011/KorService2/searchFestival2?serviceKey=${SERVICE_KEY}&MobileApp=AppTest&MobileOS=ETC&_type=json`;
+                    const today = new Date();
+                    const date = `${today.getFullYear()}${String(today.getMonth() + 1).padStart(2, '0')}${String(today.getDate()).padStart(2, '0')}`;
+                    const response = await apiClient.get(API_URL, {
+                        params: { // 요청 파라미터
+                            numOfRows: 150,
+                            pageNo: 1,
+                            arrange: "B", // 조회순
+                            eventStartDate: date, // 오늘부터 시작하는 행사만 요청
+                            eventEndDate: date
+                        },
+                    });
+                    console.log(response.data);
+                    // setLocations(response.data);
+                    setLoading(false);
+                } catch (error) {
+                    console.error('여행지 정보 조회 오류:', error);
+                    setModalMessage('해당 날짜의 여행지 정보를 불러오는 데 실패했습니다.');
+                    setMessageType('error');
+                    setShowModal(true);
+                    setLocations([]); // 오류 발생 시 목록 초기화
+                    setLoading(false);
+                }
+            };
+            fetchLocations();
+        }
+    }, [visitDate]); // visitDate가 변경될 때마다 이 useEffect가 실행됩니다.
 
     const handleFileChange = (e: ChangeEvent<HTMLInputElement>) => {
         if (e.target.files) {
@@ -48,7 +90,7 @@ function ReviewWritePage() {
         setModalMessage('');
         setMessageType(null);
 
-        if (!title.trim() || !content.trim() || !visitDate || !contentId.trim() || !contentTitle.trim()) {
+        if (!title.trim() || !content.trim() || !visitDate || !selectedLocation) {
             setModalMessage('모든 필드를 입력해주세요.');
             setMessageType('error');
             setShowModal(true);
@@ -58,9 +100,9 @@ function ReviewWritePage() {
 
         const formData = new FormData();
         const createRequest = {
-            username, // 실제 사용자 이름으로 교체 필요
-            contentid: Number(contentId),
-            contenttitle: contentTitle,
+            username: 'currentLoggedInUser', // 실제 사용자 이름으로 교체 필요
+            contentid: "",
+            contenttitle: "",
             title,
             content,
             rating,
@@ -85,16 +127,15 @@ function ReviewWritePage() {
             setMessageType('success');
             setShowModal(true);
 
+            // 폼 초기화
             setTitle('');
             setContent('');
             setRating(5);
             setVisitDate('');
-            setContentId('');
-            setContentTitle('');
+            setSelectedLocation('');
+            // setLocations([]);
             setPhotos([]);
             setImagePreviews([]);
-
-            navigate("/review");
 
         } catch (error: any) {
             console.error('리뷰 작성 오류:', error);
@@ -116,29 +157,38 @@ function ReviewWritePage() {
 
             <form onSubmit={handleSubmitReview} className={styles.reviewForm}>
                 <div className={styles.formGroup}>
-                    <label htmlFor="contentId">여행지 ID:</label>
+                    <label htmlFor="visitDate">방문 날짜:</label>
                     <input
-                        type="text"
-                        id="contentId"
-                        value={contentId}
-                        onChange={(e) => setContentId(e.target.value)}
+                        type="date"
+                        id="visitDate"
+                        value={visitDate}
+                        onChange={(e) => setVisitDate(e.target.value)}
                         required
                         className={styles.inputField}
-                        placeholder="여행지 ID를 입력해주세요."
                     />
                 </div>
+
+                {<select>
+                </select>}
                 <div className={styles.formGroup}>
-                    <label htmlFor="contentTitle">여행지 제목:</label>
-                    <input
-                        type="text"
-                        id="contentTitle"
-                        value={contentTitle}
-                        onChange={(e) => setContentTitle(e.target.value)}
+                    <label htmlFor="locationSelect">여행지 선택:</label>
+                    <select
+                        id="locationSelect"
+                        value={selectedLocation}
+                        onChange={(e) => setSelectedLocation(e.target.value)}
                         required
-                        className={styles.inputField}
-                        placeholder="여행지 제목을 입력해주세요."
-                    />
+                        className={styles.selectField}
+                        disabled={!visitDate || locations.length === 0} // 날짜가 선택되고 여행지 목록이 있을 때만 활성화
+                    >
+                        <option value="">{visitDate ? '여행지를 선택하세요' : '방문 날짜를 먼저 선택하세요'}</option>
+                        {locations.map(location => (
+                            <option key={location.contentid} value={location.contentid}>
+                                {location.title}
+                            </option>
+                        ))}
+                    </select>
                 </div>
+
                 <div className={styles.formGroup}>
                     <label htmlFor="reviewTitle">리뷰 제목:</label>
                     <input
@@ -180,18 +230,7 @@ function ReviewWritePage() {
                     </select>
                 </div>
                 <div className={styles.formGroup}>
-                    <label htmlFor="visitDate">방문 날짜:</label>
-                    <input
-                        type="date"
-                        id="visitDate"
-                        value={visitDate}
-                        onChange={(e) => setVisitDate(e.target.value)}
-                        required
-                        className={styles.inputField}
-                    />
-                </div>
-                <div className={styles.formGroup}>
-                    <label htmlFor="reviewImage">이미지 첨부</label>
+                    <label htmlFor="reviewImage">이미지 첨부 (선택 사항):</label>
                     <input
                         type="file"
                         id="reviewImage"
