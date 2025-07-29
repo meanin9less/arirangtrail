@@ -13,21 +13,6 @@ java {
     }
 }
 
-ext {
-    set('springCloudVersion', "2023.1.0")
-}
-
-dependencyManagement {
-    imports {
-        mavenBom "org.springframework.cloud:spring-cloud-dependencies:${springCloudVersion}"
-        mavenBom "io.awspring.cloud:spring-cloud-aws-dependencies:3.3.0"
-    }
-}
-
-repositories {
-    mavenCentral()
-}
-
 configurations {
     compileOnly {
         extendsFrom annotationProcessor
@@ -62,7 +47,6 @@ dependencies {
     implementation 'com.amazonaws:aws-java-sdk-s3:1.12.261' // 버전은 최신 버전으로 확인 후 적용하는 것을 권장합니다.
     // Spring Cloud AWS for simpler integration (Optional but recommended)
     implementation 'org.springframework.cloud:spring-cloud-starter-aws:2.2.6.RELEASE'
-    implementation 'io.awspring.cloud:spring-cloud-aws-starter-s3'
 }
 
 tasks.named('test') {
