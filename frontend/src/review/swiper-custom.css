@@ -1,7 +1,7 @@
 .review-swiper {
-    width: 100%;
-    height: 200px; /* 이미지 높이와 동일하게 200px로 수정 */
-    margin: 15px; /* 상단, 좌우, 하단 여백 추가 */
+    width: calc(100% - 30px);
+    height: 200px;
+    margin: 15px auto;
 }
 
 .review-swiper .swiper-slide {
@@ -16,10 +16,34 @@
     object-fit: contain;
 }
 
+/* 스와이퍼 버튼 스타일 */
 .swiper-button-next, .swiper-button-prev {
-    color: #000; /* 원하는 색상으로 변경하세요 */
+    color: white; /* 아이콘 색상 */
+    background-color: rgba(0, 0, 0, 0.5); /* 반투명 검정 배경 */
+    border-radius: 50%; /* 원형 */
+    width: 30px; /* 버튼 크기 줄임 */
+    height: 30px; /* 버튼 크기 줄임 */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1em; /* 아이콘 크기 */
+    transition: background-color 0.3s ease;
+}
+
+.swiper-button-next:hover, .swiper-button-prev:hover {
+    background-color: rgba(0, 0, 0, 0.8); /* 호버 시 더 진하게 */
+}
+
+/* 페이지네이션 점 스타일 */
+.swiper-pagination-bullet {
+    background: #ccc; /* 비활성 점 색상 */
+    opacity: 0.7; /* 투명도 */
+    width: 10px; /* 점 크기 키움 */
+    height: 10px; /* 점 크기 키움 */
+    margin: 0 5px; /* 점 간격 */
 }
 
 .swiper-pagination-bullet-active {
-    background: #000; /* 원하는 색상으로 변경하세요 */
+    background: #007bff; /* 활성 점 색상 (파란색) */
+    opacity: 1;
 }
