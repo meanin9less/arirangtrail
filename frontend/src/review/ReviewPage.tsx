@@ -91,15 +91,17 @@ function ReviewPage() {
 
     return (
         <div className={styles.reviewContainer}>
-            <h2>사용자 리뷰</h2>
+            <div className={styles.pageHeader}>
+                <h2 className={styles.pageTitle}>축제 후기</h2>
+                <p className={styles.pageDescription}>다양한 축제를 즐기고 생생한 후기를 공유해보세요!</p>
+            </div>
 
-            <div className={styles.writeButtonContainer}>
+            <div className={styles.reviewHeader}>
+                <h3 className={styles.sectionTitle}>모든 리뷰 ({reviews.length})</h3>
                 <button onClick={handleWriteReviewClick} className={styles.writeReviewButton}>
                     글쓰기
                 </button>
             </div>
-
-            <h3 className={styles.sectionTitle}>모든 리뷰 ({reviews.length})</h3>
             {reviews.length === 0 && !loading ? (
                 <p>아직 작성된 리뷰가 없습니다. 첫 리뷰를 작성해주세요!</p>
             ) : (
