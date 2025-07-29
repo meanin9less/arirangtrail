@@ -13,7 +13,10 @@ interface Location {
 
 function ReviewWritePage() {
     const navigate = useNavigate();
-    const username = useSelector((state: RootState) => state.token.userProfile.username);
+    const username = useSelector((state: RootState) => state.token.userProfile?.username);
+    if(!username){
+        navigate(-1);
+    }
     const [title, setTitle] = useState<string>('');
     const [content, setContent] = useState<string>('');
     const [rating, setRating] = useState<number>(5);
