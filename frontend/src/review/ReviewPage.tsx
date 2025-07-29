@@ -8,6 +8,8 @@ import 'swiper/css/navigation';
 import 'swiper/css/pagination';
 import './swiper-custom.css';
 import { Navigation, Pagination } from 'swiper/modules';
+import {useSelector} from "react-redux";
+import {RootState} from "../store";
 
 interface Photo {
     photoId: number;

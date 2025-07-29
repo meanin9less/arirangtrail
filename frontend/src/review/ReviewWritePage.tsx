@@ -3,6 +3,8 @@ import apiClient from '../api/axiosInstance';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 import styles from './ReviewWrite.module.css';
+import {useSelector} from "react-redux";
+import {RootState} from "../store";
 
 interface Location {
     contentid: string;
@@ -11,7 +13,7 @@ interface Location {
 
 function ReviewWritePage() {
     const navigate = useNavigate();
-
+    const username = useSelector((state: RootState) => state.token.userProfile.username);
     const [title, setTitle] = useState<string>('');
     const [content, setContent] = useState<string>('');
     const [rating, setRating] = useState<number>(5);
@@ -111,7 +113,7 @@ function ReviewWritePage() {
 
         const formData = new FormData();
         const createRequest = {
-            username: 'currentLoggedInUser',
+            username: username,
             contentid: selectedLocationInfo?.contentid,
             contenttitle: selectedLocationInfo?.title,
             title,
