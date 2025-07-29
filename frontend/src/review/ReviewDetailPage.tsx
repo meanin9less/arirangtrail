@@ -2,7 +2,13 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import apiClient from '../api/axiosInstance';
 import axios from 'axios';
-import styles from './ReviewDetailPage.module.css'; // ✨ 새 CSS 모듈 임포트
+import styles from './ReviewDetailPage.module.css';
+import { Swiper, SwiperSlide } from 'swiper/react';
+import 'swiper/css';
+import 'swiper/css/navigation';
+import 'swiper/css/pagination';
+import './swiper-custom.css'; // ReviewPage와 동일한 CSS 재사용
+import { Navigation, Pagination } from 'swiper/modules';
 
 interface Photo {
     photoId: number,
@@ -94,30 +100,44 @@ function ReviewDetailPage() {
     return (
         <div className={styles.detailContainer}>
             <h2 className={styles.reviewTitle}>{review.title}</h2>
-            <p className={styles.reviewMeta}>
-                작성자: <strong>{review.username}</strong> | 별점: {'⭐'.repeat(review.rating)}
-            </p>
-            {review.contentTitle && (
-                <p className={styles.reviewMeta}>
-                    행사: {review.contentTitle} (ID: {review.contentId})
-                </p>
+
+            {review.photos && review.photos.length > 0 && (
+                <Swiper
+                    modules={[Navigation, Pagination]}
+                    spaceBetween={10}
+                    slidesPerView={1}
+                    navigation
+                    pagination={{ clickable: true }}
+                    className={styles.detailSwiper}
+                >
+                    {review.photos.map(photo => (
+                        <SwiperSlide key={photo.photoId}>
+                            <img src={photo.photoUrl} alt={review.caption || review.title} className={styles.detailImage} />
+                        </SwiperSlide>
+                    ))}
+                </Swiper>
             )}
-            {review.visitDate && (
-                <p className={styles.reviewMeta}>방문일: {review.visitDate}</p>
-            )}
+
+            <div className={styles.reviewDetailsGroup}>
+                <div className={styles.reviewDetailsLine}>
+                    <p className={styles.reviewDetailItem}>작성자: <strong>{review.username}</strong></p>
+                    <p className={styles.reviewDetailItem}>별점: ⭐ {review.rating}</p>
+                </div>
+                {(review.contentTitle || review.visitDate) && (
+                    <div className={styles.reviewDetailsLine}>
+                        {review.contentTitle && (
+                            <p className={styles.reviewDetailItem}>행사: {review.contentTitle} (ID: {review.contentId})</p>
+                        )}
+                        {review.visitDate && (
+                            <p className={styles.reviewDetailItem}>방문일: {review.visitDate}</p>
+                        )}
+                    </div>
+                )}
+            </div>
 
             <div className={styles.reviewContent}>
                 <p>{review.content}</p>
             </div>
-
-            {review.photos && ( // 이미지 URL이 있을 경우 이미지 표시
-                review.photos.map(
-                    photo =>
-                        <div className={styles.reviewImageContainer}>
-                            <img src={photo.photoUrl} alt={review.caption || review.title} className={styles.reviewImage} />
-                        </div>
-                )
-            )}
 
             <p className={styles.reviewDate}>
                 작성일: {new Date(review.createdAt).toLocaleString()}
@@ -127,7 +147,7 @@ function ReviewDetailPage() {
             </p>
 
             <button onClick={() => navigate('/review')} className={styles.backButton}>
-                목록으로 돌아가기
+                목록으로
             </button>
         </div>
     );

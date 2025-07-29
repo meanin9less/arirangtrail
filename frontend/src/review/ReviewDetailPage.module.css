@@ -20,11 +20,38 @@
     padding-bottom: 10px;
 }
 
-.reviewMeta {
+.reviewDetailsGroup {
+    margin-top: 20px;
+    margin-bottom: 20px;
+    border: 1px solid #eee;
+    padding: 15px;
+    border-radius: 8px;
+    background-color: #f9f9f9;
+}
+
+.reviewDetailsLine {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 10px;
+}
+
+.reviewDetailsLine:last-child {
+    margin-bottom: 0;
+}
+
+.reviewDetailItem {
+    flex: 1;
     font-size: 0.95em;
-    color: #666;
-    margin-bottom: 8px;
-    text-align: center;
+    color: #555;
+    margin: 0;
+}
+
+.reviewDetailItem:first-child {
+    text-align: left;
+}
+
+.reviewDetailItem:last-child {
+    text-align: right;
 }
 
 .reviewContent {
@@ -40,18 +67,41 @@
     white-space: pre-wrap; /* 줄바꿈 유지 */
 }
 
-.reviewImageContainer {
+.detailSwiper {
+    width: 100%;
+    height: 400px; /* 상세 페이지 이미지 슬라이더 높이 */
     margin-top: 20px;
     margin-bottom: 20px;
-    text-align: center;
 }
 
-.reviewImage {
+.detailSwiper .swiper-slide {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.detailImage {
     max-width: 100%;
-    max-height: 400px; /* 상세 페이지에서는 이미지 크기를 더 크게 허용 */
+    max-height: 400px; /* 이미지 높이 */
     object-fit: contain;
     border-radius: 8px;
     box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+}
+
+.reviewImageContainer {
+    /* 이 스타일은 이제 Swiper가 대체하므로 필요 없을 수 있습니다. */
+    /* margin-top: 20px;
+    margin-bottom: 20px;
+    text-align: center; */
+}
+
+.reviewImage {
+    /* 이 스타일은 이제 detailImage가 대체하므로 필요 없을 수 있습니다. */
+    /* max-width: 100%;
+    max-height: 400px;
+    object-fit: contain;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.15); */
 }
 
 .imageCaption {
@@ -71,7 +121,7 @@
     display: block;
     width: 150px;
     padding: 10px 15px;
-    background-color: #6c757d;
+    background-color: #007bff; /* 파란색으로 변경 */
     color: white;
     border: none;
     border-radius: 5px;
@@ -82,7 +132,7 @@
 }
 
 .backButton:hover {
-    background-color: #5a6268;
+    background-color: #0056b3; /* 호버 색상 변경 */
     transform: translateY(-2px);
 }
 
