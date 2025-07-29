@@ -126,8 +126,10 @@ function ReviewWritePage() {
             formData.append('photos', photo);
         });
 
+        console.log(formData);
+
         try {
-            const response = await apiClient.post('/api/reviews', formData, {
+            const response = await apiClient.post('/reviews', formData, {
                 headers: {
                     'Content-Type': 'multipart/form-data',
                 },
