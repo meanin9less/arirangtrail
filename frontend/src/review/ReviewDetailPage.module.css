@@ -88,6 +88,40 @@
     box-shadow: 0 2px 8px rgba(0,0,0,0.15);
 }
 
+/* 상세 페이지 스와이퍼 버튼 스타일 */
+.detailSwiper .swiper-button-next, 
+.detailSwiper .swiper-button-prev {
+    color: white; /* 아이콘 색상 */
+    background-color: rgba(0, 0, 0, 0.5); /* 반투명 검정 배경 */
+    border-radius: 50%; /* 원형 */
+    width: 40px; /* 기본 크기 유지 */
+    height: 40px; /* 기본 크기 유지 */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.2em; /* 아이콘 크기 */
+    transition: background-color 0.3s ease;
+}
+
+.detailSwiper .swiper-button-next:hover, 
+.detailSwiper .swiper-button-prev:hover {
+    background-color: rgba(0, 0, 0, 0.8); /* 호버 시 더 진하게 */
+}
+
+/* 상세 페이지 페이지네이션 점 스타일 */
+.detailSwiper .swiper-pagination-bullet {
+    background: #ccc; /* 비활성 점 색상 */
+    opacity: 0.7; /* 투명도 */
+    width: 10px; /* 점 크기 키움 */
+    height: 10px; /* 점 크기 키움 */
+    margin: 0 5px; /* 점 간격 */
+}
+
+.detailSwiper .swiper-pagination-bullet-active {
+    background: #007bff; /* 활성 점 색상 (파란색) */
+    opacity: 1;
+}
+
 .reviewImageContainer {
     /* 이 스타일은 이제 Swiper가 대체하므로 필요 없을 수 있습니다. */
     /* margin-top: 20px;
