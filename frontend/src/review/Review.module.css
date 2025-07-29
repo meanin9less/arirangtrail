@@ -1,5 +1,21 @@
 /* src/pages/ReviewPage.module.css */
 
+.pageHeader {
+    text-align: center;
+    margin-bottom: 40px;
+}
+
+.pageTitle {
+    font-size: 2.5em;
+    font-weight: bold;
+    margin-bottom: 10px;
+}
+
+.pageDescription {
+    font-size: 1.1em;
+    color: #666;
+}
+
 .reviewContainer {
     padding: 20px;
     max-width: 1200px;
@@ -7,10 +23,13 @@
     box-sizing: border-box;
 }
 
-.writeButtonContainer {
+.reviewHeader {
     display: flex;
-    justify-content: flex-end;
+    justify-content: space-between;
+    align-items: center;
     margin-bottom: 20px;
+    padding-bottom: 20px; /* 구분선과 내용 사이의 여백 */
+    border-bottom: 1px solid #eee; /* 희미한 구분선 */
 }
 
 .writeReviewButton {
@@ -80,11 +99,26 @@
     text-decoration: underline;
 }
 
+.reviewContentLink {
+    display: block; /* 블록 레벨 요소로 만들어 줄바꿈 */
+    font-size: 0.9em; /* 조금 작은 글씨 */
+    color: #555; /* 회색 계열 */
+    text-decoration: none;
+    margin-top: 5px; /* 제목과의 간격 */
+    margin-bottom: 10px; /* 아래 요소와의 간격 */
+}
+
+.reviewContentLink:hover {
+    text-decoration: underline;
+    color: #007bff;
+}
+
 .reviewMeta {
     display: flex;
     justify-content: space-between;
     align-items: center;
     margin-top: 10px;
+    margin-bottom: 10px; /* 작성일과의 여백 추가 */
     font-size: 0.9em;
     color: #555;
 }
