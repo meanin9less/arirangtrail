@@ -12,7 +12,7 @@ interface UserProfile {
     email: string;
     firstname: string;
     lastname: string;
-    birthdate: string; // YYYY-MM-DD 형식으로 가정
+    birthdate: string; // YYYY-MM-DD 형식으로 가정 (백엔드 LocalDate와 매핑)
     nickname: string;
     imageUrl?: string; // 프로필 사진 URL
 }
@@ -56,7 +56,7 @@ const EditInfoPage: React.FC = () => {
     const [currentImageUrl, setCurrentImageUrl] = useState<string | null>(null); // 백엔드에서 받아온 기존 이미지 URL
 
     const [loading, setLoading] = useState<boolean>(true); // 초기 로딩 상태
-    const [submitting, setSubmitting] = useState<boolean>(false); // 제출 중 로딩 상태
+    const [submitting, setSubmitting] = useState<boolean>(false); // 제출 중 로딩 상태 (이전 'boolean' 타입 오타 수정)
     const [error, setError] = useState<string | null>(null);
     const [showModal, setShowModal] = useState<boolean>(false);
     const [modalMessage, setModalMessage] = useState<string>('');
@@ -88,9 +88,10 @@ const EditInfoPage: React.FC = () => {
                     birthdate: profileData.birthdate,
                     nickname: profileData.nickname,
                 });
+                // 이미지 URL 설정: 백엔드에서 받은 URL이 있으면 사용, 없으면 null
                 setCurrentImageUrl(profileData.imageUrl || null);
-                setSelectedFile(null);
-                setImagePreviewUrl(null);
+                setSelectedFile(null); // 새 정보 로드 시 파일 선택 초기화
+                setImagePreviewUrl(null); // 새 정보 로드 시 미리보기 초기화
             } catch (err: any) {
                 console.error('사용자 정보 불러오기 오류:', err);
                 let errorMessage = '사용자 정보를 불러오는 데 실패했습니다.';
@@ -104,11 +105,11 @@ const EditInfoPage: React.FC = () => {
         };
 
         if (isLoggedIn) {
-        fetchUserProfile();
+            fetchUserProfile();
         } else {
-            setLoading(false); // 로그인 안 된 상태면 로딩 종료 (위에 navigate 로직이 활성화되면 필요 없음)
+            setLoading(false);
         }
-    }, [isLoggedIn, navigate]); // isLoggedIn 또는 navigate 변경 시 다시 실행
+    }, [isLoggedIn, navigate, jwtToken]); // jwtToken을 의존성 배열에 추가
 
     // 폼 입력 필드 변경 핸들러 (텍스트 필드)
     const handleChange = (e: ChangeEvent<HTMLInputElement>) => {
@@ -129,16 +130,18 @@ const EditInfoPage: React.FC = () => {
         } else {
             setSelectedFile(null);
             setImagePreviewUrl(null);
-            // 파일 선택 취소 시 기존 이미지 URL을 다시 표시
+            // 파일 선택 취소 시 기존 이미지 URL을 다시 표시 (originalProfile이 로드된 경우)
             setCurrentImageUrl(originalProfile?.imageUrl || null);
         }
     };
 
-    // ✨ 추가: 파일 선택 취소 핸들러
+    // 파일 선택 취소 핸들러
     const handleClearFile = () => {
         setSelectedFile(null); // 선택된 파일 초기화
         setImagePreviewUrl(null); // 미리보기 URL 초기화
-        setCurrentImageUrl(originalProfile?.imageUrl || null); // 기존 이미지 또는 기본 이미지로 되돌림
+
+        // 기존 이미지 URL이 있으면 표시, 없으면 기본 이미지로 되돌림
+        setCurrentImageUrl(originalProfile?.imageUrl || null);
 
         // 파일 input 요소의 값을 초기화하여, 동일 파일 재선택 시 change 이벤트가 발생하도록 함
         const fileInput = document.getElementById('profileImage') as HTMLInputElement;
@@ -154,36 +157,67 @@ const EditInfoPage: React.FC = () => {
         setError(null);
         setModalMessageType(null);
 
+        // originalProfile이 null일 경우를 대비한 방어 코드
+        if (!originalProfile) {
+            setModalMessage('사용자 정보를 찾을 수 없어 업데이트를 진행할 수 없습니다.');
+            setModalMessageType('error');
+            setShowModal(true);
+            setSubmitting(false);
+            return;
+        }
+
         try {
             // 1단계: 텍스트 정보만 업데이트 (application/json)
+            // UserDTO에 맞게 username과 현재 imageurl을 포함하여 전송
             const textData = {
+                username: originalProfile.username, // 필수: 백엔드 UserDTO에 username 필드가 있으므로 반드시 포함
                 email: formData.email,
                 firstname: formData.firstname,
                 lastname: formData.lastname,
-                birthdate: formData.birthdate,
+                birthdate: formData.birthdate, // YYYY-MM-DD 문자열로 전송
                 nickname: formData.nickname,
+                // imageurl은 selectedFile이 없으면 currentImageUrl을 사용, 있으면 null (새 이미지 업로드 시 백엔드에서 처리)
+                // 백엔드에서 imageurl이 null 허용이므로, 여기서는 보내지 않아도 됩니다.
+                // 단, 사용자가 "기본 프로필" 버튼을 눌러 이미지를 제거했다면, imageurl을 null로 명시적으로 보내야 합니다.
+                imageurl: selectedFile ? null : (currentImageUrl || null) // 선택된 파일이 있으면 null, 없으면 현재 이미지 URL 유지 (또는 null)
             };
+
+            // 만약 '기본 프로필' 버튼을 눌러 이미지를 제거하는 경우, imageurl을 명시적으로 null로 보내야 합니다.
+            // 이 로직은 selectedFile이 없고, originalProfile.imageUrl이 있었는데 currentImageUrl이 null이 된 경우에 해당합니다.
+            if (!selectedFile && originalProfile.imageUrl && currentImageUrl === null) {
+                textData.imageurl = null;
+            }
+
+            // ✨ 디버깅을 위해 전송할 데이터 로깅
+            console.log('Sending textData to /update-inform:', textData);
+
 
             const response1 = await apiClient.put<ApiResponse>(
                 '/update-inform',
-                textData
+                textData,
+                {
+                    headers: {
+                        Authorization: `Bearer ${jwtToken}`, // Authorization 헤더 추가
+                        'Content-Type': 'application/json', // 명시적 Content-Type
+                    },
+                }
             );
 
             // 2단계: 이미지 변경이 있다면 업로드 (multipart/form-data)
             if (selectedFile) {
-                if (!selectedFile) return;
-
-                if (!originalProfile) {
-                    console.error('originalProfile이 null입니다.');
-                    return;
+                // selectedFile이 null이 아닌지 다시 확인
+                if (!selectedFile) {
+                    console.error('이미지 파일이 선택되지 않았습니다.');
+                    throw new Error('이미지 파일이 선택되지 않았습니다.');
                 }
 
                 const imageForm = new FormData();
                 imageForm.append('image', selectedFile);
-                imageForm.append('username', originalProfile?.username ?? ''); // 백에서 누군지 알아야 저장 가능/ 옵셔널 체이닝 사용
+                imageForm.append('username', originalProfile.username); // 백엔드에서 누군지 알아야 저장 가능
 
-                const imageRes = await axios.post<ApiResponse>(
-                    'http://arirangtrail.duckdns.org/api/upload-profile-image',
+                // ✨ apiClient 사용 권장: axios 대신 apiClient를 사용하여 기본 설정(baseURL, withCredentials 등)을 활용합니다.
+                const imageRes = await apiClient.post<ApiResponse>(
+                    '/upload-profile-image', // baseURL이 이미 설정되어 있으므로 상대 경로 사용
                     imageForm,
                     {
                         headers: {
@@ -203,6 +237,7 @@ const EditInfoPage: React.FC = () => {
             console.error('정보 수정 오류:', err);
             let errorMessage = '정보 수정에 실패했습니다.';
             if (axios.isAxiosError(err) && err.response) {
+                // 백엔드에서 보낸 에러 메시지가 있다면 사용
                 errorMessage = err.response.data?.message || errorMessage;
             }
             setModalMessage(errorMessage);
