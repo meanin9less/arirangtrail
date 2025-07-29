@@ -1,7 +1,7 @@
 .review-swiper {
     width: 100%;
     height: 200px; /* 이미지 높이와 동일하게 200px로 수정 */
-    margin-bottom: 1rem;
+    margin: 15px; /* 상단, 좌우, 하단 여백 추가 */
 }
 
 .review-swiper .swiper-slide {
