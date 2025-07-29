@@ -4,6 +4,11 @@ import apiClient from '../api/axiosInstance';
 import axios from 'axios';
 import styles from './ReviewDetailPage.module.css'; // ✨ 새 CSS 모듈 임포트
 
+interface Photo {
+    photoId: number,
+    photoUrl: string
+}
+
 // 데이터 모델 정의 (ReviewPage.tsx와 동일하게 유지)
 interface Review {
     reviewId: string;
@@ -14,7 +19,7 @@ interface Review {
     content: string;
     rating: number;
     visitDate?: string;
-    imageurl?: string;
+    photos?: Photo[]; // 단일 이미지 URL (reviewphotos에서 가져올 경우)
     caption?: string;
     createdAt: string;
     updatedAt: string;
@@ -105,11 +110,13 @@ function ReviewDetailPage() {
                 <p>{review.content}</p>
             </div>
 
-            {review.imageurl && (
-                <div className={styles.reviewImageContainer}>
-                    <img src={review.imageurl} alt={review.caption || review.title} className={styles.reviewImage} />
-                    {review.caption && <p className={styles.imageCaption}>{review.caption}</p>}
-                </div>
+            {review.photos && ( // 이미지 URL이 있을 경우 이미지 표시
+                review.photos.map(
+                    photo =>
+                        <div className={styles.reviewImageContainer}>
+                            <img src={photo.photoUrl} alt={review.caption || review.title} className={styles.reviewImage} />
+                        </div>
+                )
             )}
 
             <p className={styles.reviewDate}>

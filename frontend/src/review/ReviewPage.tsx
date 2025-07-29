@@ -5,6 +5,11 @@ import { useNavigate, useLocation, Link } from 'react-router-dom';
 // ✨ CSS 모듈 임포트 경로 수정: ReviewPage.module.css를 사용하도록 명확히 합니다.
 import styles from './Review.module.css';
 
+
+interface Photo {
+    photoId: number,
+    photoUrl: string
+}
 // 데이터 모델 정의 (DB 스키마에 맞춰 업데이트)
 interface Review {
     reviewId: string; // DB의 reviewid (bigint)
@@ -15,7 +20,7 @@ interface Review {
     content: string; // DB의 content
     rating: number; // DB의 rating (decimal 2,1)
     visitDate?: string; // DB의 visitdate (date) - 선택 사항
-    imageUrl?: string; // 단일 이미지 URL (reviewphotos에서 가져올 경우)
+    photos?: Photo[]; // 단일 이미지 URL (reviewphotos에서 가져올 경우)
     caption?: string; // DB의 caption (reviewphotos에서 가져올 경우)
     createdAt: string;
     updatedAt: string;
@@ -96,7 +101,7 @@ function ReviewPage() {
                 <div className={styles.reviewList}>
                     {reviews.map(review => (
                         <div key={review.reviewId} className={styles.reviewItem}>
-                            {/* 제목에 Link 추가 */}
+                            {/* 제목 */}
                             <p className={styles.reviewTitleLink}>
                                 <Link to={`/review/detail/${review.reviewId}`}>
                                     <strong>{review.title}</strong>
@@ -108,11 +113,13 @@ function ReviewPage() {
                             <p className={styles.reviewContentPreview}>
                                 {review.content.length > 100 ? review.content.substring(0, 100) + '...' : review.content}
                             </p>
-                            {review.imageUrl && ( // 이미지 URL이 있을 경우 이미지 표시
-                                <div className={styles.reviewImageContainer}>
-                                    <img src={review.imageUrl} alt={review.caption || review.title} className={styles.reviewImage} />
-                                    {review.caption && <p className={styles.imageCaption}>{review.caption}</p>}
-                                </div>
+                            {review.photos && ( // 이미지 URL이 있을 경우 이미지 표시
+                                review.photos.map(
+                                    photo =>
+                                        <div className={styles.reviewImageContainer}>
+                                            <img src={photo.photoUrl} alt={review.caption || review.title} className={styles.reviewImage} />
+                                        </div>
+                                )
                             )}
                             <p className={styles.reviewDate}>작성일: {new Date(review.createdAt).toLocaleString()}</p>
                         </div>
