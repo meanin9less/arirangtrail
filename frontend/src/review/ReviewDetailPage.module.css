@@ -91,7 +91,7 @@
 /* 상세 페이지 스와이퍼 버튼 스타일 */
 .detailSwiper .swiper-button-next, 
 .detailSwiper .swiper-button-prev {
-    color: white; /* 아이콘 색상 */
+    background-image: none; /* 기본 화살표 이미지 제거 */
     background-color: rgba(0, 0, 0, 0.5); /* 반투명 검정 배경 */
     border-radius: 50%; /* 원형 */
     width: 40px; /* 기본 크기 유지 */
@@ -99,13 +99,21 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 1.2em; /* 아이콘 크기 */
     transition: background-color 0.3s ease;
+    font-size: 0; /* 버튼 자체의 텍스트 숨김 */
 }
 
 .detailSwiper .swiper-button-next:hover, 
 .detailSwiper .swiper-button-prev:hover {
     background-color: rgba(0, 0, 0, 0.8); /* 호버 시 더 진하게 */
+}
+
+.detailSwiper .swiper-button-next::after, 
+.detailSwiper .swiper-button-prev::after {
+    font-size: 24px; /* 아이콘 크기 (버튼 크기에 맞게 조절) */
+    color: white; /* 아이콘 색상 */
+    text-shadow: 0px 0px 5px rgba(0,0,0,0.7); /* 그림자 추가 */
+    line-height: 1; /* 줄 간격 제거 */
 }
 
 /* 상세 페이지 페이지네이션 점 스타일 */
