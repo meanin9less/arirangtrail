@@ -130,6 +130,7 @@ function ReviewPage() {
                                         <strong>{review.title}</strong>
                                     </Link>
                                 </p>
+                                <Link to={'/calender/'+review.contentId} className={styles.reviewContentLink}>{review.contentTitle}</Link>
                                 <div className={styles.reviewMeta}>
                                     <span>{review.username}</span>
                                     <span>⭐ {review.rating}</span>

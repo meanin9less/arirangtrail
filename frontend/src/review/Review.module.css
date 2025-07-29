@@ -99,6 +99,20 @@
     text-decoration: underline;
 }
 
+.reviewContentLink {
+    display: block; /* 블록 레벨 요소로 만들어 줄바꿈 */
+    font-size: 0.9em; /* 조금 작은 글씨 */
+    color: #555; /* 회색 계열 */
+    text-decoration: none;
+    margin-top: 5px; /* 제목과의 간격 */
+    margin-bottom: 10px; /* 아래 요소와의 간격 */
+}
+
+.reviewContentLink:hover {
+    text-decoration: underline;
+    color: #007bff;
+}
+
 .reviewMeta {
     display: flex;
     justify-content: space-between;
