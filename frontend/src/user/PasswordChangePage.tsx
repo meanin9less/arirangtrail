@@ -22,10 +22,11 @@ const ChangePasswordPage = () => {
         }
 
         try {
-            const response = await apiClient.post('/reset-pw', {
-                username,
-                email,
-                password
+            const response = await apiClient.put('/reset-pw', null, {
+                params: {
+                    username,
+                    password,
+                },
             });
 
             if (response.status === 200) {
