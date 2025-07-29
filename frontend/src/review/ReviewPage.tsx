@@ -46,7 +46,7 @@ function ReviewPage() {
         try {
             // [백엔드 연동 필요] 실제 API 엔드포인트
             // 백엔드에서 /reviews GET 요청 시 Review[] 배열을 포함하는 JSON을 반환해야 합니다.
-            const response = await apiClient.get<GetReviewsResponse>('/reviews&page=0');
+            const response = await apiClient.get<GetReviewsResponse>('/reviews?page=0');
             setReviews(response.data.reviews || []); // reviews 배열이 없으면 빈 배열로 설정
             setMessage('리뷰를 성공적으로 가져왔습니다.');
             console.log("Reviews fetched successfully:", response.data.reviews); // 디버그 로그
