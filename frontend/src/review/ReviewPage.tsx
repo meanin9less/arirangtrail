@@ -47,7 +47,7 @@ function ReviewPage() {
         setLoading(true);
         try {
             // 페이지 번호를 사용하여 데이터 요청
-            const response = await apiClient.get<GetReviewsResponse>(`/api/reviews?page=${page}`);
+            const response = await apiClient.get<GetReviewsResponse>(`/reviews?page=${page}`);
             const newReviews = response.data.reviews || [];
 
             setReviews(prevReviews => [...prevReviews, ...newReviews]); // 기존 리뷰에 새로운 리뷰 추가
