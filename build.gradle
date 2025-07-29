@@ -24,6 +24,9 @@ dependencyManagement {
     }
 }
 
+repositories {
+    mavenCentral()
+}
 
 configurations {
     compileOnly {
