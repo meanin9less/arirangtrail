@@ -37,7 +37,7 @@ function ReviewWritePage() {
                     const SERVICE_KEY = "WCIc8hzzBS3Jdod%2BVa357JmB%2FOS0n4D2qPHaP9PkN4bXIfcryZyg4iaZeTj1fEYJ%2B8q2Ol8FIGe3RkW3d72FHA%3D%3D";
                     const API_URL =
                         `https://apis.data.go.kr/B551011/KorService2/searchFestival2?serviceKey=${SERVICE_KEY}&MobileApp=AppTest&MobileOS=ETC&_type=json`;
-                    const response = await apiClient.get(API_URL, {
+                    const response = await axios.get(API_URL, {
                         params: { // 요청 파라미터
                             numOfRows: 150,
                             pageNo: 1,
