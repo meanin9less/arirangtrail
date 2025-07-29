@@ -43,7 +43,7 @@ function App() {
                             <Route path="mypage" element={<MyPage />} />
                             <Route path="mypage/editinfo" element={<EditInfoPage />} />
                             <Route path="mypage/passwordchange" element={<PasswordChangePage/>}></Route>
-                            <Route path="/mypage/delete-account" element={<DeleteAccountPage />} />
+                            <Route path="mypage/delete-account" element={<DeleteAccountPage />} />
                             <Route path="calender" element={<CalenderPage />} />
                             <Route path="calender/:festivalId" element={<DetailPage />} />
                             <Route path="community" element={<CommunityPage />} />
