@@ -225,7 +225,7 @@ const LoginPage = ({}: LoginProps) => {
             <h2>로그인</h2>
             {message && (
                 <p className={message.includes('성공') ? styles.successMessage : styles.errorMessage}>
-                    {message}
+                    {'아이디 또는 비밀번호가 일치하지 않거나 없는계정입니다.'}
                 </p>
             )}
 

@@ -1,12 +1,13 @@
 import React, { useState } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
-import axios from 'axios';
+import { useNavigate } from 'react-router-dom';
+import { RootState } from '../store';
 import apiClient from "../api/axiosInstance";
-// import './ChangePasswordPage.css';
+import { useSelector } from "react-redux";
+import styles from './PasswordChangePage.module.css';  // CSS 모듈 import
 
 const ChangePasswordPage = () => {
-    const { username, email } = useParams();
     const navigate = useNavigate();
+    const username = useSelector((state: RootState) => state.token.userProfile?.username ?? '');
 
     const [password, setPassword] = useState('');
     const [confirmPassword, setConfirmPassword] = useState('');
@@ -41,39 +42,39 @@ const ChangePasswordPage = () => {
     };
 
     return (
-        <div className="changePasswordContainer">
-            <h2 className="pageTitle">비밀번호 변경</h2>
+        <div className={styles.changePasswordContainer}>
+            <h2 className={styles.pageTitle}>비밀번호 변경</h2>
             <form onSubmit={handleSubmit}>
-                <div className="formGroup">
-                    <label className="label">새 비밀번호</label>
+                <div className={styles.formGroup}>
+                    <label className={styles.label}>새 비밀번호</label>
                     <input
                         type="password"
-                        className="inputField"
+                        className={styles.inputField}
                         value={password}
                         onChange={(e) => setPassword(e.target.value)}
                         required
                     />
                 </div>
-                <div className="formGroup">
-                    <label className="label">비밀번호 확인</label>
+                <div className={styles.formGroup}>
+                    <label className={styles.label}>비밀번호 확인</label>
                     <input
                         type="password"
-                        className="inputField"
+                        className={styles.inputField}
                         value={confirmPassword}
                         onChange={(e) => setConfirmPassword(e.target.value)}
                         required
                     />
                 </div>
-                {error && <div className="errorMessage">{error}</div>}
-                {success && <div className="successMessage">{success}</div>}
+                {error && <div className={styles.errorMessage}>{error}</div>}
+                {success && <div className={styles.successMessage}>{success}</div>}
 
-                <div className="buttonContainer">
-                    <button type="submit" className="submitButton">
+                <div className={styles.buttonContainer}>
+                    <button type="submit" className={styles.submitButton}>
                         비밀번호 변경
                     </button>
                     <button
                         type="button"
-                        className="cancelButton"
+                        className={styles.cancelButton}
                         onClick={() => navigate('/login')}
                     >
                         취소
