@@ -1,10 +1,9 @@
-import React, { useState, ChangeEvent, FormEvent, useEffect } from 'react'; // <<< 추가된 부분: useEffect
+import React, { useState, ChangeEvent, FormEvent, useEffect } from 'react';
 import apiClient from '../api/axiosInstance';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 import styles from './ReviewWrite.module.css';
 
-// <<< 추가된 부분: API 응답으로 받을 여행지 데이터 타입 정의 (필요시 수정하세요)
 interface Location {
     contentid: string;
     title: string;
@@ -20,50 +19,60 @@ function ReviewWritePage() {
     const [photos, setPhotos] = useState<File[]>([]);
     const [imagePreviews, setImagePreviews] = useState<string[]>([]);
 
-    // <<< 추가된 부분: API로부터 받은 여행지 목록과 선택된 여행지 정보를 위한 상태
     const [locations, setLocations] = useState<Location[]>([]);
-    const [selectedLocation, setSelectedLocation] = useState<string>(''); // contentid를 저장
+    const [selectedLocation, setSelectedLocation] = useState<string>('');
 
     const [loading, setLoading] = useState<boolean>(false);
     const [showModal, setShowModal] = useState<boolean>(false);
     const [modalMessage, setModalMessage] = useState<string>('');
     const [messageType, setMessageType] = useState<'success' | 'error' | null>(null);
 
-    // <<< 추가된 부분: 방문 날짜가 변경될 때 API를 호출하는 함수
     useEffect(() => {
         if (visitDate) {
             const fetchLocations = async () => {
                 setLoading(true);
                 try {
+                    // <<< 수정된 부분: 날짜 형식을 YYYY-MM-DD에서 YYYYMMDD로 변경
+                    const formattedDate = visitDate.replace(/-/g, '');
                     const SERVICE_KEY = "WCIc8hzzBS3Jdod%2BVa357JmB%2FOS0n4D2qPHaP9PkN4bXIfcryZyg4iaZeTj1fEYJ%2B8q2Ol8FIGe3RkW3d72FHA%3D%3D";
                     const API_URL =
                         `https://apis.data.go.kr/B551011/KorService2/searchFestival2?serviceKey=${SERVICE_KEY}&MobileApp=AppTest&MobileOS=ETC&_type=json`;
-                    const today = new Date();
-                    const date = `${today.getFullYear()}${String(today.getMonth() + 1).padStart(2, '0')}${String(today.getDate()).padStart(2, '0')}`;
-                    const response = await apiClient.get(API_URL, {
+                    const response = await axios.get(API_URL, {
                         params: { // 요청 파라미터
                             numOfRows: 150,
                             pageNo: 1,
                             arrange: "B", // 조회순
-                            eventStartDate: date, // 오늘부터 시작하는 행사만 요청
-                            eventEndDate: date
+                            eventStartDate: formattedDate, // 오늘부터 시작하는 행사만 요청
+                            eventEndDate: formattedDate
                         },
                     });
                     console.log(response.data);
-                    // setLocations(response.data);
+                    const items = response.data.response.body.items.item;
+                    console.log(items);
+                    if (items) {
+                        const extractedLocations = items.map((item: any) => ({
+                            contentid: item.contentid,
+                            title: item.title,
+                        }));
+                        console.log(extractedLocations);
+                        setLocations(extractedLocations);
+                    } else {
+                        setLocations([]);
+                    }
                     setLoading(false);
                 } catch (error) {
                     console.error('여행지 정보 조회 오류:', error);
                     setModalMessage('해당 날짜의 여행지 정보를 불러오는 데 실패했습니다.');
                     setMessageType('error');
                     setShowModal(true);
-                    setLocations([]); // 오류 발생 시 목록 초기화
+                    setLocations([]);
                     setLoading(false);
                 }
             };
+
             fetchLocations();
         }
-    }, [visitDate]); // visitDate가 변경될 때마다 이 useEffect가 실행됩니다.
+    }, [visitDate]);
 
     const handleFileChange = (e: ChangeEvent<HTMLInputElement>) => {
         if (e.target.files) {
@@ -90,6 +99,8 @@ function ReviewWritePage() {
         setModalMessage('');
         setMessageType(null);
 
+        const selectedLocationInfo = locations.find(loc => loc.contentid === selectedLocation);
+
         if (!title.trim() || !content.trim() || !visitDate || !selectedLocation) {
             setModalMessage('모든 필드를 입력해주세요.');
             setMessageType('error');
@@ -100,9 +111,9 @@ function ReviewWritePage() {
 
         const formData = new FormData();
         const createRequest = {
-            username: 'currentLoggedInUser', // 실제 사용자 이름으로 교체 필요
-            contentid: "",
-            contenttitle: "",
+            username: 'currentLoggedInUser',
+            contentid: selectedLocationInfo?.contentid,
+            contenttitle: selectedLocationInfo?.title,
             title,
             content,
             rating,
@@ -115,8 +126,10 @@ function ReviewWritePage() {
             formData.append('photos', photo);
         });
 
+        console.log(formData);
+
         try {
-            const response = await apiClient.post('/api/reviews', formData, {
+            const response = await apiClient.post('/reviews', formData, {
                 headers: {
                     'Content-Type': 'multipart/form-data',
                 },
@@ -127,13 +140,12 @@ function ReviewWritePage() {
             setMessageType('success');
             setShowModal(true);
 
-            // 폼 초기화
             setTitle('');
             setContent('');
             setRating(5);
             setVisitDate('');
             setSelectedLocation('');
-            // setLocations([]);
+            setLocations([]);
             setPhotos([]);
             setImagePreviews([]);
 
@@ -168,8 +180,6 @@ function ReviewWritePage() {
                     />
                 </div>
 
-                {<select>
-                </select>}
                 <div className={styles.formGroup}>
                     <label htmlFor="locationSelect">여행지 선택:</label>
                     <select
@@ -178,7 +188,7 @@ function ReviewWritePage() {
                         onChange={(e) => setSelectedLocation(e.target.value)}
                         required
                         className={styles.selectField}
-                        disabled={!visitDate || locations.length === 0} // 날짜가 선택되고 여행지 목록이 있을 때만 활성화
+                        disabled={!visitDate || locations.length === 0}
                     >
                         <option value="">{visitDate ? '여행지를 선택하세요' : '방문 날짜를 먼저 선택하세요'}</option>
                         {locations.map(location => (

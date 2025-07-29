@@ -1,23 +1,49 @@
 /* src/pages/ReviewPage.module.css */
 
+.pageHeader {
+    text-align: center;
+    margin-bottom: 40px;
+}
+
+.pageTitle {
+    font-size: 2.5em;
+    font-weight: bold;
+    margin-bottom: 10px;
+}
+
+.pageDescription {
+    font-size: 1.1em;
+    color: #666;
+}
+
 .reviewContainer {
     padding: 20px;
-    max-width: 800px;
+    max-width: 1200px;
     margin: 50px auto;
-    border: 1px solid #eee;
-    border-radius: 8px;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
     box-sizing: border-box;
 }
 
-.successMessage {
-    color: green;
-    font-weight: bold;
+.reviewHeader {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+    padding-bottom: 20px; /* 구분선과 내용 사이의 여백 */
+    border-bottom: 1px solid #eee; /* 희미한 구분선 */
 }
 
-.errorMessage {
-    color: red;
-    font-weight: bold;
+.writeReviewButton {
+    padding: 10px 20px;
+    background-color: #007bff;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+}
+
+.writeReviewButton:hover {
+    background-color: #0056b3;
 }
 
 .sectionTitle {
@@ -27,136 +53,85 @@
 }
 
 .reviewList {
-    max-height: 400px;
-    overflow-y: auto;
-    border: 1px solid #ddd;
-    padding: 10px;
-    border-radius: 5px;
-    background-color: #f9f9f9;
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 20px;
 }
 
 .reviewItem {
-    border-bottom: 1px solid #eee;
-    padding: 10px 0;
-    margin-bottom: 10px;
+    border: 1px solid #eee;
+    border-radius: 8px;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    background-color: white;
+    transition: transform 0.2s ease-in-out;
+    overflow: hidden;
+    height: 350px; /* 카드 높이 고정 */
 }
 
-.reviewItem:last-child {
-    border-bottom: none;
-    margin-bottom: 0;
+.reviewItem:hover {
+    transform: translateY(-5px);
 }
 
-/* ✨ 리뷰 아이템 제목 스타일 */
-.reviewItemTitle {
-    font-size: 1.2em;
-    margin-top: 0;
-    margin-bottom: 5px;
+.reviewImage {
+    width: 100%;
+    height: 200px;
+    object-fit: cover;
 }
 
-.reviewItemTitle a {
+.reviewInfo {
+    padding: 15px;
+    display: flex;
+    flex-direction: column;
+    flex-grow: 1;
+}
+
+.reviewTitleLink a {
     color: #007bff;
     text-decoration: none;
-    transition: color 0.2s ease;
+    font-weight: bold;
+    font-size: 1.1em;
 }
 
-.reviewItemTitle a:hover {
-    color: #0056b3;
+.reviewTitleLink a:hover {
     text-decoration: underline;
 }
 
-.reviewItem p {
-    margin: 5px 0;
-    line-height: 1.5;
+.reviewContentLink {
+    display: block; /* 블록 레벨 요소로 만들어 줄바꿈 */
+    font-size: 0.9em; /* 조금 작은 글씨 */
+    color: #555; /* 회색 계열 */
+    text-decoration: none;
+    margin-top: 5px; /* 제목과의 간격 */
+    margin-bottom: 10px; /* 아래 요소와의 간격 */
+}
+
+.reviewContentLink:hover {
+    text-decoration: underline;
+    color: #007bff;
+}
+
+.reviewMeta {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 10px;
+    margin-bottom: 10px; /* 작성일과의 여백 추가 */
+    font-size: 0.9em;
+    color: #555;
 }
 
 .reviewDate {
     font-size: 0.8em;
     color: #666;
+    text-align: right;
+    margin-top: auto; /* 날짜를 하단에 고정 */
 }
 
-/* ✨ 리뷰 썸네일 이미지 스타일 */
-.reviewThumbnail {
-    max-width: 150px; /* 썸네일 최대 너비 */
-    height: auto;
-    border-radius: 5px;
-    margin-top: 10px;
-    display: block; /* 이미지 아래 여백을 위해 블록 요소로 */
-}
-
-
-.reviewForm {
-    display: flex;
-    flex-direction: column;
-    gap: 15px;
-}
-
-/* ✨ inputField 스타일 추가 (제목 입력 필드용) */
-.inputField, .textareaField, .selectField {
-    width: 100%;
-    padding: 8px;
-    border: 1px solid #ccc;
-    border-radius: 4px;
-    box-sizing: border-box;
-}
-
-.textareaField {
-    resize: vertical;
-}
-
-.submitButton {
-    padding: 10px 15px;
-    background-color: #28a745;
-    color: white;
-    border: none;
-    border-radius: 5px;
-    cursor: pointer;
-    align-self: flex-start;
-    transition: background-color 0.3s ease;
-}
-
-.submitButton:hover {
-    background-color: #218838;
-}
-
-.submitButton:disabled {
-    background-color: #cccccc;
-    cursor: not-allowed;
-}
-
-/* 모달 스타일 (LoginPage와 동일하게 재사용) */
-.modalOverlay {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background-color: rgba(0,0,0,0.5);
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    z-index: 1000;
-}
-
-.modalContent {
-    background-color: white;
-    padding: 20px;
-    border-radius: 8px;
-    box-shadow: 0 4px 8px rgba(0,0,0,0.2);
-    max-width: 300px;
+.loader {
     text-align: center;
-}
-
-.modalButton {
-    padding: 8px 15px;
-    background-color: #007bff;
-    color: white;
-    border: none;
-    border-radius: 4px;
-    cursor: pointer;
-    margin-top: 15px;
-    transition: background-color 0.3s ease;
-}
-
-.modalButton:hover {
-    background-color: #0056b3;
+    padding: 20px;
+    grid-column: 1 / -1;
 }

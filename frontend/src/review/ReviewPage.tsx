@@ -1,124 +1,151 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import apiClient from '../api/axiosInstance';
-import axios from 'axios';
-import { useNavigate, useLocation, Link } from 'react-router-dom';
-// ✨ CSS 모듈 임포트 경로 수정: ReviewPage.module.css를 사용하도록 명확히 합니다.
+import { useNavigate, Link } from 'react-router-dom';
 import styles from './Review.module.css';
+import { Swiper, SwiperSlide } from 'swiper/react';
+import 'swiper/css';
+import 'swiper/css/navigation';
+import 'swiper/css/pagination';
+import './swiper-custom.css';
+import { Navigation, Pagination } from 'swiper/modules';
 
-// 데이터 모델 정의 (DB 스키마에 맞춰 업데이트)
-interface Review {
-    reviewid: string; // DB의 reviewid (bigint)
-    username: string; // DB의 username
-    contentid: string; // DB의 contentid (bigint)
-    contenttitle: string; // DB의 contenttitle
-    title: string; // DB의 title
-    content: string; // DB의 content
-    rating: number; // DB의 rating (decimal 2,1)
-    visitdate?: string; // DB의 visitdate (date) - 선택 사항
-    imageurl?: string; // 단일 이미지 URL (reviewphotos에서 가져올 경우)
-    caption?: string; // DB의 caption (reviewphotos에서 가져올 경우)
-    createdat: string;
-    updatedat: string;
+interface Photo {
+    photoId: number;
+    photoUrl: string;
 }
 
+interface Review {
+    reviewId: string;
+    username: string;
+    contentId: string;
+    contentTitle: string;
+    title: string;
+    content: string;
+    rating: number;
+    visitDate?: string;
+    photos?: Photo[];
+    caption?: string;
+    createdAt: string;
+    updatedAt: string;
+}
+
+// 백엔드의 ReviewListResponseDto와 일치하는 인터페이스
 interface GetReviewsResponse {
     reviews: Review[];
-    message?: string;
 }
 
 function ReviewPage() {
     const navigate = useNavigate();
-    const location = useLocation();
-
-    // 상태 관리
     const [reviews, setReviews] = useState<Review[]>([]);
-    const [message, setMessage] = useState<string | null>(null);
-    const [fetchingReviews, setFetchingReviews] = useState<boolean>(true);
+    const [loading, setLoading] = useState<boolean>(false);
+    const [page, setPage] = useState<number>(0); // 현재 페이지 번호
+    const [hasMore, setHasMore] = useState<boolean>(true); // 더 불러올 데이터가 있는지 여부
+    const loader = useRef<HTMLDivElement | null>(null); // Intersection Observer를 위한 ref
 
-    // 컴포넌트가 처음 마운트되거나 location.pathname이 변경될 때 리뷰 목록을 가져옵니다.
-    useEffect(() => {
-        console.log("ReviewPage useEffect triggered. Fetching reviews..."); // 디버그 로그
-        fetchReviews();
-    }, [location.pathname]); // location.pathname을 의존성 배열에 추가
-
-    const fetchReviews = async () => {
-        setFetchingReviews(true);
+    const fetchReviews = useCallback(async () => {
+        if (loading || !hasMore) return; // 이미 로딩 중이거나 더 이상 데이터가 없으면 실행하지 않음
+        setLoading(true);
         try {
-            // [백엔드 연동 필요] 실제 API 엔드포인트
-            // 백엔드에서 /reviews GET 요청 시 Review[] 배열을 포함하는 JSON을 반환해야 합니다.
-            const response = await apiClient.get<GetReviewsResponse>('/reviews');
-            setReviews(response.data.reviews || []); // reviews 배열이 없으면 빈 배열로 설정
-            setMessage('리뷰를 성공적으로 가져왔습니다.');
-            console.log("Reviews fetched successfully:", response.data.reviews); // 디버그 로그
-        } catch (error: any) {
-            console.error('리뷰 가져오기 오류:', error);
-            let errorMessage = '리뷰를 가져오는 데 실패했습니다: 네트워크 오류 또는 알 수 없는 오류';
-            if (axios.isAxiosError(error) && error.response) {
-                // 백엔드에서 보낸 구체적인 에러 메시지 확인
-                console.error("Backend error response:", error.response.data);
-                errorMessage = error.response.data?.message || '리뷰 가져오기 실패: 서버 오류';
-            }
-            setMessage(errorMessage);
-        } finally {
-            setFetchingReviews(false);
-        }
-    };
+            // 페이지 번호를 사용하여 데이터 요청
+            const response = await apiClient.get<GetReviewsResponse>(`/reviews?page=${page}`);
+            const newReviews = response.data.reviews || [];
 
-    // "글쓰기" 버튼 클릭 핸들러
+            setReviews(prevReviews => [...prevReviews, ...newReviews]); // 기존 리뷰에 새로운 리뷰 추가
+            setHasMore(newReviews.length === 20); // 백엔드에서 20개씩 보내주므로, 20개 미만이면 더 이상 데이터가 없음
+            setPage(prevPage => prevPage + 1); // 다음 페이지로 설정
+
+        } catch (error) {
+            console.error('리뷰 가져오기 오류:', error);
+        } finally {
+            setLoading(false);
+        }
+    }, [page, loading, hasMore]);
+
+    // Intersection Observer를 사용하여 스크롤 감지
+    useEffect(() => {
+        const observer = new IntersectionObserver(
+            entries => {
+                if (entries[0].isIntersecting) {
+                    fetchReviews();
+                }
+            },
+            { threshold: 1.0 }
+        );
+
+        const currentLoader = loader.current;
+        if (currentLoader) {
+            observer.observe(currentLoader);
+        }
+
+        return () => {
+            if (currentLoader) {
+                observer.unobserve(currentLoader);
+            }
+        };
+    }, [loader, fetchReviews]);
+
+
     const handleWriteReviewClick = () => {
-        navigate('/review/write'); // 새 리뷰 작성 페이지로 이동
+        navigate('/review/write');
     };
 
     return (
         <div className={styles.reviewContainer}>
-            <h2>사용자 리뷰</h2>
+            <div className={styles.pageHeader}>
+                <h2 className={styles.pageTitle}>축제 후기</h2>
+                <p className={styles.pageDescription}>다양한 축제를 즐기고 생생한 후기를 공유해보세요!</p>
+            </div>
 
-            {message && (
-                <p className={message.includes('성공') ? styles.successMessage : styles.errorMessage}>
-                    {message}
-                </p>
-            )}
-
-            {/* "글쓰기" 버튼 추가 */}
-            <div className={styles.writeButtonContainer}>
+            <div className={styles.reviewHeader}>
+                <h3 className={styles.sectionTitle}>모든 리뷰 ({reviews.length})</h3>
                 <button onClick={handleWriteReviewClick} className={styles.writeReviewButton}>
                     글쓰기
                 </button>
             </div>
-
-            {/* 리뷰 목록 표시 */}
-            <h3 className={styles.sectionTitle}>모든 리뷰 ({reviews.length})</h3>
-            {fetchingReviews ? (
-                <p>리뷰를 불러오는 중...</p>
-            ) : reviews.length === 0 ? (
+            {reviews.length === 0 && !loading ? (
                 <p>아직 작성된 리뷰가 없습니다. 첫 리뷰를 작성해주세요!</p>
             ) : (
                 <div className={styles.reviewList}>
                     {reviews.map(review => (
-                        <div key={review.reviewid} className={styles.reviewItem}>
-                            {/* 제목에 Link 추가 */}
-                            <p className={styles.reviewTitleLink}>
-                                <Link to={`/review/detail/${review.reviewid}`}>
-                                    <strong>{review.title}</strong>
-                                </Link>
-                            </p>
-                            <p><strong>작성자:</strong> {review.username}</p>
-                            <p><strong>별점:</strong> {'⭐'.repeat(review.rating)}</p>
-                            {/* 리뷰 내용의 일부만 표시 */}
-                            <p className={styles.reviewContentPreview}>
-                                {review.content.length > 100 ? review.content.substring(0, 100) + '...' : review.content}
-                            </p>
-                            {review.imageurl && ( // 이미지 URL이 있을 경우 이미지 표시
-                                <div className={styles.reviewImageContainer}>
-                                    <img src={review.imageurl} alt={review.caption || review.title} className={styles.reviewImage} />
-                                    {review.caption && <p className={styles.imageCaption}>{review.caption}</p>}
-                                </div>
+                        <div key={review.reviewId} className={styles.reviewItem}>
+                            {review.photos && review.photos.length > 0 && (
+                                <Swiper
+                                    modules={[Navigation, Pagination]}
+                                    spaceBetween={50}
+                                    slidesPerView={1}
+                                    navigation
+                                    pagination={{ clickable: true }}
+                                    className="review-swiper"
+                                >
+                                    {review.photos.map(photo => (
+                                        <SwiperSlide key={photo.photoId}>
+                                            <img src={photo.photoUrl} alt={review.caption || review.title} className={styles.reviewImage} />
+                                        </SwiperSlide>
+                                    ))}
+                                </Swiper>
                             )}
-                            <p className={styles.reviewDate}>작성일: {new Date(review.createdat).toLocaleString()}</p>
+                            <div className={styles.reviewInfo}>
+                                <p className={styles.reviewTitleLink}>
+                                    <Link to={`/review/detail/${review.reviewId}`}>
+                                        <strong>{review.title}</strong>
+                                    </Link>
+                                </p>
+                                <Link to={'/calender/'+review.contentId} className={styles.reviewContentLink}>{review.contentTitle}</Link>
+                                <div className={styles.reviewMeta}>
+                                    <span>{review.username}</span>
+                                    <span>⭐ {review.rating}</span>
+                                </div>
+                                <p className={styles.reviewDate}>{new Date(review.createdAt).toLocaleDateString()}</p>
+                            </div>
                         </div>
                     ))}
                 </div>
             )}
+
+            {/* 로딩 인디케이터 및 Observer 타겟 */}
+            <div ref={loader} className={styles.loader}>
+                {loading && <p>리뷰를 불러오는 중...</p>}
+            </div>
         </div>
     );
 }
