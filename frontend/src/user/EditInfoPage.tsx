@@ -4,7 +4,6 @@ import { useSelector, useDispatch } from 'react-redux'; // useDispatch 추가
 import { RootState, setUserProfile } from '../store'; // setUserProfile 액션 임포트
 import apiClient from '../api/axiosInstance';
 import axios from 'axios';
-import defaultEditPageProfileIcon from '../assets/images/default-profile-icon.png';
 import styles from './EditInfoPage.module.css';
 
 // API 응답 타입 정의 (백엔드와 일치하도록 확인)
@@ -214,13 +213,13 @@ const EditInfoPage: React.FC = () => {
                 {/* 프로필 이미지 섹션 */}
                 <div className={styles.profileImageSection}>
                     <img
-                        src={imagePreviewUrl || currentImageUrl || defaultEditPageProfileIcon}
+                        src={imagePreviewUrl || currentImageUrl || 'https://placehold.co/100x100/cccccc/ffffff?text=User'}
                         alt="프로필 미리보기"
                         className={styles.profileImage}
                         onError={(e) => {
                             const target = e.target as HTMLImageElement;
                             target.onerror = null;
-                            target.src = defaultEditPageProfileIcon; // 이미지 로드 실패 시 기본 이미지
+                            target.src = 'https://placehold.co/100x100/cccccc/ffffff?text=User'; // 이미지 로드 실패 시 대체 URL
                         }}
                     />
                     <input
