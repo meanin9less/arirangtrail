@@ -10,6 +10,9 @@ import 'swiper/css/pagination';
 import './swiper-custom.css'; // ReviewPage와 동일한 CSS 재사용
 import { Navigation, Pagination } from 'swiper/modules';
 
+import { useSelector } from 'react-redux';
+import { RootState } from '../store';
+
 interface Photo {
     photoId: number,
     photoUrl: string
@@ -34,6 +37,7 @@ interface Review {
 function ReviewDetailPage() {
     const { reviewId } = useParams<{ reviewId: string }>(); // URL에서 reviewId 가져오기
     const navigate = useNavigate();
+    const currentUser = useSelector((state: RootState) => state.token.userProfile?.username);
 
     const [review, setReview] = useState<Review | null>(null);
     const [loading, setLoading] = useState<boolean>(true);
@@ -149,6 +153,11 @@ function ReviewDetailPage() {
             <button onClick={() => navigate('/review')} className={styles.backButton}>
                 목록으로
             </button>
+            {currentUser === review.username && (
+                <button onClick={() => navigate(`/review/update/${reviewId}`)} className={styles.editButton}>
+                    수정
+                </button>
+            )}
         </div>
     );
 }
