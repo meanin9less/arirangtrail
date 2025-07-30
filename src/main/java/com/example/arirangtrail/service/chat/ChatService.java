@@ -355,11 +355,11 @@ public class ChatService {
         boolean isAlreadyMember = userChatStatusRepository.existsByRoomIdAndUsername(roomId, username);
 
         if (!isAlreadyMember && currentParticipantCount >= room.getMaxParticipants()) {
-            log.warn(">>>>> [입장 거부] 정원이 초과된 채팅방({}) 입장을 시도했습니다. (현재: {}, 최대: {})",
-                    roomId, currentParticipantCount, room.getMaxParticipants());
-            throw new IllegalStateException("채팅방 정원이 초과되어 입장할 수 없습니다.");
+            throw new IllegalStateException(
+                    String.format("채팅방 정원이 초과되었습니다. (현재: %d명, 최대: %d명)",
+                            currentParticipantCount, room.getMaxParticipants())
+            );
         }
-
         // 멤버 목록에 없으면 추가
         if (!isAlreadyMember) {
             // UserChatStatus를 먼저 생성/저장

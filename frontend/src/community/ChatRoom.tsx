@@ -213,6 +213,7 @@ const ChatRoom = ({ roomId, onLeave }: ChatRoomProps) => {
         if (!userName) return;
         try {
             await apiClient.post(`chat/rooms/${roomId}/leave`, { username: userName });
+            alert("채팅방에서 나갔습니다.");
             onLeave(0); // 읽음 처리 필요 없음
         } catch (error) {
             console.error("채팅방 나가기에 실패했습니다.", error);

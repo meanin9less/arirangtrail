@@ -98,6 +98,59 @@ public class ChatRoomController {
         return ResponseEntity.ok(myRoomIds);
     }
 
+    //조인 룸 컨트롤러
+    @PostMapping("/{roomId}/join")
+    public ResponseEntity<?> joinRoom(
+            @PathVariable Long roomId,
+            @RequestBody Map<String, String> payload) {
+
+        String username = payload.get("username");
+
+        if (username == null) {
+            return ResponseEntity.badRequest()
+                    .body(Map.of("success", false, "message", "사용자 정보가 없습니다."));
+        }
+
+        try {
+            // ✅ 입장 시도 (정원 체크, 밴 체크 등 포함)
+            chatService.joinRoom(roomId, username);
+
+            // ✅ 성공 시 방 정보도 함께 반환
+            ChatRoomDetailDTO roomInfo = chatService.findRoomDetailsById(roomId);
+
+            return ResponseEntity.ok(Map.of(
+                    "success", true,
+                    "message", "입장 성공",
+                    "roomInfo", roomInfo
+            ));
+
+        } catch (IllegalStateException e) {
+            // 정원 초과 등의 상태 오류
+            log.warn(">>>>> [입장 실패] Room: {}, User: {}, Reason: {}", roomId, username, e.getMessage());
+            return ResponseEntity.status(409) // Conflict
+                    .body(Map.of("success", false, "message", e.getMessage()));
+
+        } catch (SecurityException e) {
+            // 밴당한 사용자 등의 보안 오류
+            log.warn(">>>>> [입장 거부] Room: {}, User: {}, Reason: {}", roomId, username, e.getMessage());
+            return ResponseEntity.status(403) // Forbidden
+                    .body(Map.of("success", false, "message", e.getMessage()));
+
+        } catch (IllegalArgumentException e) {
+            // 존재하지 않는 방 등
+            log.error(">>>>> [입장 오류] Room: {}, User: {}, Reason: {}", roomId, username, e.getMessage());
+            return ResponseEntity.status(404) // Not Found
+                    .body(Map.of("success", false, "message", "존재하지 않는 채팅방입니다."));
+
+        } catch (Exception e) {
+            // 기타 예상치 못한 오류
+            log.error(">>>>> [입장 실패] Room: {}, User: {}, Unexpected error: ", roomId, username, e);
+            return ResponseEntity.status(500)
+                    .body(Map.of("success", false, "message", "서버 오류가 발생했습니다."));
+        }
+    }
+
+
 //  공지 수정
 //    @PatchMapping("/{roomId}/notice")
 //    public ResponseEntity<?> updateNotice(@PathVariable Long roomId, @RequestBody NoticeDTO noticeDTO) {

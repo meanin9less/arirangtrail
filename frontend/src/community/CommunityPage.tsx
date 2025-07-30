@@ -95,9 +95,48 @@ const CommunityPage = () => {
         }
     }, [validateForm, userName, newRoomInfo, dispatch]);
 
-    const handleEnterRoom = (roomId: string) => {
+    const handleEnterRoom = async (roomId: string) => {
         if (!userName) return;
-        setSelectedRoomId(roomId);
+
+        try {
+            // ✅ 1. 먼저 입장 가능한지 서버에 확인 요청
+            const response = await apiClient.post(`chat/rooms/${roomId}/join`, {
+                username: userName
+            });
+
+            // ✅ 2. 입장 성공 시에만 ChatRoom 컴포넌트로 이동
+            if (response.data.success) {
+                console.log("✅ 채팅방 입장 성공:", response.data.message);
+                setSelectedRoomId(roomId);
+            } else {
+                // 서버에서 success: false로 응답한 경우 (혹시나 해서)
+                alert(response.data.message || "입장에 실패했습니다.");
+            }
+
+        } catch (error: any) {
+            // ✅ 3. 입장 실패 시 사용자에게 구체적인 이유 알림
+            console.error("❌ 채팅방 입장 실패:", error);
+
+            if (error.response?.data?.message) {
+                // 백엔드에서 보낸 구체적인 에러 메시지 표시
+                alert(error.response.data.message);
+            } else if (error.response?.status === 409) {
+                // 정원 초과 (Conflict)
+                alert("채팅방 정원이 초과되어 입장할 수 없습니다.");
+            } else if (error.response?.status === 403) {
+                // 접근 금지 (Forbidden)
+                alert("이 채팅방에 접근할 권한이 없습니다.");
+            } else if (error.response?.status === 404) {
+                // 방 없음 (Not Found)
+                alert("존재하지 않는 채팅방입니다.");
+            } else {
+                // 기타 오류
+                alert("채팅방 입장 중 오류가 발생했습니다. 잠시 후 다시 시도해주세요.");
+            }
+
+            // ✅ 4. 실패했으므로 ChatRoom으로 이동하지 않음
+            // setSelectedRoomId는 호출하지 않아서 로비에 그대로 남아있음
+        }
     };
 
 // ✅ 수정: handleLeaveRoom이 lastReadSeq를 인자로 받도록 하고, async 함수로 변경
@@ -125,6 +164,30 @@ const CommunityPage = () => {
         // 2. 비동기 작업이 모두 끝난 후, 컴포넌트를 언마운트시킵니다.
         setSelectedRoomId(null);
     };
+
+    // ✅ 역할 1: ChatRoom을 닫고, '로비로 가기' 시에만 읽음 처리를 하는 함수
+    const handleCloseChatRoom = async (lastReadSeq: number) => {
+        if (userName && selectedRoomId) {
+            // lastReadSeq가 0보다 클 때만 (즉, '로비로 가기'일 때만) 읽음 처리 실행
+            if (lastReadSeq > 0) {
+                try {
+                    await apiClient.post(`/chat/rooms/update-status`, {
+                        roomId: selectedRoomId,
+                        username: userName,
+                        lastReadSeq: lastReadSeq
+                    });
+
+                    const response = await apiClient.get(`/chat/users/${userName}/unread-count`);
+                    dispatch(setTotalUnreadCount(response.data.totalUnreadCount));
+                } catch (error) {
+                    console.error("로비로 나가기 전 읽음 상태 갱신에 실패했습니다.", error);
+                }
+            }
+        }
+        // 모든 작업이 끝나면 ChatRoom을 닫음
+        setSelectedRoomId(null);
+    };
+
 
     const openCreateModal = () => {
         setFormError('');
@@ -158,7 +221,7 @@ const CommunityPage = () => {
         );
     }
 
-    if (selectedRoomId) { return <ChatRoom roomId={selectedRoomId} onLeave={handleLeaveRoom} />; }
+    if (selectedRoomId) { return <ChatRoom roomId={selectedRoomId} onLeave={handleCloseChatRoom} />; }
 
     const isAllRoomsActive = location.pathname.includes('/all-rooms');
     const isMyRoomsActive = location.pathname.includes('/my-rooms');
