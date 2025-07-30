@@ -98,6 +98,7 @@ const DetailPage = () => {
         mapx: string;
         title: string;
     } | null>(null); // 선택된 목적지 정보
+    const [starRating, setStarRating] = useState<number>(0); // 별점 상태 추가
 
     useEffect(() => {
         if (festivalId) {
@@ -123,6 +124,21 @@ const DetailPage = () => {
                 }
             };
             fetchDetail();
+
+            // 별점 API 요청 (주소는 나중에 사용자가 채워넣을 예정)
+            const fetchStarRating = async () => {
+                try {
+                    // TODO: 여기에 실제 별점 API 주소를 넣어주세요.
+                    // 예시: const ratingResponse = await apiClient.get(`/reviews/average-rating/${festivalId}`);
+                    // setStarRating(ratingResponse.data.averageRating);
+                    // 임시 데이터
+                    setStarRating(4.5);
+                } catch (error) {
+                    console.error("별점 로딩 실패:", error);
+                    setStarRating(0); // 에러 발생 시 0으로 설정
+                }
+            };
+            fetchStarRating();
         }
     }, [festivalId]);
 
@@ -368,6 +384,16 @@ const DetailPage = () => {
                         <div className={"info-section2"}>
                             <h2 className="section-title"><IoInformationCircleOutline/>소개</h2>
                             <div className="actions-group">
+                                <div className="star-rating-display">
+                                    {starRating === 0.0 ? (
+                                        <span className="no-rating-text">아직 평가가 없습니다</span>
+                                    ) : (
+                                        <>
+                                            <span className="star-icon">★</span>
+                                            <span className="rating-value">{starRating.toFixed(1)}</span>
+                                        </>
+                                    )}
+                                </div>
                                 <button
                                     onClick={handleLikeClick}
                                     className={`like-button ${isLiked ? 'active' : ''}`}
