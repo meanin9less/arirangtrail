@@ -201,7 +201,7 @@ function ReviewDetailPage() {
             <button onClick={() => navigate('/review')} className={styles.backButton}>
                 목록으로
             </button>
-            {currentUser === review.username && (
+            {currentUser.username === review.username && (
                 <div className={styles.actionButtons}>
                     <button onClick={() => navigate(`/review/update/${reviewId}`)} className={styles.editButton}>
                         수정
