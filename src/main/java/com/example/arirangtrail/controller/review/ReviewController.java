@@ -1,10 +1,9 @@
 package com.example.arirangtrail.controller.review;
 
-import com.example.arirangtrail.data.dto.review.ReviewCreateRequestDto;
-import com.example.arirangtrail.data.dto.review.ReviewListResponseDto;
-import com.example.arirangtrail.data.dto.review.ReviewResponseDto; // ✨ 추가: ReviewResponseDto 임포트
-import com.example.arirangtrail.data.dto.review.ReviewUpdateRequestDto;
+import com.example.arirangtrail.data.dto.review.*;
 import com.example.arirangtrail.data.entity.ReviewEntity;
+import com.example.arirangtrail.data.repository.ReviewCommentRepository;
+import com.example.arirangtrail.service.review.ReviewCommentService;
 import com.example.arirangtrail.service.review.ReviewService;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
@@ -31,6 +30,7 @@ import java.util.Map;
 public class ReviewController {
 
     private final ReviewService reviewService;
+    private final ReviewCommentService reviewCommentService;
 
     @PostMapping(consumes = {MediaType.APPLICATION_JSON_VALUE, MediaType.MULTIPART_FORM_DATA_VALUE})
     public ResponseEntity<String> createReview(
@@ -114,4 +114,11 @@ public class ReviewController {
         // 이 부분은 ReviewService에 해당 로직을 추가하거나, 이 엔드포인트가 필요 없으면 삭제해야 합니다.
         return ResponseEntity.status(HttpStatus.NOT_IMPLEMENTED).body(null); // 임시로 501 Not Implemented 반환
     }
+
+    @GetMapping("/{reviewid}/comments")
+    public ResponseEntity<List<ReviewCommentDTO>> reviewCommentsByReviewid(@PathVariable Long reviewid) {
+        List<ReviewCommentDTO> commentDTOList = this.reviewCommentService.getReviewCommentsByReviewId(reviewid);
+        return ResponseEntity.ok(commentDTOList);
+    }
+
 }

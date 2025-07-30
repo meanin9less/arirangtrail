@@ -34,6 +34,16 @@ interface Review {
     updatedAt: string;
 }
 
+interface Comment {
+    commentid: string;
+    reviewid: string;
+    content: string;
+    username: string;
+    nickname: string;
+    createdat: string;
+    updatedat: string;
+}
+
 function ReviewDetailPage() {
     const { reviewId } = useParams<{ reviewId: string }>(); // URL에서 reviewId 가져오기
     const navigate = useNavigate();
@@ -42,6 +52,9 @@ function ReviewDetailPage() {
     const [review, setReview] = useState<Review | null>(null);
     const [loading, setLoading] = useState<boolean>(true);
     const [error, setError] = useState<string | null>(null);
+    const [comments, setComments] = useState<Comment[]>([]); // 댓글 목록 상태
+    const [newCommentText, setNewCommentText] = useState<string>(''); // 새 댓글 입력 상태
+
     console.log(reviewId);
     useEffect(() => {
         if (!reviewId) {
@@ -53,8 +66,6 @@ function ReviewDetailPage() {
             setLoading(true);
             setError(null);
             try {
-                // [백엔드 연동 필요] 단일 리뷰를 가져오는 API 엔드포인트
-                // 예: GET /reviews/{reviewId}
                 const response = await apiClient.get(`/reviews/${reviewId}`);
                 setReview(response.data);
             } catch (err: any) {
@@ -68,8 +79,40 @@ function ReviewDetailPage() {
                 setLoading(false);
             }
         };
+
+        const fetchComments = async () => {
+            try {
+                const response = await apiClient.get(`/reviews/${reviewId}/comments`);
+                if(response.data===null){
+                    setComments([]);
+                }
+                setComments(response.data);
+            } catch (error) {
+                console.error("댓글 로딩 실패:", error);
+            }
+        };
         fetchReviewDetail();
-    }, []); // reviewId가 변경될 때마다 다시 불러오기
+        fetchComments();
+    }, [reviewId]); // reviewId가 변경될 때마다 다시 불러오기
+
+    const handleAddComment = async () => {
+        if (!newCommentText.trim() || !currentUser) {
+            alert("댓글 내용을 입력하거나 로그인해야 합니다.");
+            return;
+        }
+
+        try {
+            const response = await apiClient.post(`/reviews/${reviewId}/comments`, {
+                author: currentUser,
+                text: newCommentText,
+            });
+            setComments(response.data);
+            setNewCommentText(''); // 입력 필드 초기화
+        } catch (error) {
+            console.error("댓글 추가 실패:", error);
+            alert("댓글 추가에 실패했습니다.");
+        }
+    };
 
     if (loading) {
         return (
@@ -166,6 +209,35 @@ function ReviewDetailPage() {
                     </button>
                 </div>
             )}
+
+            <div className={styles.commentsSection}>
+                <h3>댓글 ({comments.length})</h3>
+                <div className={styles.commentsList}>
+                    {comments.length === 0 ? (
+                        <p className={styles.noComments}>아직 댓글이 없습니다. 첫 댓글을 남겨보세요!</p>
+                    ) : (
+                        comments.map((comment) => (
+                            <div key={comment.commentid} className={styles.commentItem}>
+                                <p className={styles.commentAuthor}>{comment.nickname}<span>{comment.username}</span></p>
+                                <p className={styles.commentText}>{comment.content}</p>
+                                <p className={styles.commentDate}>{comment.createdat}</p>
+                            </div>
+                        ))
+                    )}
+                </div>
+
+                <div className={styles.commentInputContainer}>
+                    <textarea
+                        className={styles.commentTextarea}
+                        placeholder="댓글을 입력하세요..."
+                        value={newCommentText}
+                        onChange={(e) => setNewCommentText(e.target.value)}
+                    />
+                    <button onClick={handleAddComment} className={styles.commentSubmitButton}>
+                        댓글 작성
+                    </button>
+                </div>
+            </div>
         </div>
     );
 }
