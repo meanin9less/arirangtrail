@@ -144,11 +144,16 @@ public class UserController {
         String accessToken = request.getHeader("authorization").substring(7);
         String username = this.jwtUtil.getUserName(accessToken);
         this.userService.uploadProfileImage(username, imageFile);
+
+        String imageUrl = this.userService.uploadProfileImage(username, imageFile);
+        return ResponseEntity.ok(imageUrl);
     }
 
     // ✨ 새로 추가된 이미지 제거 엔드포인트
     @DeleteMapping(value = "/remove-profile-image")
     public ResponseEntity<String> removeProfileImage(HttpServletRequest request) {
 
+
+        return ResponseEntity.ok("Profile image removed successfully.");
     }
 }
