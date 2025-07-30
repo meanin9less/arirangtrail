@@ -29,6 +29,7 @@ import DeleteAccountPage from "./user/DeleteAccountPage";
 import AllRooms from "./community/AllRooms";
 import MyRooms from "./community/MyRooms";
 import MyReviewsPage from "./user/MyReviewsPage";
+import LikedFestivalsPage from "./user/LikedFestivalsPage";
 
 function App() {
     return (
@@ -50,6 +51,7 @@ function App() {
                             <Route path="mypage/delete-account" element={<DeleteAccountPage />} />
                             <Route path="mypage/my-reviews" element={<MyReviewsPage/>}></Route>
                             <Route path="calender" element={<CalenderPage />} />
+                            <Route path="mypage/liked-festivals" element={<LikedFestivalsPage/>}></Route>
                             <Route path="calender/:festivalId" element={<DetailPage />} />
                             <Route path="community" element={<CommunityPage />}>
                                 <Route path="all-rooms" element={<AllRooms />} />
