@@ -47,7 +47,8 @@ interface Comment {
 function ReviewDetailPage() {
     const { reviewId } = useParams<{ reviewId: string }>(); // URL에서 reviewId 가져오기
     const navigate = useNavigate();
-    const currentUser = useSelector((state: RootState) => state.token.userProfile?.username);
+    const currentUser = useSelector((state: RootState) => state.token.userProfile);
+
 
     const [review, setReview] = useState<Review | null>(null);
     const [loading, setLoading] = useState<boolean>(true);
@@ -96,15 +97,19 @@ function ReviewDetailPage() {
     }, [reviewId]); // reviewId가 변경될 때마다 다시 불러오기
 
     const handleAddComment = async () => {
-        if (!newCommentText.trim() || !currentUser) {
+        if (!newCommentText.trim() || !currentUser?.username) {
             alert("댓글 내용을 입력하거나 로그인해야 합니다.");
             return;
         }
 
         try {
             const response = await apiClient.post(`/reviews/${reviewId}/comments`, {
-                author: currentUser,
-                text: newCommentText,
+                commentid: null,
+                content: newCommentText,
+                username: currentUser.username,
+                nickname: currentUser.nickname,
+                createdat: null,
+                updatedat: null
             });
             setComments(response.data);
             setNewCommentText(''); // 입력 필드 초기화

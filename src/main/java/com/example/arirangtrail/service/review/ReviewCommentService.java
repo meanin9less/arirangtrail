@@ -43,4 +43,19 @@ public class ReviewCommentService {
         return null;
     }
 
+    public boolean createReviewComment(Long reviewid, ReviewCommentDTO reviewCommentDTO){
+        ReviewEntity review = this.reviewRepository.findById(reviewid).orElse(null);
+        if (review != null) {
+            ReviewCommentEntity reviewCommentEntity = new ReviewCommentEntity();
+            reviewCommentEntity.setCommentid(reviewCommentDTO.getCommentid());
+            reviewCommentEntity.setContent(reviewCommentDTO.getContent());
+            reviewCommentEntity.setUsername(reviewCommentDTO.getUsername());
+            reviewCommentEntity.setNickname(reviewCommentDTO.getNickname());
+            reviewCommentEntity.setReviewid(review);
+            reviewCommentRepository.save(reviewCommentEntity);
+            return true;
+        }
+        return false;
+    }
+
 }
