@@ -31,7 +31,7 @@ public class ReviewEntity {
     @Column(name = "reviewid", nullable = false)
     private Long id; // 리뷰 ID (Long 타입)
 
-    @Size(max = 20)
+    @Size(max = 255)
     @NotNull
     @Column(name = "username", nullable = false, length = 20)
     private String username; // 작성자 ID
