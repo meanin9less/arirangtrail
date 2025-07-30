@@ -93,4 +93,9 @@ public class ReviewController {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(null); // 404 Not Found
         }
     }
+
+    @GetMapping("/rating/{contentid}")
+    public ResponseEntity<Double> getAverageRatingByContentid(@PathVariable Long contentid) {
+        return ResponseEntity.ok(this.reviewService.findAverageRatingByContentid(contentid));
+    }
 }

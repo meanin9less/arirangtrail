@@ -162,4 +162,12 @@ public class ReviewService {
                 .photos(photos) // 변환된 사진 목록 추가
                 .build();
     }
+
+    public double findAverageRatingByContentid(Long contentid) {
+        Double rating = this.reviewRepository.findAverageRatingByContentid(contentid);
+        if (rating == null) {
+            return 0.0;
+        }
+        return rating;
+    }
 }
