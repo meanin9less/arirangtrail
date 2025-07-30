@@ -159,12 +159,9 @@ function ReviewDetailPage() {
                         수정
                     </button>
                     <button onClick={async () => {
-                        if(confirm("삭제 하시겠습니까?")){
-                            await apiClient.delete(`/reviews/${reviewId}`);
-                            navigate(`/review`);
-                        }
-                    }
-                    } className={styles.editButton}>
+                        await apiClient.delete(`/reviews/${reviewId}`);
+                        navigate(`/review`);
+                    }} className={styles.editButton}>
                         삭제
                     </button>
                 </div>
