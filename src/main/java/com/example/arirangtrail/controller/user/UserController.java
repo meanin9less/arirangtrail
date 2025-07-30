@@ -140,54 +140,15 @@ public class UserController {
     @PostMapping(value = "/upload-profile-image")
     public ResponseEntity<String> uploadProfileImage(
             @RequestParam("image") MultipartFile imageFile,
-            HttpServletRequest request) {
-        try {
-            String token = request.getHeader("authorization");
-            if (token == null || !token.startsWith("Bearer ")) {
-                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Unauthorized: No token provided or invalid format.");
-            }
-            String accessToken = token.substring(7);
-            String username = jwtUtil.getUserName(accessToken);
-
-            if (imageFile.isEmpty()) {
-                return ResponseEntity.badRequest().body("No image file provided.");
-            }
-
-            String imageUrl = userService.uploadProfileImage(username, imageFile);
-            return ResponseEntity.ok("Profile image uploaded successfully. URL: " + imageUrl);
-
-        } catch (EntityNotFoundException e) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
-        } catch (IOException e) {
-            e.printStackTrace();
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Failed to upload image due to server error: " + e.getMessage());
-        } catch (Exception e) {
-            e.printStackTrace();
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("An unexpected error occurred during image upload: " + e.getMessage());
-        }
+            HttpServletRequest request) throws IOException {
+        String accessToken = request.getHeader("authorization").substring(7);
+        String username = this.jwtUtil.getUserName(accessToken);
+        this.userService.uploadProfileImage(username, imageFile);
     }
 
     // ✨ 새로 추가된 이미지 제거 엔드포인트
     @DeleteMapping(value = "/remove-profile-image")
     public ResponseEntity<String> removeProfileImage(HttpServletRequest request) {
-        try {
-            String token = request.getHeader("authorization");
-            if (token == null || !token.startsWith("Bearer ")) {
-                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Unauthorized: No token provided or invalid format.");
-            }
-            String accessToken = token.substring(7);
-            String username = jwtUtil.getUserName(accessToken);
 
-            userService.removeProfileImage(username);
-            return ResponseEntity.ok("Profile image removed successfully.");
-        } catch (EntityNotFoundException e) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
-        } catch (IOException e) {
-            e.printStackTrace();
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Failed to remove image due to server error: " + e.getMessage());
-        } catch (Exception e) {
-            e.printStackTrace();
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("An unexpected error occurred during image removal: " + e.getMessage());
-        }
     }
 }
