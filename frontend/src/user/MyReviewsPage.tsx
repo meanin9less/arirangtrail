@@ -4,7 +4,7 @@ import { RootState } from '../store';
 import { useNavigate } from 'react-router-dom';
 import apiClient from '../api/axiosInstance';
 import axios from 'axios';
-import styles from './MyReviewsPage.module.css'; // MyReviewsPage 전용 스타일 파일 임포트
+import styles from './MyReviewsPage.module.css';
 
 // 1. StarRating 컴포넌트 (별점 표시용)
 interface StarRatingProps {
