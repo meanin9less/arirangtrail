@@ -151,7 +151,7 @@ public class ReviewService {
      */
     @Transactional(readOnly = true) // 읽기 전용 트랜잭션으로 설정하여 성능 최적화
     public List<ReviewResponseDto> getReviewsByUsername(String username) {
-        List<ReviewEntity> reviewEntities = reviewRepository.findByUsernameOrderByCreatedAtDesc(username);
+        List<ReviewEntity> reviewEntities = reviewRepository.findByUsernameOrderByCreatedatDesc(username);
         return reviewEntities.stream()
                 .map(this::convertToDto)
                 .collect(Collectors.toList());
