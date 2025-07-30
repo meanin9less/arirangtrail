@@ -28,6 +28,7 @@ import PasswordChangePage from "./user/PasswordChangePage";
 import DeleteAccountPage from "./user/DeleteAccountPage";
 import AllRooms from "./community/AllRooms";
 import MyRooms from "./community/MyRooms";
+import MyReviewsPage from "./user/MyReviewsPage";
 
 function App() {
     return (
@@ -47,6 +48,7 @@ function App() {
                             <Route path="mypage/editinfo" element={<EditInfoPage />} />
                             <Route path="mypage/passwordchange" element={<PasswordChangePage/>}></Route>
                             <Route path="mypage/delete-account" element={<DeleteAccountPage />} />
+                            <Route path="mypage/my-reviews" element={<MyReviewsPage/>}></Route>
                             <Route path="calender" element={<CalenderPage />} />
                             <Route path="calender/:festivalId" element={<DetailPage />} />
                             <Route path="community" element={<CommunityPage />}>

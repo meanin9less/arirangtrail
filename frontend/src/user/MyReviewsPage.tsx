@@ -156,6 +156,12 @@ const MyReviewsPage: React.FC = () => {
         setLoading(true);
         setError(null);
         try {
+            // 로그인 상태가 아니면 API 호출을 하지 않고 로그인 페이지로 리디렉션
+            if (!isLoggedIn) {
+                navigate('/login'); // 로그인되지 않았다면 로그인 페이지로 리디렉션
+                return; // 여기서 함수 실행 중단
+            }
+
             const response = await apiClient.get<BackendReview[]>('/reviews/my', {
                 headers: {
                     Authorization: `Bearer ${jwtToken}`,
@@ -183,7 +189,7 @@ const MyReviewsPage: React.FC = () => {
         } finally {
             setLoading(false);
         }
-    }, [jwtToken]); // jwtToken이 변경될 때만 fetchMyReviews 함수 재생성
+    }, [jwtToken, isLoggedIn, navigate]); // isLoggedIn과 navigate를 의존성 배열에 추가
 
     useEffect(() => {
         // 컴포넌트 마운트 시 로그인 여부 확인 및 API 호출
@@ -196,7 +202,8 @@ const MyReviewsPage: React.FC = () => {
 
     // 리뷰 클릭 시 상세 페이지로 이동
     const handleReviewClick = (reviewId: string) => {
-        navigate(`/review/${reviewId}`);
+        // ✨ 기존 라우팅 경로에 맞춰 수정
+        navigate(`/review/detail/${reviewId}`);
     };
 
     // 로딩 중 UI
