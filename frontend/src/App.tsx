@@ -36,7 +36,7 @@ function App() {
         <Provider store={store}>
             <PersistGate loading={<div>로딩중...</div>} persistor={persistor}>
                 <BrowserRouter>
-                    <Routes>
+                        <Routes>
                         {/* ✨ GlobalLayout을 사용하는 라우트를 최상위에 배치합니다. */}
                         <Route path="/" element={<GlobalLayout />}>
                             <Route index element={<HomePage />} />
