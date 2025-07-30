@@ -28,13 +28,15 @@ import PasswordChangePage from "./user/PasswordChangePage";
 import DeleteAccountPage from "./user/DeleteAccountPage";
 import AllRooms from "./community/AllRooms";
 import MyRooms from "./community/MyRooms";
+import MyReviewsPage from "./user/MyReviewsPage";
+import LikedFestivalsPage from "./user/LikedFestivalsPage";
 
 function App() {
     return (
         <Provider store={store}>
             <PersistGate loading={<div>로딩중...</div>} persistor={persistor}>
                 <BrowserRouter>
-                    <Routes>
+                        <Routes>
                         {/* ✨ GlobalLayout을 사용하는 라우트를 최상위에 배치합니다. */}
                         <Route path="/" element={<GlobalLayout />}>
                             <Route index element={<HomePage />} />
@@ -47,7 +49,9 @@ function App() {
                             <Route path="mypage/editinfo" element={<EditInfoPage />} />
                             <Route path="mypage/passwordchange" element={<PasswordChangePage/>}></Route>
                             <Route path="mypage/delete-account" element={<DeleteAccountPage />} />
+                            <Route path="mypage/my-reviews" element={<MyReviewsPage/>}></Route>
                             <Route path="calender" element={<CalenderPage />} />
+                            <Route path="mypage/liked-festivals" element={<LikedFestivalsPage/>}></Route>
                             <Route path="calender/:festivalId" element={<DetailPage />} />
                             <Route path="community" element={<CommunityPage />}>
                                 <Route path="all-rooms" element={<AllRooms />} />

@@ -122,7 +122,7 @@ public class ReviewController {
     }
 
     @PostMapping("/{reviewid}/comments")
-    public ResponseEntity<?> createComment(@PathVariable Long reviewid, ReviewCommentDTO reviewCommentDTO){
+    public ResponseEntity<?> createComment(@PathVariable Long reviewid, @RequestBody ReviewCommentDTO reviewCommentDTO){
         boolean result = this.reviewCommentService.createReviewComment(reviewid, reviewCommentDTO);
         if (result) {
             return ResponseEntity.ok().build();

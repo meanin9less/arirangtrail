@@ -1,0 +1,135 @@
+/* src/pages/MyReviewsPage.module.css */
+
+.container {
+    max-width: 800px;
+    margin: 50px auto;
+    padding: 30px;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    background-color: #fff;
+    box-sizing: border-box;
+}
+
+.pageTitle {
+    text-align: center;
+    color: #333;
+    margin-bottom: 30px;
+    font-size: 2em;
+    font-weight: bold;
+}
+
+.message {
+    text-align: center;
+    color: #666;
+    margin-bottom: 10px;
+}
+
+.errorMessage {
+    color: red;
+    font-weight: bold;
+    text-align: center;
+    margin-top: 5px;
+}
+
+.backButton {
+    display: block;
+    width: fit-content;
+    margin: 0 auto 20px auto;
+    padding: 10px 20px;
+    background-color: #007bff;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    font-size: 1em;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+    text-align: center;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+}
+
+.backButton:hover {
+    background-color: #0056b3;
+}
+
+/* --- 리뷰 목록 및 아이템 스타일 (간결화) --- */
+.reviewList {
+    display: flex;
+    flex-direction: column;
+    gap: 10px; /* 각 리뷰 아이템 사이의 간격 */
+}
+
+.reviewItem {
+    display: flex;
+    justify-content: space-between; /* 제목과 날짜를 양 끝으로 정렬 */
+    align-items: center; /* 세로 중앙 정렬 */
+    border: 1px solid #eee;
+    border-radius: 6px;
+    padding: 12px 15px;
+    background-color: #fcfcfc;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+    cursor: pointer;
+    transition: background-color 0.2s ease, transform 0.2s ease;
+}
+
+.reviewItem:hover {
+    background-color: #f0f8ff; /* 호버 시 배경색 변경 */
+    transform: translateY(-2px); /* 약간 위로 올라가는 효과 */
+}
+
+.reviewTitleLink {
+    flex-grow: 1; /* 제목이 남은 공간을 차지하도록 */
+    font-size: 1.1em;
+    font-weight: bold;
+    color: #333;
+    text-decoration: none;
+    white-space: nowrap; /* 줄바꿈 방지 */
+    overflow: hidden; /* 넘치는 텍스트 숨김 */
+    text-overflow: ellipsis; /* 넘치는 텍스트 ... 처리 */
+    margin-right: 15px; /* 제목과 날짜 사이 간격 */
+}
+
+.reviewTitleLink:hover {
+    color: #007bff;
+    text-decoration: underline;
+}
+
+.reviewDate {
+    font-size: 0.85em;
+    color: #888;
+    flex-shrink: 0; /* 날짜는 줄어들지 않도록 */
+}
+
+/* 모바일 반응형 */
+@media (max-width: 768px) {
+    .container {
+        margin: 20px auto;
+        padding: 20px;
+    }
+
+    .pageTitle {
+        font-size: 1.8em;
+    }
+
+    .backButton {
+        padding: 8px 15px;
+        font-size: 0.9em;
+    }
+
+    .reviewItem {
+        flex-direction: column; /* 모바일에서는 세로로 쌓이도록 */
+        align-items: flex-start; /* 왼쪽 정렬 */
+        padding: 10px;
+    }
+
+    .reviewTitleLink {
+        width: 100%;
+        margin-right: 0;
+        margin-bottom: 5px;
+    }
+
+    .reviewDate {
+        width: 100%;
+        text-align: left;
+    }
+}
