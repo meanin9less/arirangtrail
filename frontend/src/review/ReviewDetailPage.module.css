@@ -178,6 +178,25 @@
     transform: translateY(-2px);
 }
 
+.editButton {
+    display: block;
+    width: 150px;
+    padding: 10px 15px;
+    background-color: #28a745; /* 녹색 계열 */
+    color: white;
+    border: none;
+    border-radius: 5px;
+    font-size: 1em;
+    cursor: pointer;
+    margin: 10px auto 0 auto; /* 중앙 정렬 및 위쪽 여백 */
+    transition: background-color 0.3s ease, transform 0.2s ease;
+}
+
+.editButton:hover {
+    background-color: #218838;
+    transform: translateY(-2px);
+}
+
 .errorMessage {
     color: red;
     font-weight: bold;

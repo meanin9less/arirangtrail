@@ -21,6 +21,7 @@ import ReviewPage from "./review/ReviewPage";
 import SearchPage from "./search/SearchPage";
 import ReviewWritePage from "./review/ReviewWritePage";
 import ReviewDetailPage from './review/ReviewDetailPage';
+import ReviewUpdatePage from './review/ReviewUpdatePage';
 import SimpleJoinPage from "./user/SimpleJoinPage";
 import SimpleLoginPage from "./user/SimpleLoginPage";
 import PasswordChangePage from "./user/PasswordChangePage";
@@ -56,6 +57,7 @@ function App() {
                             <Route path="review"  element={<ReviewPage />} />
                             <Route path="review/write" element={<ReviewWritePage />} />
                             <Route path="review/detail/:reviewId" element={<ReviewDetailPage />} />
+                            <Route path="review/update/:reviewId" element={<ReviewUpdatePage />} />
                             <Route path="search" element={<SearchPage />} />
                         </Route>
                     </Routes>
