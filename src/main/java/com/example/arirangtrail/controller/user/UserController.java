@@ -8,16 +8,16 @@ import com.example.arirangtrail.service.user.UserService;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-import jakarta.persistence.EntityNotFoundException; // 임포트 추가
+import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseCookie;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.multipart.MultipartFile; // MultipartFile 임포트
+import org.springframework.web.multipart.MultipartFile;
 
-import java.io.IOException; // IOException 임포트
+import java.io.IOException;
 
 @RestController
 @RequiredArgsConstructor
@@ -26,7 +26,6 @@ public class UserController {
     private final JwtUtil jwtUtil;
     private final UserService userService;
 
-    // --- 기존 컨트롤러 코드들은 변경 없이 그대로 유지합니다. ---
     @PostMapping(value = "/join")
     public ResponseEntity<String> join(@RequestBody JoinDTO joinDTO) {
         String result = userService.join(joinDTO);
@@ -55,7 +54,6 @@ public class UserController {
 
     @PutMapping(value = "/update-inform")
     public ResponseEntity<UserDTO> updateInform(@RequestBody UserDTO userDTO, HttpServletRequest request) {
-        // JWT 토큰에서 username 추출하여, 요청된 정보가 현재 로그인한 사용자의 것인지 검증
         String token = request.getHeader("authorization");
         if (token == null || !token.startsWith("Bearer ")) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(null);
@@ -86,7 +84,7 @@ public class UserController {
     }
 
     @GetMapping(value = "/user-inform")
-    public ResponseEntity<UserDTO> userInform(HttpServletRequest request) { // @RequestParam 대신 토큰에서 username 추출
+    public ResponseEntity<UserDTO> userInform(HttpServletRequest request) {
         String token = request.getHeader("authorization");
         if (token == null || !token.startsWith("Bearer ")) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(null);
@@ -98,7 +96,7 @@ public class UserController {
     }
 
     @DeleteMapping(value = "/delete-member")
-    public ResponseEntity<String> deleteMember(HttpServletRequest request) { // @RequestParam 대신 토큰에서 username 추출
+    public ResponseEntity<String> deleteMember(HttpServletRequest request) {
         String token = request.getHeader("authorization");
         if (token == null || !token.startsWith("Bearer ")) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Unauthorized");
@@ -115,7 +113,7 @@ public class UserController {
         String access_Token = this.jwtUtil.createToken("access", userDTO.getUsername(), userDTO.getRole(), 60 * 1000L);
         ResponseCookie refreshTokenCookie = ResponseCookie.from("refresh", refresh_Token)
                 .httpOnly(true)
-                .secure(false) // HTTPS 환경에서는 true로 변경
+                .secure(false)
                 .path("/")
                 .maxAge(24 * 60 * 60)
                 .sameSite("Lax")
@@ -138,45 +136,12 @@ public class UserController {
         return ResponseEntity.status(HttpStatus.OK).body(userDTO);
     }
 
+    // ✨ 새로 추가된 이미지 업로드 엔드포인트
     @PostMapping(value = "/upload-profile-image")
     public ResponseEntity<String> uploadProfileImage(
             @RequestParam("image") MultipartFile imageFile,
             HttpServletRequest request) {
         try {
-            // JWT 토큰에서 username 추출 (로그인된 사용자의 프로필에만 업로드)
-            String token = request.getHeader("authorization");
-            if (token == null || !token.startsWith("Bearer ")) {
-                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Unauthorized: No token provided or invalid format.");
-            }
-            String accessToken = token.substring(7); // "Bearer " 제거
-            String username = jwtUtil.getUserName(accessToken); // JWT에서 username 추출
-
-            if (imageFile.isEmpty()) {
-                return ResponseEntity.badRequest().body("No image file provided.");
-            }
-
-            // UserService의 이미지 업로드 로직 호출
-            String imageUrl = userService.uploadProfileImage(username, imageFile);
-            return ResponseEntity.ok("Profile image uploaded successfully. URL: " + imageUrl);
-
-        } catch (EntityNotFoundException e) {
-            // 사용자 ID를 찾을 수 없을 때
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
-        } catch (IOException e) {
-            // 파일 저장 중 I/O 오류 발생 시
-            e.printStackTrace(); // 서버 로그에 스택 트레이스 출력
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Failed to upload image due to server error: " + e.getMessage());
-        } catch (Exception e) {
-            // 그 외 예상치 못한 오류 발생 시
-            e.printStackTrace();
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("An unexpected error occurred during image upload: " + e.getMessage());
-        }
-    }
-
-    @DeleteMapping(value = "/remove-profile-image")
-    public ResponseEntity<String> removeProfileImage(HttpServletRequest request) {
-        try {
-            // JWT 토큰에서 username 추출
             String token = request.getHeader("authorization");
             if (token == null || !token.startsWith("Bearer ")) {
                 return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Unauthorized: No token provided or invalid format.");
@@ -184,7 +149,35 @@ public class UserController {
             String accessToken = token.substring(7);
             String username = jwtUtil.getUserName(accessToken);
 
-            // UserService의 이미지 제거 로직 호출
+            if (imageFile.isEmpty()) {
+                return ResponseEntity.badRequest().body("No image file provided.");
+            }
+
+            String imageUrl = userService.uploadProfileImage(username, imageFile);
+            return ResponseEntity.ok("Profile image uploaded successfully. URL: " + imageUrl);
+
+        } catch (EntityNotFoundException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
+        } catch (IOException e) {
+            e.printStackTrace();
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Failed to upload image due to server error: " + e.getMessage());
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("An unexpected error occurred during image upload: " + e.getMessage());
+        }
+    }
+
+    // ✨ 새로 추가된 이미지 제거 엔드포인트
+    @DeleteMapping(value = "/remove-profile-image")
+    public ResponseEntity<String> removeProfileImage(HttpServletRequest request) {
+        try {
+            String token = request.getHeader("authorization");
+            if (token == null || !token.startsWith("Bearer ")) {
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Unauthorized: No token provided or invalid format.");
+            }
+            String accessToken = token.substring(7);
+            String username = jwtUtil.getUserName(accessToken);
+
             userService.removeProfileImage(username);
             return ResponseEntity.ok("Profile image removed successfully.");
         } catch (EntityNotFoundException e) {
