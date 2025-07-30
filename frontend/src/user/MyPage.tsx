@@ -232,7 +232,10 @@ const MyPage: React.FC = () => {
                                 onClick={() => navigate('/mypage/my-reviews')}>
                         내가 쓴 리뷰</button>
                     </li>
-                    <li><button className={styles.menuButton}>찜한 축제/관광지</button></li>
+                    <li><button className={styles.menuButton}
+                                onClick={() => navigate('/mypage/liked-festivals')}>
+                        찜한 축제/관광지</button>
+                    </li>
                 </ul>
             </div>
         </div>
