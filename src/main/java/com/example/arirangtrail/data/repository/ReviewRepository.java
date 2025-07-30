@@ -3,6 +3,8 @@ package com.example.arirangtrail.data.repository;
 
 import com.example.arirangtrail.data.entity.ReviewEntity;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
@@ -19,4 +21,7 @@ public interface ReviewRepository extends JpaRepository<ReviewEntity, Long> { //
      * @return 해당 사용자가 작성한 ReviewEntity 목록
      */
     List<ReviewEntity> findByUsername(String username);
+
+    @Query("SELECT AVG(e.rating) FROM ReviewEntity e WHERE e.contentid = :contentid")
+    Double findAverageRatingByContentid(@Param("contentid") Long contentid);
 }

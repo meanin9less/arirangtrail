@@ -154,9 +154,20 @@ function ReviewDetailPage() {
                 목록으로
             </button>
             {currentUser === review.username && (
-                <button onClick={() => navigate(`/review/update/${reviewId}`)} className={styles.editButton}>
-                    수정
-                </button>
+                <div className={styles.actionButtons}>
+                    <button onClick={() => navigate(`/review/update/${reviewId}`)} className={styles.editButton}>
+                        수정
+                    </button>
+                    <button onClick={async () => {
+                        if(confirm("삭제 하시겠습니까?")){
+                            await apiClient.delete(`/reviews/${reviewId}`);
+                            navigate(`/review`);
+                        }
+                    }
+                    } className={styles.editButton}>
+                        삭제
+                    </button>
+                </div>
             )}
         </div>
     );
