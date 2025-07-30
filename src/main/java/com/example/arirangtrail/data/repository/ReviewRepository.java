@@ -15,14 +15,7 @@ import java.util.Optional; // Optional 임포트 추가
  */
 @Repository
 public interface ReviewRepository extends JpaRepository<ReviewEntity, Long> {
-    /**
-     * 특정 사용자가 작성한 리뷰 목록을 조회합니다.
-     * 작성일(createdAt) 기준 내림차순으로 정렬하여 최신 리뷰가 먼저 오도록 합니다.
-     * 이 메서드는 `ReviewService`의 `getReviewsByUsername`에서 사용됩니다.
-     * @param username 조회할 사용자의 ID
-     * @return 해당 사용자가 작성한 ReviewEntity 목록
-     */
-    List<ReviewEntity> findByUsernameOrderByCreatedAtDesc(String username);
+    List<ReviewEntity> findByUsernameOrderByCreatedatDesc(String username);
 
     // Review ID로 리뷰를 찾아올 때 Optional을 반환하도록 (EntityNotFoundException 처리를 위해)
     // JpaRepository에 기본적으로 findById가 있지만, 명시적으로 추가하여 주석으로 설명합니다.
