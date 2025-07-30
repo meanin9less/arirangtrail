@@ -5,7 +5,7 @@ import { useNavigate, Link } from 'react-router-dom';
 import apiClient from '../api/axiosInstance';
 import axios from 'axios';
 import styles from './LikedFestivalsPage.module.css'; // 새로 생성한 스타일 파일 임포트
-import { IoLocationOutline, IoCalendarOutline } from 'react-icons/io5'; // 아이콘 임포트
+import { IoLocationOutline } from 'react-icons/io5'; // 아이콘 임포트
 
 // 한국관광공사 API 응답 (detailCommon2) 인터페이스
 interface KTOFestivalDetail {
@@ -19,8 +19,8 @@ interface KTOFestivalDetail {
     tel: string;
     overview?: string;
     homepage?: string;
-    // KTO API에서 날짜 정보가 없을 수 있으므로, 필요하다면 백엔드에서 찜 저장 시 함께 저장해야 합니다.
-    // 여기서는 목록에 표시하지 않으므로 생략합니다.
+    eventstartdate?: string; // searchFestival2에서 오는 필드
+    eventenddate?: string;   // searchFestival2에서 오는 필드
 }
 
 // 백엔드에서 찜한 목록을 가져올 때의 인터페이스
@@ -37,7 +37,6 @@ const KTO_API_BASE_URL = "https://apis.data.go.kr/B551011/KorService2";
 interface LikedFestivalItemProps {
     festival: KTOFestivalDetail;
     onItemClick: (contentId: string) => void;
-    // onUnlike: (contentId: string) => void; // 찜 해제 버튼은 목록에서 제거
 }
 
 const LikedFestivalItem: React.FC<LikedFestivalItemProps> = ({ festival, onItemClick }) => {
@@ -73,8 +72,8 @@ const LikedFestivalsPage: React.FC = () => {
             }
 
             // 1. 백엔드에서 사용자가 찜한 contentId 목록을 가져옵니다.
-            // ✨ 백엔드에 GET /api/likes/my 엔드포인트 구현 필요 (로그인 사용자 찜 목록)
-            const likedResponse = await apiClient.get<LikedItem[]>('/likes/my', {
+            // ✨ API 경로 수정: '/likes/my' -> '/festivals/likes/my'로 변경
+            const likedResponse = await apiClient.get<LikedItem[]>('/festivals/likes/my', {
                 headers: {
                     Authorization: `Bearer ${jwtToken}`,
                 },
@@ -88,6 +87,7 @@ const LikedFestivalsPage: React.FC = () => {
             }
 
             // 2. 각 contentId에 대해 한국관광공사 API에서 상세 정보를 가져옵니다.
+            // 병렬로 여러 API 요청을 처리
             const festivalDetailsPromises = likedContentIds.map(async (contentId) => {
                 const detailApiUrl = `${KTO_API_BASE_URL}/detailCommon2?serviceKey=${SERVICE_KEY}&MobileApp=AppTest&MobileOS=ETC&_type=json`;
                 try {
@@ -120,7 +120,7 @@ const LikedFestivalsPage: React.FC = () => {
         } catch (err: any) {
             console.error('찜한 축제 불러오기 오류:', err);
             let errorMessage = '찜한 축제를 불러오는 데 실패했습니다.';
-            if (axios.isAxiosError(err) && axios.isAxiosError(err) && err.response) {
+            if (axios.isAxiosError(err) && err.response) {
                 errorMessage = err.response.data?.message || errorMessage;
             }
             setError(errorMessage);
@@ -137,9 +137,6 @@ const LikedFestivalsPage: React.FC = () => {
     const handleItemClick = (contentId: string) => {
         navigate(`/calender/${contentId}`);
     };
-
-    // 찜 해제 기능은 이 페이지에서 제거 (상세 페이지에서 처리)
-    // const handleUnlike = async (contentId: string) => { ... };
 
     if (loading) {
         return (
