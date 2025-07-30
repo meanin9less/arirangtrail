@@ -1,4 +1,3 @@
-// src/main/java/com/example/arirangtrail/data/entity/ReviewEntity.java
 package com.example.arirangtrail.data.entity;
 
 import jakarta.persistence.*;
@@ -6,6 +5,9 @@ import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 import lombok.Getter;
 import lombok.Setter;
+import lombok.NoArgsConstructor; // 추가: Lombok의 NoArgsConstructor
+import lombok.AllArgsConstructor; // 추가: Lombok의 AllArgsConstructor
+import lombok.Builder; // 추가: Lombok의 Builder
 import org.hibernate.annotations.ColumnDefault;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
@@ -25,6 +27,9 @@ import java.util.List;
 @Setter
 @Entity
 @Table(name = "reviews")
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
 public class ReviewEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY) // ID 자동 생성 전략 (IDENTITY는 DB에 위임)
@@ -67,6 +72,7 @@ public class ReviewEntity {
 
     @OneToMany(mappedBy = "review", cascade = CascadeType.ALL, orphanRemoval = true)
     // review 필드에 의해 매핑되며, ReviewEntity가 삭제되면 연관된 ReviewphotoEntity도 삭제됩니다.
+    @Builder.Default // @Builder 사용 시 기본값 설정
     private List<ReviewphotoEntity> reviewphotos = new ArrayList<>(); // 리뷰에 첨부된 사진 목록
 
     @Size(max = 255)

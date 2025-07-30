@@ -1,20 +1,20 @@
 package com.example.arirangtrail.service.user;
 
+import com.example.arirangtrail.component.review.FileStore;
 import com.example.arirangtrail.data.dao.user.UserDAO;
 import com.example.arirangtrail.data.dto.user.JoinDTO;
 import com.example.arirangtrail.data.dto.user.UserDTO;
 import com.example.arirangtrail.data.entity.UserEntity;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.nio.file.StandardCopyOption;
+import java.nio.file.*;
 import java.time.LocalDate;
 import java.util.UUID;
 
@@ -22,6 +22,10 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class UserService {
     private final UserDAO userDAO;
+    private final FileStore fileStore;
+
+    @Value("${cloud.aws.s3.bucket2}")
+    private String bucket;
 
     public String join(JoinDTO joinDTO) {
         return userDAO.join(
@@ -102,52 +106,20 @@ public class UserService {
     // ✨ 새로 추가된 이미지 업로드 관련 메서드
     @Transactional
     public String uploadProfileImage(String username, MultipartFile imageFile) throws IOException {
-        String uploadDir = "src/main/resources/static/uploads/profile/"; // 운영 환경에 맞게 변경 필수
-        Path uploadPath = Paths.get(uploadDir);
+        UserEntity user = this.userDAO.userInform(username);
+        String url = this.fileStore.storeFile(imageFile, bucket);
+        user.setImageurl(url);
 
-        if (!Files.exists(uploadPath)) {
-            Files.createDirectories(uploadPath);
-        }
-
-        String originalFileName = imageFile.getOriginalFilename();
-        String fileExtension = "";
-        int dotIndex = originalFileName.lastIndexOf('.');
-        if (dotIndex >= 0) {
-            fileExtension = originalFileName.substring(dotIndex);
-        }
-        String savedFileName = username + "_" + UUID.randomUUID().toString() + fileExtension;
-        Path filePath = uploadPath.resolve(savedFileName);
-
-        Files.copy(imageFile.getInputStream(), filePath, StandardCopyOption.REPLACE_EXISTING);
-
-        String imageUrl = "/uploads/profile/" + savedFileName;
-
-        UserEntity currentUserEntity = userDAO.userInform(username);
-        if (currentUserEntity != null) {
-            // UserDTO를 빌드하여 imageurl만 변경하고 DAO의 updateInform에 전달
-            UserDTO updatedUserDTO = UserDTO.builder()
-                    .username(currentUserEntity.getUsername())
-                    .email(currentUserEntity.getEmail())
-                    .firstname(currentUserEntity.getFirstname())
-                    .lastname(currentUserEntity.getLastname())
-                    .birthdate(currentUserEntity.getBirthdate())
-                    .nickname(currentUserEntity.getNickname())
-                    .imageurl(imageUrl)
-                    .build();
-
-            userDAO.updateInform(
-                    updatedUserDTO.getUsername(),
-                    updatedUserDTO.getFirstname(),
-                    updatedUserDTO.getLastname(),
-                    updatedUserDTO.getEmail(),
-                    updatedUserDTO.getBirthdate(),
-                    updatedUserDTO.getNickname(),
-                    updatedUserDTO.getImageurl()
-            );
-            return imageUrl;
-        } else {
-            throw new EntityNotFoundException("User not found with username: " + username);
-        }
+        this.userDAO.updateInform(
+                user.getUsername(),
+                user.getFirstname(),
+                user.getLastname(),
+                user.getEmail(),
+                user.getBirthdate(),
+                user.getNickname(),
+                user.getImageurl()
+        );
+        return url;
     }
 
     // ✨ 새로 추가된 이미지 제거 관련 메서드
