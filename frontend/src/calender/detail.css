@@ -588,6 +588,41 @@ body {
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.04);
 }
 
+/* 별점 표시 스타일 */
+.star-rating-display {
+    display: flex;
+    align-items: center;
+    gap: 4px; /* 별과 숫자 사이 간격 */
+    height: 48px;
+    padding: 0 16px;
+    background-color: #ffffff;
+    border: 1px solid #dee2e6;
+    border-radius: 12px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.04);
+    font-size: 1.2rem;
+    color: #ffc107; /* 별 색상 (노란색) */
+    flex-shrink: 0;
+}
+
+.star-rating-display .star-icon {
+    font-size: 1.5rem; /* 별 아이콘 크기 */
+    color: #ffc107; /* 별 아이콘 색상 */
+}
+
+.star-rating-display .rating-value {
+    font-size: 1rem;
+    font-weight: 600;
+    color: #495057; /* 숫자 색상 */
+    margin-left: 4px;
+}
+
+.star-rating-display .no-rating-text {
+    font-size: 0.9rem;
+    color: #868e96; /* 회색 텍스트 */
+    font-weight: 500;
+    padding: 0 8px; /* 좌우 여백 */
+}
+
 /* 공유하기 아이콘 버튼 자체의 스타일 */
 .icon-button {
     width: 48px;
