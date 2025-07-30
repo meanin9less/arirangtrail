@@ -27,7 +27,7 @@ import org.slf4j.LoggerFactory;
 
 //잠시 주석처리
 @Service
-@Profile("prod") // "prod" 프로필이 활성화될 때만 이 빈(Bean)을 생성하라는 의미!
+//@Profile("prod") // "prod" 프로필이 활성화될 때만 이 빈(Bean)을 생성하라는 의미!
 @RequiredArgsConstructor
 public class ReviewService {
 

@@ -1,18 +1,23 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Outlet, useNavigate, useLocation, Link } from 'react-router-dom';
 import ChatRoom from './ChatRoom';
-import { useDispatch, useSelector } from 'react-redux';
-import { RootState } from '../store';
+import { useSelector, useDispatch } from 'react-redux';
+import {RootState, setTotalUnreadCount, updateLobby} from '../store';
 import { BsChatDots } from "react-icons/bs";
 import apiClient from "../api/axiosInstance";
 import Modal from "../components/Modal";
 
-// 백엔드의 DTO와 일치하는 인터페이스
-export interface Room {
-    id: number;
+    export interface Room {
+    id: string;
     title: string;
     creator: string;
-    participantCount: number;
+    participantCount?: number;
+    maxMembers?: number;
+    maxParticipants?: number;
+    meetingDate?: string;
+    subject?: string;
+    notice?: string; // 이 필드는 채팅방 들어가서 공지사항 지정할때 쓰임
+    unreadCount?: number;
 }
 
 const CommunityPage = () => {
@@ -20,10 +25,19 @@ const CommunityPage = () => {
     const userName = userProfile?.username;
     const navigate = useNavigate();
     const location = useLocation();
+    const dispatch = useDispatch();
 
     const [selectedRoomId, setSelectedRoomId] = useState<string | null>(null);
-    const [isModalOpen, setIsModalOpen] = useState(false);
-    const [successModalOpen, setSuccessModalOpen] = useState(false); // 성공 메시지 모달 상태
+    const [activeModal, setActiveModal] = useState<'create' | 'success' | null>(null);
+    const [isHovering, setIsHovering] = useState(false);
+
+    const [newRoomInfo, setNewRoomInfo] = useState({
+        title: '',
+        subject: '',
+        maxParticipants: '',
+        meetingDate: '',
+    });
+    const [formError, setFormError] = useState('');
 
     useEffect(() => {
         if (userName && location.pathname === '/community') {
@@ -31,39 +45,97 @@ const CommunityPage = () => {
         }
     }, [userName, location.pathname, navigate]);
 
-    useEffect(() => {
-        const handleOpenModal = (e: Event) => {
-            const customEvent = e as CustomEvent<{ open: boolean }>;
-            if (customEvent.detail?.open) setIsModalOpen(true);
-        };
-        window.addEventListener('openModal', handleOpenModal);
-        return () => window.removeEventListener('openModal', handleOpenModal);
+    const handleInputChange = useCallback((e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+        const { name, value } = e.target;
+        setNewRoomInfo(prev => ({ ...prev, [name]: value }));
     }, []);
 
-    const handleCreateRoom = async (roomName: string) => {
-        if (!roomName.trim() || !userName) return;
+    const validateForm = useCallback(() => {
+        const { title, subject, maxParticipants, meetingDate } = newRoomInfo;
+        // 여기서는 필수로 가정합니다.
+        if (!title.trim() || !subject.trim() || !maxParticipants || !meetingDate) {
+            setFormError('모든 필드를 채워주세요.');
+            return false;
+        }
+        const maxMembersNum = parseInt(maxParticipants, 10);
+        if (isNaN(maxMembersNum) || maxMembersNum <= 1) {
+            setFormError('최대 인원은 2명 이상의 숫자여야 합니다.');
+            return false;
+        }
+        setFormError('');
+        return true;
+    }, [newRoomInfo]);
+
+    const handleCreateRoom = useCallback(async () => {
+        if (!validateForm() || !userName) return;
+
         try {
+            // date string을 ISO 형식으로 전환 (React input은 'yyyy-MM-dd' 형식임)
+            const formattedDate = new Date(newRoomInfo.meetingDate).toISOString();
+
             await apiClient.post<Room>(`chat/rooms`, {
-                title: roomName,
-                username: userName
+                title: newRoomInfo.title,
+                subject: newRoomInfo.subject,
+                maxParticipants: parseInt(newRoomInfo.maxParticipants, 10),
+                meetingDate: formattedDate, // ISO로 변경
+                username: userName,
             });
-            setIsModalOpen(false); // 생성 모달 닫기
-            navigate('/community/my-rooms'); // 내 채팅방 탭으로 이동
-            setSuccessModalOpen(true); // 성공 메시지 모달 열기
+
+            dispatch(updateLobby());
+            setActiveModal('success');
+            setNewRoomInfo({ // 상태 초기화
+                title: '',
+                subject: '',
+                maxParticipants: '',
+                meetingDate: '',
+            });
         } catch (error) {
             console.error("채팅방 생성에 실패했습니다.", error);
+            setFormError('채팅방 생성에 실패했습니다. 서버 로그를 확인해주세요.');
         }
-    };
+    }, [validateForm, userName, newRoomInfo, dispatch]);
 
     const handleEnterRoom = (roomId: string) => {
         if (!userName) return;
         setSelectedRoomId(roomId);
     };
 
-    const handleLeaveRoom = () => {
+// ✅ 수정: handleLeaveRoom이 lastReadSeq를 인자로 받도록 하고, async 함수로 변경
+    const handleLeaveRoom = async (lastReadSeq: number) => {
+        if (userName && selectedRoomId) {
+            try {
+                // 1. 읽음 처리 API를 '먼저' 호출하고 완료될 때까지 기다립니다.
+                await apiClient.post(`chat/rooms/update-status`, {
+                    roomId: selectedRoomId,
+                    username: userName,
+                    lastReadSeq: lastReadSeq
+                });
+                console.log(`[로비 나가기] 읽음 처리 완료: Room ${selectedRoomId}, Seq ${lastReadSeq}`);
+
+                // 2. ✅ [핵심 추가] 읽음 처리가 끝난 직후, 서버로부터 최신 totalUnreadCount를 다시 가져옵니다.
+                const response = await apiClient.get(`/chat/users/${userName}/unread-count`);
+
+                // 3. ✅ 가져온 최신 값으로 Redux 스토어를 업데이트합니다.
+                dispatch(setTotalUnreadCount(response.data.totalUnreadCount));
+            } catch (error) {
+                console.error("로비로 나가기 전 읽음 상태 갱신에 실패했습니다.", error);
+            }
+        }
+
+        // 2. 비동기 작업이 모두 끝난 후, 컴포넌트를 언마운트시킵니다.
         setSelectedRoomId(null);
     };
 
+    const openCreateModal = () => {
+        setFormError('');
+        setNewRoomInfo({ title: '', subject: '', maxParticipants: '', meetingDate: '' });
+        setActiveModal('create');
+    };
+
+    const handleCloseSuccessModal = () => {
+        setActiveModal(null);
+        navigate('/community/my-rooms');
+    };
     if (!userName) {
         return (
             <div style={loginStyles.container}>
@@ -86,9 +158,7 @@ const CommunityPage = () => {
         );
     }
 
-    if (selectedRoomId) {
-        return <ChatRoom roomId={selectedRoomId} onLeave={handleLeaveRoom} />;
-    }
+    if (selectedRoomId) { return <ChatRoom roomId={selectedRoomId} onLeave={handleLeaveRoom} />; }
 
     const isAllRoomsActive = location.pathname.includes('/all-rooms');
     const isMyRoomsActive = location.pathname.includes('/my-rooms');
@@ -106,140 +176,77 @@ const CommunityPage = () => {
             </header>
 
             <div style={styles.tabContainer}>
-                <button
-                    onClick={() => navigate('/community/all-rooms')}
-                    style={{
-                        ...styles.tab,
-                        ...(isAllRoomsActive ? styles.activeTab : {})
-                    }}
-                >
-                    전체 채팅방
-                </button>
-                <button
-                    onClick={() => navigate('/community/my-rooms')}
-                    style={{
-                        ...styles.tab,
-                        ...(isMyRoomsActive ? styles.activeTab : {})
-                    }}
-                >
-                    내 채팅방
-                </button>
-                <span
-                    onClick={() => setIsModalOpen(true)}
-                    style={styles.createRoomText}
-                >
+                <div>
+                    <button onClick={() => navigate('/community/all-rooms')} style={{ ...styles.tab, ...(isAllRoomsActive ? styles.activeTab : {}) }}>
+                        전체 채팅방
+                    </button>
+                    <button onClick={() => navigate('/community/my-rooms')} style={{ ...styles.tab, ...(isMyRoomsActive ? styles.activeTab : {}) }}>
+                        내 채팅방
+                    </button>
+                </div>
+                <span onClick={openCreateModal} style={{ ...styles.createRoomText, ...(isHovering ? styles.createRoomTextHover : {}) }} onMouseEnter={() => setIsHovering(true)} onMouseLeave={() => setIsHovering(false)}>
                     + 방 생성하기
                 </span>
             </div>
 
             <div style={styles.tabContent}>
                 <Outlet context={{ handleEnterRoom }} />
-                <Modal
-                    isOpen={isModalOpen}
-                    onClose={() => setIsModalOpen(false)}
-                    onCreate={handleCreateRoom}
-                />
-                <Modal
-                    isOpen={successModalOpen}
-                    onClose={() => setSuccessModalOpen(false)}
-                    onCreate={() => {}} // 빈 함수, 성공 모달은 onCreate 필요 없음
-                    successMessage="방이 생성되었습니다. 내 채팅방에서 확인하세요"
-                />
+
+                <Modal isOpen={activeModal === 'create'} onClose={() => setActiveModal(null)} title="새로운 채팅방 만들기">
+                    <div style={modalStyles.form}>
+                        <input type="text" name="title" placeholder="방 이름" value={newRoomInfo.title} onChange={handleInputChange} style={modalStyles.input}/>
+                        <input type="text" name="subject" placeholder="주제 (예: 축제 맛집 탐방)" value={newRoomInfo.subject} onChange={handleInputChange} style={modalStyles.input}/>
+                        <input type="number" name="maxParticipants" placeholder="최대 인원 (숫자만 입력, 최소 2명 최대 20명)" max={20} min={2} value={newRoomInfo.maxParticipants} onChange={handleInputChange} style={modalStyles.input}/>
+                        <input type="date" name="meetingDate" value={newRoomInfo.meetingDate} onChange={handleInputChange} style={modalStyles.input}/>
+                        {formError && <p style={modalStyles.error}>{formError}</p>}
+                        <button onClick={handleCreateRoom} style={modalStyles.button}>방 만들기</button>
+                    </div>
+                </Modal>
+
+                <Modal isOpen={activeModal === 'success'} onClose={handleCloseSuccessModal} title="성공">
+                    <p>방이 성공적으로 생성되었습니다. 내 채팅방에서 확인해 주세요.</p>
+                    <button
+                        onClick={handleCloseSuccessModal}
+                        style={{
+                            ...modalStyles.button,
+                            display: 'block',
+                            margin: '15px auto 0'
+                        }}
+                    >
+                        확인
+                    </button>
+                </Modal>
             </div>
         </div>
     );
 };
 
+const modalStyles: { [key: string]: React.CSSProperties } = {
+    form: { display: 'flex', flexDirection: 'column', gap: '15px' },
+    input: { padding: '10px', borderRadius: '5px', border: '1px solid #ccc' },
+    textarea: { padding: '10px', borderRadius: '5px', border: '1px solid #ccc', minHeight: '80px' },
+    button: { padding: '10px 20px', borderRadius: '5px', border: 'none', backgroundColor: '#007bff', color: 'white', cursor: 'pointer' },
+    error: { color: 'red', fontSize: '14px', textAlign: 'center', margin: 0 }
+};
+
 const loginStyles: { [key: string]: React.CSSProperties } = {
-    container: {
-        display: 'flex',
-        justifyContent: 'center',
-        alignItems: 'center',
-        height: 'calc(100vh - 200px)',
-        textAlign: 'center',
-        backgroundColor: '#f8f9fa',
-    },
-    card: {
-        display: 'flex',
-        flexDirection: 'column',
-        alignItems: 'center',
-        padding: '40px',
-        borderRadius: '12px',
-        backgroundColor: 'white',
-        boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
-        maxWidth: '600px',
-    },
-    topSection: {
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        marginBottom: '15px',
-    },
-    inlineImage: {
-        height: '140px',
-        width: 'auto',
-    },
-    icon: {
-        fontSize: '70px',
-        color: '#007bff',
-        margin: '0 20px',
-    },
-    title: {
-        fontSize: '24px',
-        fontWeight: 'bold',
-        marginBottom: '10px',
-    },
-    description: {
-        fontSize: '16px',
-        color: '#6c757d',
-        marginBottom: '30px',
-        lineHeight: 1.6,
-    },
-    loginButton: {
-        display: 'inline-block',
-        padding: '12px 30px',
-        backgroundColor: '#007bff',
-        color: 'white',
-        textDecoration: 'none',
-        borderRadius: '8px',
-        fontWeight: 'bold',
-        transition: 'background-color 0.2s',
-    }
+    container: { display: 'flex', justifyContent: 'center', alignItems: 'center', height: 'calc(100vh - 200px)', textAlign: 'center', backgroundColor: '#f8f9fa' },
+    card: { display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '40px', borderRadius: '12px', backgroundColor: 'white', boxShadow: '0 4px 12px rgba(0,0,0,0.1)', maxWidth: '600px' },
+    topSection: { display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '15px' },
+    inlineImage: { height: '140px', width: 'auto' },
+    icon: { fontSize: '70px', color: '#007bff', margin: '0 20px' },
+    title: { fontSize: '24px', fontWeight: 'bold', marginBottom: '10px' },
+    description: { fontSize: '16px', color: '#6c757d', marginBottom: '30px', lineHeight: 1.6 },
+    loginButton: { display: 'inline-block', padding: '12px 30px', backgroundColor: '#007bff', color: 'white', textDecoration: 'none', borderRadius: '8px', fontWeight: 'bold', transition: 'background-color 0.2s' }
 };
 
 const styles: { [key: string]: React.CSSProperties } = {
-    container: {
-        padding: '20px',
-        maxWidth: '900px',
-        margin: '0 auto',
-        fontFamily: 'sans-serif'
-    },
-    header: {
-        display: 'flex',
-        alignItems: 'center',
-        borderBottom: '2px solid #eee',
-        paddingBottom: '15px',
-        marginBottom: '30px'
-    },
-    headerImage: {
-        height: '100px',
-        width: 'auto',
-        marginRight: '15px',
-    },
-    headerTitle: {
-        margin: 0,
-        fontSize: '2rem',
-    },
-    welcomeMessage: {
-        margin: '5px 0 0 0',
-        color: '#333'
-    },
-    tabContainer: {
-        display: 'flex',
-        borderBottom: '2px solid #e9ecef',
-        marginBottom: '20px',
-        justifyContent: 'space-between',
-    },
+    container: { padding: '20px', maxWidth: '1200px', margin: '0 auto', fontFamily: 'sans-serif' },
+    header: { display: 'flex', alignItems: 'center', borderBottom: '2px solid #eee', paddingBottom: '15px', marginBottom: '30px' },
+    headerImage: { height: '100px', width: 'auto', marginRight: '15px' },
+    headerTitle: { margin: 0, fontSize: '2rem' },
+    welcomeMessage: { margin: '5px 0 0 0', color: '#333' },
+    tabContainer: { display: 'flex', borderBottom: '2px solid #e9ecef', marginBottom: '20px', alignItems: 'center', justifyContent: 'space-between' },
     tab: {
         padding: '12px 24px',
         border: 'none',
@@ -248,29 +255,18 @@ const styles: { [key: string]: React.CSSProperties } = {
         fontSize: '16px',
         fontWeight: '500',
         color: '#6c757d',
-        borderBottom: '3px solid transparent',
+        borderBottomWidth: '3px',
+        borderBottomStyle: 'solid',
+        borderBottomColor: 'transparent',
         transition: 'all 0.2s ease'
     },
     activeTab: {
         color: '#007bff',
         borderBottomColor: '#007bff',
-        backgroundColor: '#f8f9fa'
     },
-    createRoomText: {
-        padding: '12px 24px',
-        color: '#6c757d',
-        cursor: 'pointer',
-        fontSize: '16px',
-        fontWeight: '500',
-        transition: 'color 0.2s ease',
-        marginLeft: 'auto',
-    },
-    createRoomTextHover: {
-        color: '#007bff',
-    },
-    tabContent: {
-        minHeight: '400px'
-    }
+    createRoomText: { padding: '12px 24px', color: '#6c757d', cursor: 'pointer', fontSize: '16px', fontWeight: '500', transition: 'color 0.2s ease' },
+    createRoomTextHover: { color: '#007bff' },
+    tabContent: { minHeight: '400px' }
 };
 
 export default CommunityPage;
