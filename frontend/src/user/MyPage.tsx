@@ -216,17 +216,22 @@ const MyPage: React.FC = () => {
                     )}
                     <li><button className={styles.menuButton}
                                 onClick={()=>navigate('/mypage/passwordchange')}>
-                        비밀번호 변경</button></li>
+                        비밀번호 변경</button>
+                    </li>
                     <li><button className={styles.menuButton}
                                 onClick={() => navigate('/mypage/delete-account')}>
-                        회원 탈퇴</button></li>
+                        회원 탈퇴</button>
+                    </li>
                 </ul>
             </div>
 
             <div className={styles.menuSection}>
                 <h3 className={styles.sectionTitle}>활동 내역</h3>
                 <ul className={styles.menuList}>
-                    <li><button className={styles.menuButton}>내가 쓴 리뷰</button></li>
+                    <li><button className={styles.menuButton}
+                                onClick={() => navigate('/mypage/my-reviews')}>
+                        내가 쓴 리뷰</button>
+                    </li>
                     <li><button className={styles.menuButton}>찜한 축제/관광지</button></li>
                 </ul>
             </div>
