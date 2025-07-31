@@ -13,4 +13,6 @@ public class ChatMessageDTO {
     private Long roomId;
     private String sender;
     private String message;
+    // 닉네임 추가
+    private String nickname;
 }

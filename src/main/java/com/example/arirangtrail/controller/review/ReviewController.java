@@ -24,7 +24,7 @@ import java.util.Map;
 
 //잠시 꺼놓기
 @RestController
-@Profile("prod") // "prod" 프로필이 활성화될 때만 이 빈(Bean)을 생성하라는 의미!
+//@Profile("prod") // "prod" 프로필이 활성화될 때만 이 빈(Bean)을 생성하라는 의미!
 @RequiredArgsConstructor
 @RequestMapping("/api/reviews")
 public class ReviewController {

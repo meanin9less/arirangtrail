@@ -8,7 +8,7 @@ interface TokenState {
     userProfile: {
         username: string;
         nickname?: string;
-        imageUrl?: string;
+        imageurl?: string; // ✨ imageUrl -> imageurl (소문자로 변경)
         email?: string;
         firstname?: string; // EditInfoPage에서 전달하는 정보에 맞춰 추가
         lastname?: string; // EditInfoPage에서 전달하는 정보에 맞춰 추가

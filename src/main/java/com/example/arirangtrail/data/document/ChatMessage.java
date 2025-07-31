@@ -16,7 +16,8 @@ public class ChatMessage {
 
     private Long roomId;
     private Long messageSeq;
-    private String sender;
+    private String sender; // username
+    private String senderNickname; // ✅ 추가: 보낸 사람 닉네임
     private String message;
     @JsonProperty("type")
     private String messageType;

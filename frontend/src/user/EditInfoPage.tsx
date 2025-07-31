@@ -1,7 +1,7 @@
-import React, { useState, useEffect, FormEvent, useRef } from 'react';
+import React, { useState, useEffect, ChangeEvent, FormEvent, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useSelector, useDispatch } from 'react-redux'; // useDispatch 추가
-import { RootState, setUserProfile } from '../store'; // setUserProfile 액션 임포트
+import { useSelector, useDispatch } from 'react-redux';
+import { RootState, setUserProfile } from '../store';
 import apiClient from '../api/axiosInstance';
 import axios from 'axios';
 import styles from './EditInfoPage.module.css';
@@ -20,63 +20,60 @@ interface UserProfile {
     lastname: string;
     nickname: string;
     birthdate: string; // YYYY-MM-DD 형식의 문자열
-    imageUrl?: string; // 프로필 이미지 URL은 선택 사항
+    imageurl?: string; // 프로필 이미지 URL은 선택 사항 (소문자 url)
 }
 
 const EditInfoPage: React.FC = () => {
     const navigate = useNavigate();
-    const dispatch = useDispatch(); // useDispatch 훅 사용
+    const dispatch = useDispatch();
 
     const jwtToken = useSelector((state: RootState) => state.token.token);
     const isLoggedIn = !!jwtToken;
-    const storedUserProfile = useSelector((state: RootState) => state.token.userProfile); // Redux Store에서 가져옴
+    const storedUserProfile = useSelector((state: RootState) => state.token.userProfile);
 
-    const fileInputRef = useRef<HTMLInputElement>(null); // 파일 입력 필드 참조
+    const fileInputRef = useRef<HTMLInputElement>(null);
 
-    // 사용자 정보 상태 (초기값은 Redux Store 또는 null)
-    const [originalProfile, setOriginalProfile] = useState<UserProfile | null>(null); // 초기 프로필 정보 저장용
+    const [originalProfile, setOriginalProfile] = useState<UserProfile | null>(null);
     const [username, setUsername] = useState<string>(storedUserProfile?.username || '');
     const [email, setEmail] = useState<string>(storedUserProfile?.email || '');
     const [firstname, setFirstname] = useState<string>(storedUserProfile?.firstname || '');
     const [lastname, setLastname] = useState<string>(storedUserProfile?.lastname || '');
     const [nickname, setNickname] = useState<string>(storedUserProfile?.nickname || '');
     const [birthdate, setBirthdate] = useState<string>(storedUserProfile?.birthdate || '');
-    const [currentImageUrl, setCurrentImageUrl] = useState<string | null>(storedUserProfile?.imageUrl || null); // DB에 저장된 현재 이미지 URL
-    const [imagePreviewUrl, setImagePreviewUrl] = useState<string | null>(null); // 새로 선택한 이미지 미리보기 URL
+    const [currentImageUrl, setCurrentImageUrl] = useState<string | null>(storedUserProfile?.imageurl || null); // storedUserProfile?.imageurl 사용
+    const [imagePreviewUrl, setImagePreviewUrl] = useState<string | null>(null);
 
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
-    const [submitting, setSubmitting] = useState(false); // 제출 중 상태
-    const [selectedFile, setSelectedFile] = useState<File | null>(null); // 새로 선택된 파일 객체
+    const [submitting, setSubmitting] = useState(false);
+    const [selectedFile, setSelectedFile] = useState<File | null>(null);
 
-    // 모달 상태 관리
     const [modalMessageType, setModalMessageType] = useState<'success' | 'error'>('success');
 
-    // 사용자 정보 불러오기
     useEffect(() => {
         if (!isLoggedIn) {
-            navigate('/login'); // 로그인하지 않았으면 로그인 페이지로 리다이렉트
+            navigate('/login');
             return;
         }
 
         const fetchUserProfile = async () => {
             try {
                 setLoading(true);
-                // JWT 토큰을 사용하여 사용자 정보 요청
                 const response = await apiClient.get<UserProfile>('/userinfo', {
                     headers: {
                         Authorization: `Bearer ${jwtToken}`,
                     },
                 });
                 const userData = response.data;
-                setOriginalProfile(userData); // 원본 프로필 저장
+                setOriginalProfile(userData);
                 setUsername(userData.username);
                 setEmail(userData.email);
                 setFirstname(userData.firstname);
                 setLastname(userData.lastname);
                 setNickname(userData.nickname);
                 setBirthdate(userData.birthdate);
-                setCurrentImageUrl(userData.imageUrl || null); // 이미지 URL 설정
+                setCurrentImageUrl(userData.imageurl || null); // userData.imageurl 사용
+                setImagePreviewUrl(null); // 새 정보 로드 시 미리보기 초기화
 
             } catch (err: any) {
                 console.error('사용자 정보 불러오기 오류:', err);
@@ -93,27 +90,29 @@ const EditInfoPage: React.FC = () => {
         fetchUserProfile();
     }, [isLoggedIn, jwtToken, navigate]);
 
-    // 파일 선택 핸들러
     const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
         if (file) {
             setSelectedFile(file);
-            setImagePreviewUrl(URL.createObjectURL(file)); // 미리보기 URL 생성
+            setImagePreviewUrl(URL.createObjectURL(file));
+        } else {
+            setSelectedFile(null);
+            setImagePreviewUrl(null);
+            // 파일 선택 취소 시 기존 이미지 URL로 돌아감
+            setCurrentImageUrl(originalProfile?.imageurl || null); // originalProfile?.imageurl 사용
         }
     };
 
-    // '사진 변경' 버튼 클릭 시 파일 입력 클릭
     const handleImageChangeClick = () => {
         fileInputRef.current?.click();
     };
 
-    // '기본 프로필' 버튼 클릭 시
     const handleSetDefaultImage = () => {
-        setSelectedFile(null); // 선택된 파일 제거
-        setImagePreviewUrl(null); // 미리보기 제거
-        setCurrentImageUrl(null); // 현재 이미지 URL도 null로 설정 (DB에 null로 저장될 예정)
+        setSelectedFile(null);
+        setImagePreviewUrl(null);
+        setCurrentImageUrl(null); // DB에 null로 저장되도록 명시적으로 설정
         if (fileInputRef.current) {
-            fileInputRef.current.value = ''; // 파일 입력 필드 초기화
+            fileInputRef.current.value = '';
         }
     };
 
@@ -121,36 +120,22 @@ const EditInfoPage: React.FC = () => {
         e.preventDefault();
         setSubmitting(true);
 
-        const textData = {
-            username: username,
-            email: email,
-            firstname: firstname,
-            lastname: lastname,
-            nickname: nickname,
-            birthdate: birthdate,
-            imageUrl: selectedFile ? currentImageUrl : currentImageUrl, // 이미지를 변경하지 않으면 기존 URL 유지
-                                                                        // selectedFile이 있으면 (업로드) 백엔드에서 이미지 URL을 업데이트할 것이므로 currentImageUrl 값은 중요하지 않음.
-                                                                        // selectedFile이 없고 currentImageUrl이 null이면 (기본 프로필로 변경) 백엔드에서 null로 업데이트할 것임.
-        };
+        if (!originalProfile) {
+            alert('사용자 정보를 찾을 수 없어 업데이트를 진행할 수 없습니다.');
+            setSubmitting(false);
+            return;
+        }
+
+        let finalImageUrl: string | null = currentImageUrl; // 기본적으로 현재 DB 이미지 URL 사용
 
         try {
-            // 1. 텍스트 정보 업데이트
-            await apiClient.put<ApiResponse>(
-                '/update-inform',
-                textData,
-                {
-                    headers: {
-                        Authorization: `Bearer ${jwtToken}`,
-                        'Content-Type': 'application/json',
-                    },
-                }
-            );
-
-            // 2. 이미지 변경이 있다면 업로드 또는 제거
+            // 1. 새 파일이 선택되었다면, 이미지를 먼저 업로드하고 새 URL을 받습니다.
             if (selectedFile) {
                 const imageForm = new FormData();
-                imageForm.append('image', selectedFile);
-                await apiClient.post<ApiResponse>(
+                imageForm.append('image', selectedFile); // 백엔드 @RequestParam("image")와 일치
+                // username을 @AuthenticationPrincipal로 받으므로 FormData에 추가할 필요 없음
+
+                const imageUploadResponse = await apiClient.post<string>( // 백엔드가 업로드된 URL을 문자열로 반환한다고 가정
                     '/upload-profile-image',
                     imageForm,
                     {
@@ -160,157 +145,237 @@ const EditInfoPage: React.FC = () => {
                         },
                     }
                 );
-            } else if (!selectedFile && originalProfile?.imageUrl && currentImageUrl === null) {
-                // 기존 이미지가 있었는데 '기본 프로필'로 변경한 경우
-                await apiClient.delete<ApiResponse>(
-                    '/remove-profile-image',
-                    {
-                        headers: {
-                            Authorization: `Bearer ${jwtToken}`,
-                        },
-                    }
-                );
+                finalImageUrl = imageUploadResponse.data; // 업로드된 새 이미지 URL로 업데이트
+            } else if (originalProfile.imageurl && currentImageUrl === null) { // originalProfile.imageurl 사용
+                // 2. '기본 프로필' 버튼을 눌러 기존 이미지를 명시적으로 제거한 경우
+                //    이 경우 백엔드 /update-inform으로 imageurl: null을 보냅니다.
+                finalImageUrl = null;
             }
+            // 3. selectedFile이 없고 currentImageUrl도 변경되지 않은 경우 (텍스트만 수정)
+            //    finalImageUrl은 currentImageUrl (기존 값)을 그대로 사용
 
-            // ✨ 핵심 변경: 모든 업데이트가 성공적으로 완료된 후,
-            //    서버로부터 최신 사용자 정보를 다시 불러와 Redux Store를 업데이트합니다.
+            // 최종 사용자 정보 업데이트 요청 (텍스트 정보 + 최종 이미지 URL)
+            const updatedUserData = {
+                username: username,
+                email: email,
+                firstname: firstname,
+                lastname: lastname,
+                nickname: nickname,
+                birthdate: birthdate, // YYYY-MM-DD 문자열
+                imageurl: finalImageUrl // ✨ 최종 결정된 이미지 URL을 백엔드로 전송
+            };
+
+            const response = await apiClient.put<ApiResponse>(
+                '/update-inform',
+                updatedUserData,
+                {
+                    headers: {
+                        Authorization: `Bearer ${jwtToken}`,
+                        'Content-Type': 'application/json',
+                    },
+                }
+            );
+
+            // 모든 업데이트가 성공적으로 완료된 후, 서버로부터 최신 사용자 정보를 다시 불러와 Redux Store를 업데이트합니다.
             const updatedProfileResponse = await apiClient.get<UserProfile>('/userinfo', {
                 headers: { Authorization: `Bearer ${jwtToken}` },
             });
             dispatch(setUserProfile(updatedProfileResponse.data)); // Redux Store 업데이트
 
-            alert('정보가 성공적으로 수정되었습니다.');
-            navigate('/mypage'); // alert 후 바로 마이페이지로 이동
+            alert('정보가 성공적으로 수정되었습니다.'); // alert 대신 커스텀 모달 사용 권장
+            navigate('/mypage');
 
         } catch (err: any) {
             console.error('정보 수정 오류:', err);
             let errorMessage = '정보 수정 중 오류가 발생했습니다.';
             if (axios.isAxiosError(err) && err.response) {
                 errorMessage = err.response.data?.message || errorMessage;
-                if (err.response.status === 409) {
+                if (err.response.status === 409) { // 충돌(Conflict) 에러 (예: 닉네임/이메일 중복)
                     errorMessage = "이미 사용 중인 닉네임 또는 이메일입니다.";
                 }
             }
-            alert(errorMessage);
+            alert(errorMessage); // alert 대신 커스텀 모달 사용 권장
         } finally {
             setSubmitting(false);
         }
     };
 
+    if (!isLoggedIn) {
+        return (
+            <div className={styles.editInfoContainer}>
+                <p className={styles.message}>로그인이 필요합니다.</p>
+            </div>
+        );
+    }
 
     if (loading) {
-        return <div className={styles.loadingMessage}>사용자 정보를 불러오는 중입니다...</div>;
+        return (
+            <div className={styles.editInfoContainer}>
+                <p className={styles.message}>사용자 정보를 불러오는 중입니다...</p>
+            </div>
+        );
     }
 
     if (error) {
-        return <div className={styles.errorMessage}>오류: {error}</div>;
+        return (
+            <div className={styles.editInfoContainer}>
+                <p className={`${styles.message} ${styles.errorMessage}`}>{error}</p>
+            </div>
+        );
+    }
+
+    if (!originalProfile) {
+        return (
+            <div className={styles.editInfoContainer}>
+                <p className={`${styles.message} ${styles.errorMessage}`}>사용자 정보를 찾을 수 없습니다.</p>
+            </div>
+        );
     }
 
     return (
         <div className={styles.editInfoContainer}>
             <h2 className={styles.pageTitle}>내 정보 수정</h2>
             <form onSubmit={handleSubmit} className={styles.editForm}>
-                {/* 프로필 이미지 섹션 */}
-                <div className={styles.profileImageSection}>
-                    <img
-                        src={imagePreviewUrl || currentImageUrl || 'https://placehold.co/100x100/cccccc/ffffff?text=User'}
-                        alt="프로필 미리보기"
-                        className={styles.profileImage}
-                        onError={(e) => {
-                            const target = e.target as HTMLImageElement;
-                            target.onerror = null;
-                            target.src = 'https://placehold.co/100x100/cccccc/ffffff?text=User'; // 이미지 로드 실패 시 대체 URL
-                        }}
-                    />
-                    <input
-                        type="file"
-                        accept="image/*"
-                        onChange={handleFileChange}
-                        ref={fileInputRef}
-                        style={{ display: 'none' }} // 숨겨진 파일 입력
-                    />
-                    <div className={styles.imageButtons}>
-                        <button type="button" onClick={handleImageChangeClick} className={styles.changeImageButton}>
-                            사진 변경
-                        </button>
-                        <button type="button" onClick={handleSetDefaultImage} className={styles.defaultImageButton}>
+                {/* 프로필 이미지 미리보기 */}
+                <div className={styles.formGroup}>
+                    <div className={styles.imagePreviewContainer}>
+                        <img
+                            src={imagePreviewUrl || currentImageUrl || 'https://placehold.co/150x150/cccccc/ffffff?text=User'}
+                            alt="프로필 미리보기"
+                            className={styles.profileImagePreview}
+                            onError={(e) => {
+                                const target = e.target as HTMLImageElement;
+                                target.onerror = null;
+                                target.src = 'https://placehold.co/150x150/cccccc/ffffff?text=User';
+                            }}
+                        />
+                    </div>
+                </div>
+
+                {/* 이미지 첨부 필드 및 파일 선택 취소 버튼 */}
+                <div className={`${styles.formGroup} ${styles.fileUploadGroup}`}>
+                    <div>
+                        <label htmlFor="profileImage">프로필 이미지 업데이트</label>
+                        <input
+                            type="file"
+                            id="profileImage"
+                            name="profileImage"
+                            accept="image/*"
+                            onChange={handleFileChange}
+                            className={styles.fileInput}
+                            ref={fileInputRef} // ref 연결
+                        />
+                    </div>
+                    <div style={{marginTop: '10px'}}>
+                        <button
+                            type="button"
+                            onClick={handleSetDefaultImage}
+                            className={styles.clearFileButton}
+                        >
                             기본 프로필
                         </button>
                     </div>
                 </div>
 
-                {/* 기타 정보 입력 필드 */}
+                {/* 사용자명 (읽기 전용) */}
                 <div className={styles.formGroup}>
-                    <label htmlFor="username" className={styles.label}>아이디</label>
+                    <label>아이디:</label>
                     <input
                         type="text"
-                        id="username"
-                        className={styles.inputField}
                         value={username}
-                        readOnly // 아이디는 수정 불가
-                    />
-                </div>
-                <div className={styles.formGroup}>
-                    <label htmlFor="nickname" className={styles.label}>닉네임</label>
-                    <input
-                        type="text"
-                        id="nickname"
                         className={styles.inputField}
-                        value={nickname}
-                        onChange={(e) => setNickname(e.target.value)}
-                        required
+                        disabled
                     />
+                    <p className={styles.helpText}>아이디는 변경할 수 없습니다.</p>
                 </div>
+
+                {/* 이메일 (수정 가능) */}
                 <div className={styles.formGroup}>
-                    <label htmlFor="email" className={styles.label}>이메일</label>
+                    <label htmlFor="email">이메일:</label>
                     <input
                         type="email"
                         id="email"
-                        className={styles.inputField}
+                        name="email"
                         value={email}
                         onChange={(e) => setEmail(e.target.value)}
                         required
+                        className={styles.inputField}
                     />
                 </div>
+
+                {/* 닉네임 (수정 가능) */}
                 <div className={styles.formGroup}>
-                    <label htmlFor="firstname" className={styles.label}>이름</label>
+                    <label htmlFor="nickname">닉네임:</label>
+                    <input
+                        type="text"
+                        id="nickname"
+                        name="nickname"
+                        value={nickname}
+                        onChange={(e) => setNickname(e.target.value)}
+                        required
+                        className={styles.inputField}
+                    />
+                </div>
+
+                {/* 성 (수정 가능) */}
+                <div className={styles.formGroup}>
+                    <label htmlFor="firstname">성:</label>
                     <input
                         type="text"
                         id="firstname"
-                        className={styles.inputField}
+                        name="firstname"
                         value={firstname}
                         onChange={(e) => setFirstname(e.target.value)}
                         required
+                        className={styles.inputField}
                     />
                 </div>
+
+                {/* 이름 (수정 가능) */}
                 <div className={styles.formGroup}>
-                    <label htmlFor="lastname" className={styles.label}>성</label>
+                    <label htmlFor="lastname">이름:</label>
                     <input
                         type="text"
                         id="lastname"
-                        className={styles.inputField}
+                        name="lastname"
                         value={lastname}
                         onChange={(e) => setLastname(e.target.value)}
                         required
+                        className={styles.inputField}
                     />
                 </div>
+
+                {/* 생년월일 (수정 가능) */}
                 <div className={styles.formGroup}>
-                    <label htmlFor="birthdate" className={styles.label}>생년월일</label>
+                    <label htmlFor="birthdate">생년월일:</label>
                     <input
                         type="date"
                         id="birthdate"
-                        className={styles.inputField}
+                        name="birthdate"
                         value={birthdate}
                         onChange={(e) => setBirthdate(e.target.value)}
                         required
+                        className={styles.inputField}
                     />
                 </div>
 
-                <button type="submit" className={styles.submitButton} disabled={submitting}>
-                    {submitting ? '저장 중...' : '정보 저장'}
-                </button>
+                <div className={styles.buttonContainer}>
+                    <button
+                        type="submit"
+                        disabled={submitting}
+                        className={styles.submitButton}
+                    >
+                        {submitting ? '저장 중...' : '정보 저장'}
+                    </button>
+                    <button
+                        type="button"
+                        onClick={() => navigate('/mypage')}
+                        className={styles.cancelButton}
+                    >
+                        취소
+                    </button>
+                </div>
             </form>
-
         </div>
     );
 };

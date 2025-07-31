@@ -2,7 +2,7 @@ import React, { useEffect, useRef } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import { Client } from '@stomp/stompjs';
 import SockJS from 'sockjs-client';
-import store, {RootState, updateLobby} from "./store";
+import store, {RootState, setTotalUnreadCount, updateLobby} from "./store";
 // 나중에 만들 Redux action들을 임포트한다고 가정
 // import { updateLobby, updateUnreadCount } from './store';
 
@@ -49,8 +49,18 @@ function WebSocketManager() {
                 });
 
                 client.subscribe(`/sub/user/${userName}`, (message) => {
+                    const notification = JSON.parse(message.body);
                     console.log('개인 알림 수신:', message.body);
-                    // TODO: Redux dispatch(updateUnreadCount(JSON.parse(message.body)));
+                    // ✅ 서버가 보낸 'TOTAL_UNREAD_COUNT_UPDATE' 메시지를 처리
+                    if (notification.type === 'TOTAL_UNREAD_COUNT_UPDATE') {
+                        // Redux 스토어의 총 안 읽은 메시지 개수를 즉시 업데이트
+                        dispatch(setTotalUnreadCount(notification.totalUnreadCount));
+                    }
+
+                    // 강퇴 메시지 처리 등 다른 알림 처리...
+                    if (notification.type === 'KICK') {
+                        // ...
+                    }
                 });
             },
             onDisconnect: () => {
