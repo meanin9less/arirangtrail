@@ -5,18 +5,18 @@ import { useDispatch, useSelector } from 'react-redux';
 import store, { RootState, setTotalUnreadCount } from '../store';
 import axios from 'axios';
 import apiClient from '../api/axiosInstance';
-import { Room } from './CommunityPage'; // 부모의 Room 인터페이스를 사용
+import { Room } from './CommunityPage';
 import {
     IoSend, IoAddCircleOutline, IoCameraOutline, IoArrowBack, IoLogOutOutline,
-    IoTrashOutline, IoPeopleOutline, IoCalendarOutline, IoChatbubblesOutline
+    IoTrashOutline, IoMegaphoneOutline, IoHandRightOutline, IoHappyOutline
 } from 'react-icons/io5';
 
 // --- 타입 정의 ---
 interface ChatMessage {
+    nickname?: string;
     type: 'ENTER' | 'TALK' | 'LEAVE' | 'IMAGE';
     roomId: string;
     sender: string;
-    senderNickname?: string;
     message: string;
     messageSeq?: number;
 }
@@ -44,12 +44,12 @@ const ChatRoom = ({ roomId, onLeave }: ChatRoomProps) => {
     const dispatch = useDispatch();
     const API_URL = process.env.REACT_APP_API_URL;
 
-
-
+    // ... (기존 함수들은 변경되지 않음) ...
     const updateLastReadSequence = useCallback(async (seqToUpdate: number) => {
         if (!userName || seqToUpdate === 0) return;
         try {
             await apiClient.post(`chat/rooms/update-status`, { roomId, username: userName, lastReadSeq: seqToUpdate });
+            console.log(`[읽음 처리/참여 기록] Room: ${roomId}, User: ${userName}, LastReadSeq: ${seqToUpdate}`);
         } catch (error) {
             console.error("읽음 상태 갱신/참여 기록에 실패했습니다.", error);
         }
@@ -57,7 +57,6 @@ const ChatRoom = ({ roomId, onLeave }: ChatRoomProps) => {
 
     const fetchRoomInfo = useCallback(async () => {
         try {
-            // 이제 이 API는 participantCount를 포함한 ChatRoomDetailDTO를 반환합니다.
             const response = await apiClient.get<Room>(`chat/rooms/${roomId}`);
             setRoomInfo(response.data);
         } catch (error) {
@@ -84,7 +83,6 @@ const ChatRoom = ({ roomId, onLeave }: ChatRoomProps) => {
         }
     }, [roomId]);
 
-    //수정1
     const connectWebSocket = useCallback(() => {
         const token = store.getState().token.token;
         if (!userName || !token) return;
@@ -93,31 +91,17 @@ const ChatRoom = ({ roomId, onLeave }: ChatRoomProps) => {
             connectHeaders: { Authorization: token },
             webSocketFactory: () => new SockJS(`${API_URL}/ws-stomp`),
             reconnectDelay: 5000,
+            debug: (str) => { console.log(new Date(), str); },
             onConnect: () => {
+                console.log('STOMP 연결 성공!');
                 clientRef.current = client;
                 client.subscribe(`/sub/chat/room/${roomId}`, (message) => {
-                    const receivedMessage = JSON.parse(message.body);
-
-                    // ✅ 수정: 백엔드에서 보낸 참여자 수 업데이트 메시지 처리
-                    if (receivedMessage.type === 'PARTICIPANT_COUNT_UPDATE') {
-                        setRoomInfo(prevInfo => prevInfo ? {
-                            ...prevInfo,
-                            participantCount: receivedMessage.participantCount
-                        } : null);
-                        return; // 일반 채팅 메시지가 아니므로 여기서 종료
-                    }
-
-                    // 일반 채팅 메시지 처리
-                    if (receivedMessage.type === 'ENTER' || receivedMessage.type === 'TALK' ||
-                        receivedMessage.type === 'LEAVE' || receivedMessage.type === 'IMAGE') {
-
-                        setMessages((prevMessages) => [...prevMessages, receivedMessage as ChatMessage]);
-                        if (receivedMessage.messageSeq) {
-                            lastMessageSeqRef.current = receivedMessage.messageSeq;
-                        }
+                    const receivedMessage = JSON.parse(message.body) as ChatMessage;
+                    setMessages((prevMessages) => [...prevMessages, receivedMessage]);
+                    if (receivedMessage.messageSeq) {
+                        lastMessageSeqRef.current = receivedMessage.messageSeq;
                     }
                 });
-
                 client.publish({
                     destination: '/api/pub/chat/enter',
                     body: JSON.stringify({ roomId, sender: userName, nickname: userNickname, type: 'ENTER' }),
@@ -126,20 +110,19 @@ const ChatRoom = ({ roomId, onLeave }: ChatRoomProps) => {
             onStompError: (frame) => { console.error('STOMP Error:', frame); },
         });
         client.activate();
-    }, [roomId, userName, API_URL, fetchRoomInfo]); // fetchRoomInfo 의존성 추가
+    }, [roomId, userName, API_URL, userNickname]);
 
     useEffect(() => {
         const token = store.getState().token.token;
         if (!userName || !token) return;
 
         const initializeAndConnect = async () => {
+            if (!userName) return;
             await fetchRoomInfo();
             const previousMessages = await fetchPreviousMessages();
-            const lastSeq = previousMessages[previousMessages.length - 1]?.messageSeq ?? 0;
-
+            const lastSeq = previousMessages.length > 0 ? previousMessages[previousMessages.length - 1].messageSeq ?? 0 : 0;
             lastMessageSeqRef.current = lastSeq;
             await updateLastReadSequence(lastMessageSeqRef.current);
-
             try {
                 const response = await apiClient.get(`/chat/users/${userName}/unread-count`);
                 dispatch(setTotalUnreadCount(response.data.totalUnreadCount));
@@ -151,15 +134,19 @@ const ChatRoom = ({ roomId, onLeave }: ChatRoomProps) => {
         initializeAndConnect();
 
         return () => {
+            const finalReadSeq = lastMessageSeqRef.current;
+            console.log(`[나가기 전 읽음 처리] Room: ${roomId}, User: ${userName}, LastReadSeq: ${finalReadSeq}`);
+            updateLastReadSequence(finalReadSeq);
             if (clientRef.current?.connected) {
                 clientRef.current.publish({
                     destination: '/api/pub/chat/leave',
                     body: JSON.stringify({ roomId, sender: userName, type: 'LEAVE' }),
                 });
                 clientRef.current.deactivate();
+                console.log('STOMP 연결이 비활성화되었습니다.');
             }
         };
-    }, [roomId, userName,userNickname, dispatch, fetchRoomInfo, fetchPreviousMessages, updateLastReadSequence, connectWebSocket]);
+    }, [roomId, userName, userNickname, dispatch, fetchRoomInfo, fetchPreviousMessages, updateLastReadSequence, connectWebSocket]);
 
     useEffect(() => {
         if (messageContainerRef.current) {
@@ -167,12 +154,11 @@ const ChatRoom = ({ roomId, onLeave }: ChatRoomProps) => {
         }
     }, [messages]);
 
-    // --- 이벤트 핸들러 ---
     const sendMessage = () => {
         if (inputMessage.trim() && clientRef.current?.connected && userName) {
             clientRef.current.publish({
                 destination: '/api/pub/chat/message',
-                body: JSON.stringify({ roomId, sender: userName, nickname: userNickname,message: inputMessage, type: 'TALK' }),
+                body: JSON.stringify({ roomId, sender: userName, nickname: userNickname, message: inputMessage, type: 'TALK' }),
             });
             setInputMessage('');
         }
@@ -183,7 +169,6 @@ const ChatRoom = ({ roomId, onLeave }: ChatRoomProps) => {
         if (!file || !userName) return;
         const formData = new FormData();
         formData.append('file', file);
-
         try {
             const response = await axios.post<{ url: string }>(`${API_URL}/api/files/upload`, formData, {
                 headers: { 'Content-Type': 'multipart/form-data' }
@@ -192,7 +177,7 @@ const ChatRoom = ({ roomId, onLeave }: ChatRoomProps) => {
             if (clientRef.current?.connected) {
                 clientRef.current.publish({
                     destination: '/api/pub/chat/message',
-                    body: JSON.stringify({ roomId, sender: userName, nickname: userNickname,message: imageUrl, type: 'IMAGE' }),
+                    body: JSON.stringify({ roomId, sender: userName, nickname: userNickname, message: imageUrl, type: 'IMAGE' }),
                 });
             }
             setIsOptionsOpen(false);
@@ -210,13 +195,10 @@ const ChatRoom = ({ roomId, onLeave }: ChatRoomProps) => {
 
     const handleLeaveRoom = async () => {
         if (!userName) return;
-
         try {
             await apiClient.post(`chat/rooms/${roomId}/leave`, { username: userName });
             alert("채팅방에서 나갔습니다.");
-
-            onLeave(-1); // ✅ -1을 명확히 하드코딩
-
+            onLeave(-1);
         } catch (error) {
             console.error("채팅방 나가기에 실패했습니다.", error);
             alert("채팅방을 나가는 중 오류가 발생했습니다.");
@@ -227,17 +209,32 @@ const ChatRoom = ({ roomId, onLeave }: ChatRoomProps) => {
         onLeave(lastMessageSeqRef.current);
     };
 
-
     const handleDeleteRoom = async () => {
         if (!userName || !window.confirm("정말로 이 방을 삭제하시겠습니까?")) return;
         try {
             await apiClient.delete(`chat/rooms/${roomId}`, { data: { username: userName } });
             alert("채팅방이 삭제되었습니다.");
-            onLeave(0); // 읽음 처리 필요 없음
+            onLeave(0);
         } catch (error) {
             console.error("방 삭제에 실패했습니다.", error);
             alert("방을 삭제하는 중 오류가 발생했습니다.");
         }
+    };
+
+    const handleAnnouncement = () => {
+        console.log("공지사항 버튼 클릭");
+        alert("공지사항 기능은 준비 중입니다.");
+    };
+
+    const handleBanUser = () => {
+        console.log("밴/강퇴 버튼 클릭");
+        alert("밴/강퇴 기능은 준비 중입니다.");
+    };
+
+    const handleEmoticonClick = () => {
+        console.log("이모티콘 버튼 클릭");
+        alert("이모티콘 기능은 준비 중입니다.");
+        setIsOptionsOpen(false);
     };
 
     const handleOutsideClick = () => {
@@ -246,162 +243,229 @@ const ChatRoom = ({ roomId, onLeave }: ChatRoomProps) => {
         }
     };
 
+    // --- [수정] 옵션 버튼들을 배열로 관리하여 확장성 및 애니메이션 적용 용이 ---
+    const menuOptions = [
+        { icon: <IoHappyOutline size={24} color="#a0a0a0" />, handler: handleEmoticonClick, title: '이모티콘' },
+        { icon: <IoCameraOutline size={24} color="#a0a0a0" />, handler: handleImageIconClick, title: '사진 전송' }
+    ];
+
     return (
-        <div style={styles.container} onClick={handleOutsideClick}>
-            <header style={styles.header}>
-                <div style={styles.headerTop}>
-                    <div style={styles.headerButtons}>
-                        {/* ✅ 수정: onClick에 새로운 핸들러 연결 */}
-                        <button onClick={handleExitToLobby} title="로비로 나가기" style={styles.headerButtonStyle}>
-                            <IoArrowBack size={20} />
-                        </button>
-                        <button onClick={handleLeaveRoom} title="방에서 나가기" style={styles.headerButtonStyle}>
-                            <IoLogOutOutline size={20} style={{ transform: 'rotate(180deg)' }} />
-                        </button>
-                        {userName === roomInfo?.creator && (
-                            <button onClick={handleDeleteRoom} title="방 삭제하기" style={styles.headerButtonStyle}>
-                                <IoTrashOutline size={20} />
-                            </button>
-                        )}
-                    </div>
+        <div style={{
+            maxWidth: '950px',
+            margin: '20px auto',
+            padding: '20px',
+            border: '1px solid #e9ecef',
+            borderRadius: '12px',
+            display: 'flex',
+            flexDirection: 'column',
+            height: '90vh',
+            backgroundColor: '#fff'
+        }} onClick={handleOutsideClick}>
+            <div style={{
+                backgroundColor: 'transparent',
+                padding: '15px 0',
+                marginBottom: '20px',
+                position: 'relative' // 부모 컨테이너는 position: relative 유지
+            }}>
+                {/* 1. 왼쪽 버튼들만 남겨둡니다. */}
+                <div style={{
+                    position: 'absolute',
+                    top: '0',
+                    left: '0',
+                    display: 'flex',
+                    gap: '8px',
+                    zIndex: 10
+                }}>
+                    <button
+                        onClick={handleExitToLobby}
+                        title="로비로 나가기"
+                        style={circleButtonStyle}
+                    >
+                        <IoArrowBack size={20} color="#a0a0a0" />
+                    </button>
+                    <button
+                        onClick={handleLeaveRoom}
+                        title="방에서 나가기"
+                        style={circleButtonStyle}
+                    >
+                        <IoLogOutOutline
+                            size={20}
+                            color="#a0a0a0"
+                            style={{ transform: 'rotate(180deg)' }}
+                        />
+                    </button>
                 </div>
-                {roomInfo ? (
-                    <div style={styles.roomInfoContainer}>
-                        <h2 style={styles.roomTitle}>{roomInfo.title} <span style={styles.subjectPill}>{roomInfo.subject}</span></h2>
-                        <div style={styles.roomMeta}>
-                            <div style={styles.metaItem}>
-                                <IoPeopleOutline style={styles.metaIcon} />
-                                <span>{`${roomInfo.participantCount || 0} / ${roomInfo.maxParticipants || '-'}`}</span>
-                            </div>
-                            <div style={styles.metaItem}>
-                                <IoCalendarOutline style={styles.metaIcon} />
-                                <span>{roomInfo.meetingDate ? new Date(roomInfo.meetingDate).toLocaleDateString() : '날짜 미정'}</span>
-                            </div>
-                            <div style={styles.metaItem}>
-                                <IoChatbubblesOutline style={styles.metaIcon} />
-                                <span>개설자: <strong>{roomInfo.creatorNickname || roomInfo.creator}</strong></span>
-                            </div>
-                        </div>
-                    </div>
-                ) : (
-                    <div style={{ textAlign: 'center', padding: '20px' }}>
-                        <h2 style={{ margin: '0', color: '#6c757d' }}>채팅방 정보 로딩 중...</h2>
+
+                {/* 2. ✨ [핵심 수정] 방장 전용 버튼들을 위한 새로운 컨테이너를 만듭니다. */}
+                {userName === roomInfo?.creator && (
+                    <div style={{
+                        position: 'absolute',
+                        top: '0',
+                        right: '0', // ✨ left 대신 right: 0을 사용하여 오른쪽에 붙입니다.
+                        display: 'flex',
+                        gap: '8px',
+                        zIndex: 10
+                    }}>
+                        <button onClick={handleAnnouncement} title="공지사항" style={circleButtonStyle}>
+                            <IoMegaphoneOutline size={20} color="#a0a0a0" />
+                        </button>
+                        <button onClick={handleBanUser} title="밴/강퇴" style={circleButtonStyle}>
+                            <IoHandRightOutline size={20} color="#a0a0a0" />
+                        </button>
+                        <button onClick={handleDeleteRoom} title="방 삭제하기" style={circleButtonStyle}>
+                            <IoTrashOutline size={20} color="#a0a0a0" />
+                        </button>
                     </div>
                 )}
-            </header>
+                {/* 중앙의 방 제목 부분은 그대로 둡니다. */}
+                <div style={{ textAlign: 'center', paddingTop: '50px' }}>
+                    {roomInfo ? (
+                        <div>
+                            <h2 style={{ margin: '0 0 8px 0', color: '#343a40' }}>
+                                {roomInfo.title} <span style={{ color: '#6c757d', fontSize: '18px' }}>#{roomInfo.id}</span>
+                            </h2>
+                            {/* 개설자 정보는 이제 creatorNickname을 우선으로 사용하도록 수정 */}
+                            <p style={{ margin: '0', color: '#6c757d', fontSize: '14px' }}>개설자: {roomInfo.creatorNickname || roomInfo.creator}</p>
+                        </div>
+                    ) : (
+                        <h2 style={{ margin: '0', color: '#6c757d' }}>채팅방 정보 로딩 중...</h2>
+                    )}
+                </div>
+            </div>
 
-            <div ref={messageContainerRef} style={styles.messageList}>
+            <div ref={messageContainerRef} style={{ flexGrow: 1, overflowY: 'auto', padding: '10px', marginBottom: '10px' }}>
                 {messages.map((msg, index) => (
                     <div key={index} style={{
-                        ...styles.messageWrapper,
-                        justifyContent: msg.sender === userName ? 'flex-end' : 'flex-start'
+                        textAlign: msg.sender === userName ? 'right' : 'left',
+                        margin: '15px 0',
                     }}>
-                        {/*{msg.sender !== userName && <div style={styles.avatar}></div>}*/}
-                        <div style={{ maxWidth: '70%' }}>
-                            <small style={{ ...styles.senderName, textAlign: msg.sender === userName ? 'right' : 'left' }}>
-                                {msg.senderNickname || msg.sender}
-                            </small>
+                        <div style={{ display: 'flex', flexDirection: msg.sender === userName ? 'row-reverse' : 'row', alignItems: 'flex-end', gap: '8px' }}>
                             <div style={{
-                                ...styles.messageBubble,
-                                backgroundColor: msg.type === 'IMAGE' ? 'transparent' : (msg.type === 'ENTER' || msg.type === 'LEAVE' ? '#fffac1' : (msg.sender === userName ? '#dcf8c6' : '#fff')),
-                                border: msg.sender !== userName ? '1px solid #e9ecef' : 'none'
+                                display: 'inline-block',
+                                padding: msg.type === 'IMAGE' ? '0px' : '8px 12px',
+                                borderRadius: '18px',
+                                maxWidth: '70%',
+                                backgroundColor: msg.type === 'IMAGE' ? 'transparent' : (msg.type === 'ENTER' || msg.type === 'LEAVE' ? '#FFFACD' : (msg.sender === userName ? '#DCF8C6' : '#EAEAEA'))
                             }}>
                                 {msg.type === 'IMAGE' ? (
-                                    <img
-                                        src={msg.message}
-                                        alt="채팅 이미지"
-                                        style={{ maxWidth: '200px', borderRadius: '8px', cursor: 'pointer', display: 'block' }}
-                                        onClick={() => window.open(msg.message, '_blank')}
-                                    />
+                                    <img src={msg.message} alt="채팅 이미지" style={{ maxWidth: '200px', borderRadius: '8px', cursor: 'pointer', display: 'block' }} onClick={() => window.open(msg.message, '_blank')} />
                                 ) : (
-                                    // ✅ 수정: HTML 문자열 내의 style 속성을 올바르게 수정
-                                    <span style={{ whiteSpace: 'pre-wrap', wordBreak: 'break-all' }} dangerouslySetInnerHTML={{ __html: msg.message.replace(/(https?:\/\/[^\s]+)/g, '<a href="$1" target="_blank" rel="noopener noreferrer" style="color: #007bff;">$1</a>') }}></span>
+                                    <span style={{ whiteSpace: 'pre-wrap', wordBreak: 'break-all' }}>{msg.message}</span>
                                 )}
                             </div>
+                            <small style={{ color: '#6c757d', whiteSpace: 'nowrap' }}>{msg.nickname || msg.sender}</small>
                         </div>
                     </div>
                 ))}
             </div>
 
-            <footer style={styles.footer}>
-                <div style={{ position: 'relative' }}>
-                    {isOptionsOpen && (
-                        <div style={styles.fileOptions} onClick={(e) => e.stopPropagation()}>
-                            <button onClick={handleImageIconClick} style={styles.iconButtonStyle}>
-                                <IoCameraOutline size={24} />
+            {/* --- [수정] 하단 입력 및 옵션 메뉴 부분 --- */}
+            <div style={{ position: 'relative' }}>
+                {isOptionsOpen && (
+                    <div
+                        style={{
+                            position: 'absolute',
+                            bottom: '60px',
+                            left: '1px',
+                            display: 'flex',
+                            // --- [수정] flex-direction을 column으로 변경하여 세로 배치 ---
+                            flexDirection: 'column',
+                            gap: '8px',
+                        }}
+                        onClick={(e) => e.stopPropagation()}
+                    >
+                        {/* --- [수정] menuOptions 배열을 map으로 렌더링하고 애니메이션 스타일 적용 --- */}
+                        {menuOptions.map((option, index) => (
+                            <button
+                                key={option.title}
+                                onClick={option.handler}
+                                title={option.title}
+                                style={{
+                                    ...iconButtonStyle,
+                                    background: 'white',
+                                    borderRadius: '16px',
+                                    boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
+                                    padding: '8px',
+                                    width: '44px', // 아이콘 크기에 맞게 조정
+                                    height: '44px',
+                                    // --- [추가] 애니메이션을 위한 스타일 ---
+                                    opacity: isOptionsOpen ? 1 : 0,
+                                    transform: isOptionsOpen ? 'translateY(0)' : 'translateY(10px)',
+                                    transition: `all 250ms ease-out`,
+                                    // --- [추가] 순차적 애니메이션을 위한 delay 계산 (아래쪽부터) ---
+                                    transitionDelay: `${(menuOptions.length - 1 - index) * 60}ms`
+                                }}
+                            >
+                                {option.icon}
                             </button>
-                        </div>
-                    )}
-                    <div style={styles.inputContainer}>
-                        <button onClick={(e) => { e.stopPropagation(); setIsOptionsOpen(!isOptionsOpen); }} style={styles.iconButtonStyle}>
-                            <IoAddCircleOutline size={28} />
-                        </button>
-                        <input type="file" ref={fileInputRef} onChange={handleFileChange} style={{ display: 'none' }} accept="image/*" />
-                        <input
-                            type="text"
-                            value={inputMessage}
-                            onChange={(e) => setInputMessage(e.target.value)}
-                            onKeyDown={(e) => e.key === 'Enter' && sendMessage()}
-                            placeholder="메시지를 입력하세요"
-                            style={styles.input}
-                        />
-                        <button onClick={sendMessage} style={styles.iconButtonStyle} disabled={!inputMessage.trim()}>
-                            <IoSend size={24} color={inputMessage.trim() ? '#007bff' : '#a0a0a0'} />
-                        </button>
+                        ))}
                     </div>
+                )}
+                <div style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    padding: '4px 10px',
+                    backgroundColor: '#f0f2f5',
+                    borderRadius: '24px',
+                    height: '40px'
+                }}>
+                    <button
+                        onClick={(e) => {
+                            e.stopPropagation();
+                            setIsOptionsOpen(!isOptionsOpen);
+                        }}
+                        style={iconButtonStyle}
+                    >
+                        <IoAddCircleOutline size={28} color="#a0a0a0" />
+                    </button>
+                    <input type="file" ref={fileInputRef} onChange={handleFileChange} style={{ display: 'none' }} accept="image/*" />
+                    <input
+                        type="text"
+                        value={inputMessage}
+                        onChange={(e) => setInputMessage(e.target.value)}
+                        onKeyDown={(e) => e.key === 'Enter' && sendMessage()}
+                        placeholder="메시지를 입력하세요"
+                        style={{
+                            flex: 1,
+                            border: 'none',
+                            background: 'transparent',
+                            outline: 'none',
+                            fontSize: '16px',
+                            marginLeft: '8px',
+                            marginRight: '8px'
+                        }}
+                    />
+                    <button onClick={sendMessage} style={iconButtonStyle} disabled={!inputMessage.trim()}>
+                        <IoSend size={24} color={inputMessage.trim() ? '#007bff' : '#a0a0a0'} />
+                    </button>
                 </div>
-            </footer>
+            </div>
         </div>
     );
 };
 
-// ✅ 수정: 모든 스타일을 하나의 객체에서 관리하여 일관성 확보
-const styles: { [key: string]: React.CSSProperties } = {
-    container: { maxWidth: '950px', margin: '20px auto', border: '1px solid #e9ecef', borderRadius: '12px', display: 'flex', flexDirection: 'column', height: 'calc(100vh - 40px)', backgroundColor: '#f8f9fa' },
-    header: { backgroundColor: '#ffffff', padding: '15px 20px', borderBottom: '1px solid #e9ecef', borderRadius: '12px 12px 0 0' },
-    headerTop: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '15px' },
-    headerButtons: { display: 'flex', gap: '8px' },
-    roomInfoContainer: { textAlign: 'center' },
-    roomTitle: { margin: '0 0 8px 0', color: '#343a40', fontSize: '22px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px' },
-    subjectPill: { fontSize: '12px', color: '#007bff', backgroundColor: '#e7f3ff', padding: '4px 10px', borderRadius: '12px', fontWeight: '500' },
-    description: { margin: '0 0 12px 0', color: '#6c757d', fontSize: '14px' },
-    roomMeta: { display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '20px', color: '#495057' },
-    metaItem: { display: 'flex', alignItems: 'center', gap: '6px', fontSize: '14px' },
-    metaIcon: { fontSize: '16px', color: '#007bff' },
-    messageList: { flexGrow: 1, overflowY: 'auto', padding: '10px 20px' },
-    messageWrapper: { display: 'flex', alignItems: 'flex-end', margin: '15px 0' },
-    avatar: { width: '32px', height: '32px', borderRadius: '50%', backgroundColor: '#e9ecef', marginRight: '10px' },
-    senderName: { color: '#6c757d', padding: '0 5px', marginBottom: '4px', display: 'block', fontSize: '12px' },
-    messageBubble: { padding: '8px 12px', borderRadius: '18px', maxWidth: '100%', marginTop: '4px', textAlign: 'left' },
-    footer: { padding: '10px 20px' },
-    fileOptions: { position: 'absolute', bottom: '60px', left: '1px', background: 'white', borderRadius: '16px', boxShadow: '0 4px 12px rgba(0,0,0,0.15)', padding: '8px', display: 'flex', gap: '8px' },
-    inputContainer: { display: 'flex', alignItems: 'center', padding: '4px 10px', backgroundColor: '#ffffff', borderRadius: '24px', height: '40px', border: '1px solid #dee2e6' },
-    input: { flex: 1, border: 'none', background: 'transparent', outline: 'none', fontSize: '16px', marginLeft: '8px', marginRight: '8px' },
-    headerButtonStyle: {
-        width: '40px',
-        height: '40px',
-        borderRadius: '50%',
-        backgroundColor: 'white',
-        border: '1px solid #e0e0e0',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        cursor: 'pointer',
-        boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
-        color: '#495057'
-    },
-    iconButtonStyle: {
-        background: 'none',
-        border: 'none',
-        padding: '8px',
-        cursor: 'pointer',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        borderRadius: '50%',
-        color: '#6c757d'
-    }
+const circleButtonStyle: React.CSSProperties = {
+    width: '40px',
+    height: '40px',
+    borderRadius: '50%',
+    backgroundColor: 'white',
+    border: '1px solid #e0e0e0',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    cursor: 'pointer',
+    boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
 };
 
-// ✅ 수정: 중복된 선언 및 export 구문 삭제
+const iconButtonStyle: React.CSSProperties = {
+    background: 'none',
+    border: 'none',
+    padding: '8px',
+    cursor: 'pointer',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderRadius: '50%'
+};
+
 export default ChatRoom;

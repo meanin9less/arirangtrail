@@ -122,7 +122,7 @@ const AllRooms = () => {
                                     </div>
                                     <div style={styles.infoItem}>
                                         <IoChatbubblesOutline style={styles.infoIcon} />
-                                        <span>개설자: <strong>{room.creator}</strong></span>
+                                        <span>개설자: <strong>{room.creatorNickname || room.creator}</strong></span>
                                     </div>
                                 </div>
                                 <div style={styles.roomCardFooter}>

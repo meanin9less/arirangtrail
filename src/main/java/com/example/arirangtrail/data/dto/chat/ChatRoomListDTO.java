@@ -15,4 +15,5 @@ public class ChatRoomListDTO {
     private long participantCount;
     private Integer maxParticipants;
     private long unreadCount;
+    private String creatorNickname;
 }

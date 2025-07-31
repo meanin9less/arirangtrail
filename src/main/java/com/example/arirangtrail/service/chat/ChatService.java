@@ -56,11 +56,12 @@ public class ChatService {
                     return new ChatRoomListDTO(
                             room.getId(),
                             room.getTitle(),
-                            room.getCreator(),
+                            room.getCreator(),          // username
                             room.getMeetingDate(),
                             participantCount,
                             room.getMaxParticipants(),
-                            unreadCount
+                            unreadCount,
+                            room.getCreatorNickname()   // 닉네임
                     );
                 })
                 .collect(Collectors.toList());
@@ -100,7 +101,7 @@ public class ChatService {
         newRoom.setId(roomId); // Long 타입 ID 설정
         newRoom.setTitle(createRoomDTO.getTitle());
         newRoom.setCreator(createRoomDTO.getUsername());
-        newRoom.setCreatorNickname(createRoomDTO.getUsername());
+        newRoom.setCreatorNickname(createRoomDTO.getNickname());
         newRoom.setSubject(createRoomDTO.getSubject());
         newRoom.setMeetingDate(createRoomDTO.getMeetingDate());
         newRoom.setMaxParticipants(createRoomDTO.getMaxParticipants());

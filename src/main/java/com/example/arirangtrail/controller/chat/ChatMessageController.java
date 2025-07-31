@@ -27,21 +27,25 @@ public class ChatMessageController {
 
     @MessageMapping("/chat/enter")
     public void enter(ChatMessageDTO message) {
-        // 프론트에서 nickname을 보내주지 않으면 null이 될 수 있으므로, 방어 코드 추가
-        String nickname = message.getNickname() != null ? message.getNickname() : message.getSender();
-        message.setMessage(nickname + "님이 입장하셨습니다.");
+        // 프론트에서 보낸 nickname을 그대로 사용합니다. (이제 프론트와 필드명이 동일합니다)
+        String entranceNickname = message.getNickname() != null ? message.getNickname() : message.getSender();
 
-        // DB 저장 없이, 입장 메시지만 모두에게 방송
+        // 메시지 내용을 설정합니다.
+        message.setMessage(entranceNickname + "님이 입장하셨습니다.");
+
+        // ★★★ 이제 DTO의 'nickname' 필드는 이미 프론트에서 보내준 값으로 채워져 있으므로,
+        // 별도로 set 할 필요 없이 그대로 방송하면 됩니다.
         template.convertAndSend("/sub/chat/room/" + message.getRoomId(), message);
         template.convertAndSend("/sub/chat/lobby", "user-entered-or-left");
     }
 
     @MessageMapping("/chat/message")
     public void talk(ChatMessageDTO message) {
-        // 1. chatService가 seq를 생성해서 반환해준, 완전한 객체를 변수에 담는다.
+        // ChatService는 프론트에서 받은 DTO의 nickname을
+        // ChatMessage Document의 senderNickname 필드에 저장하도록 수정해야 합니다.
         ChatMessage savedMessage = chatService.saveMessage(message);
 
-        // 2. seq가 포함된 이 "savedMessage" 객체를 방송한다.
+        // 서비스에서 반환된 객체는 모든 정보가 담겨있으므로 그대로 방송합니다.
         template.convertAndSend("/sub/chat/room/" + savedMessage.getRoomId(), savedMessage);
     }
 
