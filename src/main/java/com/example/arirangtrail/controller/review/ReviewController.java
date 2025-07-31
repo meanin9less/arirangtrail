@@ -125,7 +125,7 @@ public class ReviewController {
     public ResponseEntity<ReviewCommentDTO> createComment(@PathVariable Long reviewid, @RequestBody ReviewCommentDTO reviewCommentDTO){
         ReviewCommentDTO result = this.reviewCommentService.createReviewComment(reviewid, reviewCommentDTO);
         if (result != null) {
-            return ResponseEntity.ok().build();
+            return ResponseEntity.ok(result);
         }
         return ResponseEntity.notFound().build();
     }
