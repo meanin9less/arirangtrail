@@ -79,6 +79,7 @@ public class ChatService {
         dto.setTitle(room.getTitle()); // <-- 이 부분이 제대로 되어 있는지?
         dto.setSubject(room.getSubject()); // <-- 이 부분이 제대로 되어 있는지?
         dto.setCreator(room.getCreator()); // <-- 이 부분이 제대로 되어 있는지?
+        dto.setCreatorNickname(room.getCreatorNickname());
         dto.setMeetingDate(room.getMeetingDate()); // <-- 이 부분이 제대로 되어 있는지?
         dto.setMaxParticipants(room.getMaxParticipants()); // <-- 이 부분이 제대로 되어 있는지?
         dto.setNotice(room.getNotice());

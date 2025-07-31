@@ -20,7 +20,5 @@ public class ChatRoomDetailDTO {
     private long lastMessageSeq; // 마지막 메시지 순번
     private LocalDateTime createdAt; // 방 생성일 (이미 존재)
     private LocalDateTime updatedAt; // 방 수정일
-
-    public ChatRoomDetailDTO(ChatRoom room, long currentParticipantCount) {
-    }
+    private String creatorNickname;
 }
