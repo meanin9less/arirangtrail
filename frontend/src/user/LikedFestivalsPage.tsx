@@ -93,8 +93,8 @@ const LikedFestivalsPage: React.FC = () => {
             }
 
             // 1. 백엔드 FestivalController에서 사용자가 찜한 contentId 목록을 가져옵니다.
-            // ✨ API 경로 수정: '/api' 중복 제거
-            const likedResponse = await apiClient.get<string[]>('/festivals/likes/my', {
+            // ✨ API 경로 수정: '/api' 중복 제거 및 백엔드 경로와 정확히 일치하도록 수정
+            const likedResponse = await apiClient.get<string[]>('/festivals/my-page/likes', {
                 headers: {
                     Authorization: `Bearer ${jwtToken}`,
                 },
