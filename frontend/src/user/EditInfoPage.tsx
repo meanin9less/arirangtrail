@@ -20,7 +20,7 @@ interface UserProfile {
     lastname: string;
     nickname: string;
     birthdate: string; // YYYY-MM-DD 형식의 문자열
-    imageUrl?: string; // 프로필 이미지 URL은 선택 사항
+    imageurl?: string; // 프로필 이미지 URL은 선택 사항
 }
 
 const EditInfoPage: React.FC = () => {
