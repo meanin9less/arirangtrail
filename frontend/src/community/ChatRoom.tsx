@@ -15,17 +15,24 @@ import {
 // --- 타입 정의 ---
 interface ChatMessage {
     nickname?: string;
-    type: 'ENTER' | 'TALK' | 'LEAVE' | 'IMAGE';
+    type: 'ENTER' | 'TALK' | 'LEAVE' | 'IMAGE' | 'KICK';
     roomId: string;
     sender: string;
     message: string;
     messageSeq?: number;
+    kickedUsername?: string;
 }
 
 interface ChatRoomProps {
     roomId: string;
     onLeave: (lastReadSeq: number) => void;
 }
+
+interface Participant {
+    username: string;
+    nickname: string;
+}
+
 
 const ChatRoom = ({ roomId, onLeave }: ChatRoomProps) => {
     const userProfile = useSelector((state: RootState) => state.token.userProfile);
@@ -36,6 +43,9 @@ const ChatRoom = ({ roomId, onLeave }: ChatRoomProps) => {
     const [inputMessage, setInputMessage] = useState('');
     const [roomInfo, setRoomInfo] = useState<Room | null>(null);
     const [isOptionsOpen, setIsOptionsOpen] = useState(false);
+    const [isKickModalOpen, setIsKickModalOpen] = useState(false);
+    const [participants, setParticipants] = useState<Participant[]>([]);
+    const [selectedUserToKick, setSelectedUserToKick] = useState<Participant | null>(null);
 
     const clientRef = useRef<Client | null>(null);
     const lastMessageSeqRef = useRef<number>(0);
@@ -97,6 +107,18 @@ const ChatRoom = ({ roomId, onLeave }: ChatRoomProps) => {
                 clientRef.current = client;
                 client.subscribe(`/sub/chat/room/${roomId}`, (message) => {
                     const receivedMessage = JSON.parse(message.body) as ChatMessage;
+
+                    // ✅ [신규] KICK 메시지 처리
+                    if (receivedMessage.type === 'KICK') {
+                        // 내가 강퇴당했다면
+                        if (receivedMessage.kickedUsername === userName) {
+                            alert("방장에 의해 채팅방에서 강퇴되었습니다.");
+                            // WebSocket 연결을 정상적으로 종료하고 로비로 나감
+                            clientRef.current?.deactivate();
+                            onLeave(0); // 안 읽은 카운트 갱신 불필요
+                        }
+                        return; // KICK 메시지는 화면에 표시하지 않음
+                    }
 
                     // 참여자 수 실시간 업데이트 처리
                     if ((receivedMessage as any).type === 'PARTICIPANT_COUNT_UPDATE') {
@@ -210,8 +232,43 @@ const ChatRoom = ({ roomId, onLeave }: ChatRoomProps) => {
         try { await apiClient.delete(`chat/rooms/${roomId}`, { data: { username: userName } }); alert("채팅방이 삭제되었습니다."); onLeave(0);
         } catch (error) { console.error("방 삭제에 실패했습니다.", error); alert("방을 삭제하는 중 오류가 발생했습니다."); }
     };
+    const handleBanUser = async () => {
+        if (!userName) return;
+        try {
+            const response = await apiClient.get<Participant[]>(`/chat/rooms/${roomId}/participants`, {
+                params: { username: userName }
+            });
+            setParticipants(response.data);
+            setIsKickModalOpen(true); // 모달 열기
+        } catch (error) {
+            console.error("참여자 목록을 불러오는데 실패했습니다.", error);
+            alert("참여자 목록을 불러오는데 실패했습니다.");
+        }
+    };
+    // [신규] 강퇴 실행 함수
+    const handleConfirmKick = async () => {
+        if (!selectedUserToKick || !userName) {
+            alert("강퇴할 사용자를 선택해주세요.");
+            return;
+        }
+
+        if (!window.confirm(`정말로 '${selectedUserToKick.nickname}'님을 강퇴하시겠습니까?`)) return;
+
+        try {
+            await apiClient.post(`/chat/rooms/${roomId}/kick`, {
+                creatorUsername: userName,
+                userToKick: selectedUserToKick.username
+            });
+            alert(`'${selectedUserToKick.nickname}'님이 강퇴되었습니다.`);
+            setIsKickModalOpen(false); // 모달 닫기
+            setSelectedUserToKick(null); // 선택 초기화
+        } catch (error) {
+            console.error("사용자 강퇴에 실패했습니다.", error);
+            alert("사용자 강퇴 처리 중 오류가 발생했습니다.");
+        }
+    };
+
     const handleAnnouncement = () => alert("공지사항 기능은 준비 중입니다.");
-    const handleBanUser = () => alert("밴/강퇴 기능은 준비 중입니다.");
     const handleEmoticonClick = () => { alert("이모티콘 기능은 준비 중입니다."); setIsOptionsOpen(false); };
     const handleOutsideClick = () => { if (isOptionsOpen) setIsOptionsOpen(false); };
 
@@ -348,6 +405,32 @@ const ChatRoom = ({ roomId, onLeave }: ChatRoomProps) => {
                     </div>
                 </div>
             </footer>
+            {/* ✅ [신규] 강퇴 모달 추가 (React-Modal 같은 라이브러리 사용을 권장) */}
+            {isKickModalOpen && (
+                <div style={kickModalStyles.overlay}>
+                    <div style={kickModalStyles.modal}>
+                        <h3>참여자 강퇴시키기</h3>
+                        <ul style={kickModalStyles.list}>
+                            {participants.length > 0 ? participants.map(p => (
+                                <li
+                                    key={p.username}
+                                    style={{
+                                        ...kickModalStyles.listItem,
+                                        backgroundColor: selectedUserToKick?.username === p.username ? '#e7f3ff' : 'transparent'
+                                    }}
+                                    onClick={() => setSelectedUserToKick(p)}
+                                >
+                                    {p.nickname} ({p.username})
+                                </li>
+                            )) : <p>강퇴할 다른 참여자가 없습니다.</p>}
+                        </ul>
+                        <div style={kickModalStyles.buttons}>
+                            <button onClick={() => { setIsKickModalOpen(false); setSelectedUserToKick(null); }} style={kickModalStyles.button}>취소</button>
+                            <button onClick={handleConfirmKick} disabled={!selectedUserToKick} style={{...kickModalStyles.button, ...kickModalStyles.kickButton}}>강퇴하기</button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 };
@@ -378,6 +461,17 @@ const styles: { [key: string]: React.CSSProperties } = {
     metaIcon: { fontSize: '16px', color: '#007bff' },
     messageList: { flexGrow: 1, overflowY: 'auto', padding: '10px 20px' },
     footer: { padding: '10px 20px' },
+};
+
+// ✅ [신규] 강퇴 모달 스타일
+const kickModalStyles: { [key: string]: React.CSSProperties } = {
+    overlay: { position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.5)', display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 1000 },
+    modal: { backgroundColor: 'white', padding: '20px', borderRadius: '8px', width: '90%', maxWidth: '400px' },
+    list: { listStyle: 'none', padding: 0, margin: '20px 0', maxHeight: '300px', overflowY: 'auto' },
+    listItem: { padding: '10px', borderBottom: '1px solid #eee', cursor: 'pointer' },
+    buttons: { display: 'flex', justifyContent: 'flex-end', gap: '10px', marginTop: '20px' },
+    button: { padding: '8px 16px', borderRadius: '5px', border: '1px solid #ccc', cursor: 'pointer' },
+    kickButton: { backgroundColor: '#dc3545', color: 'white', border: 'none' }
 };
 
 export default ChatRoom;

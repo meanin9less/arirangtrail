@@ -10,6 +10,7 @@ import java.time.LocalDateTime;
 public class ChatRoomListDTO {
     private Long id;
     private String title;
+    private String subject;
     private String creator;
     private LocalDateTime meetingDate;
     private long participantCount;

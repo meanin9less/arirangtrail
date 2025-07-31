@@ -27,11 +27,15 @@ public class UserChatStatus {
     private long lastReadMessageSeq;
     private LocalDateTime lastReadAt; // 마지막으로 읽은 시간 (부가 정보)
 
+    // ✅ 닉네임 필드 추가
+    private String nickname;
+
     //새로운 채팅 참여 상태를 생성하기 위한 생성자입니다
-    public UserChatStatus(Long roomId, String username) {
+    public UserChatStatus(Long roomId, String username, String nickname) {
         this.roomId = roomId;
         this.username = username;
         this.lastReadMessageSeq = 0L; // 처음에는 0으로 시작
         this.lastReadAt = LocalDateTime.now();
+        this.nickname = nickname;
     }
 }

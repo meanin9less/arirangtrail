@@ -43,11 +43,13 @@ function WebSocketManager() {
                 console.log('✅ 전역 웹소켓 연결 성공!');
                 clientRef.current = client;
 
+                //1. 로비 대상자
                 client.subscribe('/sub/chat/lobby', (message) => {
                     console.log('로비 업데이트 수신:', message.body);
                     dispatch(updateLobby());
                 });
 
+                //2. 각 개인 유저 대상
                 client.subscribe(`/sub/user/${userName}`, (message) => {
                     const notification = JSON.parse(message.body);
                     console.log('개인 알림 수신:', message.body);

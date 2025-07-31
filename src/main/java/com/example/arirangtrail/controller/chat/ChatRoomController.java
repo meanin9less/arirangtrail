@@ -2,10 +2,7 @@ package com.example.arirangtrail.controller.chat;
 
 
 import com.example.arirangtrail.data.document.ChatRoom;
-import com.example.arirangtrail.data.dto.chat.ChatRoomDetailDTO;
-import com.example.arirangtrail.data.dto.chat.ChatRoomListDTO;
-import com.example.arirangtrail.data.dto.chat.CreateRoomDTO;
-import com.example.arirangtrail.data.dto.chat.UpdateReqDTO;
+import com.example.arirangtrail.data.dto.chat.*;
 import com.example.arirangtrail.service.chat.ChatService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -102,9 +99,10 @@ public class ChatRoomController {
     @PostMapping("/{roomId}/join")
     public ResponseEntity<?> joinRoom(
             @PathVariable Long roomId,
-            @RequestBody Map<String, String> payload) {
+            @RequestBody JoinRoomRequestDTO request) {
 
-        String username = payload.get("username");
+        String username = request.getUsername();
+        String nickname = request.getNickname();
 
         if (username == null) {
             return ResponseEntity.badRequest()
@@ -113,7 +111,7 @@ public class ChatRoomController {
 
         try {
             // ✅ 입장 시도 (정원 체크, 밴 체크 등 포함)
-            chatService.joinRoom(roomId, username);
+            chatService.joinRoom(roomId, username,nickname);
 
             // ✅ 성공 시 방 정보도 함께 반환
             ChatRoomDetailDTO roomInfo = chatService.findRoomDetailsById(roomId);
@@ -148,6 +146,28 @@ public class ChatRoomController {
             return ResponseEntity.status(500)
                     .body(Map.of("success", false, "message", "서버 오류가 발생했습니다."));
         }
+    }
+
+    // ✅ [신규] 참여자 목록 조회 API
+    @GetMapping("/{roomId}/participants")
+    public ResponseEntity<List<ParticipantDTO>> getParticipants(
+            @PathVariable Long roomId,
+            @RequestParam String username) { // 실제로는 @AuthenticationPrincipal 로 가져와야 안전
+        List<ParticipantDTO> participants = chatService.getParticipants(roomId, username);
+        return ResponseEntity.ok(participants);
+    }
+
+    // ✅ [신규] 강퇴/밴 처리 API
+    @PostMapping("/{roomId}/kick")
+    public ResponseEntity<Void> kickUser(
+            @PathVariable Long roomId,
+            @RequestBody Map<String, String> payload) { // { "creatorUsername": "...", "userToKick": "..." }
+
+        String creatorUsername = payload.get("creatorUsername"); // 방장
+        String userToKick = payload.get("userToKick"); // 강퇴할 유저
+
+        chatService.kickAndBanUser(roomId, creatorUsername, userToKick);
+        return ResponseEntity.ok().build();
     }
 
 
