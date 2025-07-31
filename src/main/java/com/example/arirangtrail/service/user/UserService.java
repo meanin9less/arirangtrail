@@ -45,8 +45,8 @@ public class UserService {
 
     // 기존 updateInform 메서드 (UserDTO를 받아 DAO로 전달)
     public UserDTO updateInform(UserDTO userDTO) {
-        UserEntity updated=this.userDAO.updateInform(userDTO.getUsername(),userDTO.getFirstname(),userDTO.getLastname(),userDTO.getEmail(),userDTO.getBirthdate(),userDTO.getNickname(),userDTO.getImageurl());
-        UserDTO updatedDTO= UserDTO.builder()
+        UserEntity updated = this.userDAO.updateInform(userDTO.getUsername(), userDTO.getFirstname(), userDTO.getLastname(), userDTO.getEmail(), userDTO.getBirthdate(), userDTO.getNickname(), userDTO.getImageurl());
+        UserDTO updatedDTO = UserDTO.builder()
                 .username(updated.getUsername())
                 .firstname(updated.getFirstname())
                 .lastname(updated.getLastname())
@@ -63,7 +63,7 @@ public class UserService {
     }
 
     public UserDTO userInform(String username) {
-        UserEntity entity= this.userDAO.userInform(username);
+        UserEntity entity = this.userDAO.userInform(username);
         UserDTO userDTO = UserDTO.builder()
                 .username(entity.getUsername())
                 .role(entity.getRole())
@@ -103,59 +103,40 @@ public class UserService {
                 .build();
     }
 
-    // ✨ 새로 추가된 이미지 업로드 관련 메서드
+    // ✨ 프로필 이미지 업로드 관련 메서드 (최소 수정: S3에 업로드만 하고 URL 반환)
     @Transactional
     public String uploadProfileImage(String username, MultipartFile imageFile) throws IOException {
-        UserEntity user = this.userDAO.userInform(username);
-        String url = this.fileStore.storeFile(imageFile, bucket);
-        user.setImageurl(url);
+        UserEntity user = this.userDAO.userInform(username); // 사용자 존재 여부 확인용
+        if (user == null) {
+            throw new EntityNotFoundException("사용자를 찾을 수 없습니다: " + username);
+        }
 
-        this.userDAO.updateInform(
-                user.getUsername(),
-                user.getFirstname(),
-                user.getLastname(),
-                user.getEmail(),
-                user.getBirthdate(),
-                user.getNickname(),
-                user.getImageurl()
-        );
-        return url;
+        // 기존 이미지가 있다면 S3에서 삭제 (새 이미지로 교체되므로)
+        if (user.getImageurl() != null && !user.getImageurl().isEmpty()) { // getImageurl() 사용
+            fileStore.deleteFile(user.getImageurl(), bucket); // FileStore 사용
+        }
+
+        // 새 이미지 S3에 업로드
+        String newImageUrl = fileStore.storeFile(imageFile, bucket); // FileStore 사용
+
+        // 이 메서드에서는 DB 업데이트를 하지 않습니다.
+        // DB 업데이트는 프론트에서 이 URL을 받아 /update-inform으로 다시 요청할 때 이루어집니다.
+        return newImageUrl; // 업로드된 새 이미지 URL 반환
     }
 
-    // ✨ 새로 추가된 이미지 제거 관련 메서드
+    // ✨ 프로필 이미지 제거 관련 메서드 (최소 수정: S3에서 삭제만 하고 DB 업데이트는 하지 않음)
     @Transactional
-    public void removeProfileImage(String username) throws IOException {
+    public void removeProfileImage(String username) { // throws IOException 제거 (S3 삭제는 RuntimeException)
         UserEntity currentUserEntity = userDAO.userInform(username);
-        if (currentUserEntity != null) {
-            String currentImageUrl = currentUserEntity.getImageurl();
-            if (currentImageUrl != null && !currentImageUrl.isEmpty()) {
-                String uploadBaseDir = "src/main/resources/static"; // static 폴더의 기본 경로
-                Path filePathToDelete = Paths.get(uploadBaseDir + currentImageUrl);
-                if (Files.exists(filePathToDelete) && Files.isReadable(filePathToDelete)) {
-                    Files.delete(filePathToDelete);
-                }
-            }
-            UserDTO updatedUserDTO = UserDTO.builder()
-                    .username(currentUserEntity.getUsername())
-                    .email(currentUserEntity.getEmail())
-                    .firstname(currentUserEntity.getFirstname())
-                    .lastname(currentUserEntity.getLastname())
-                    .birthdate(currentUserEntity.getBirthdate())
-                    .nickname(currentUserEntity.getNickname())
-                    .imageurl(null) // imageurl을 null로 설정
-                    .build();
-
-            userDAO.updateInform(
-                    updatedUserDTO.getUsername(),
-                    updatedUserDTO.getFirstname(),
-                    updatedUserDTO.getLastname(),
-                    updatedUserDTO.getEmail(),
-                    updatedUserDTO.getBirthdate(),
-                    updatedUserDTO.getNickname(),
-                    updatedUserDTO.getImageurl()
-            );
-        } else {
-            throw new EntityNotFoundException("User not found with username: " + username);
+        if (currentUserEntity == null) {
+            throw new EntityNotFoundException("사용자를 찾을 수 없습니다: " + username);
         }
+
+        // 기존 이미지가 있다면 S3에서 삭제
+        if (currentUserEntity.getImageurl() != null && !currentUserEntity.getImageurl().isEmpty()) { // getImageurl() 사용
+            fileStore.deleteFile(currentUserEntity.getImageurl(), bucket); // FileStore 사용
+        }
+        // 이 메서드에서는 DB 업데이트를 하지 않습니다.
+        // DB 업데이트는 프론트에서 imageurl: null을 받아 /update-inform으로 다시 요청할 때 이루어집니다.
     }
 }
