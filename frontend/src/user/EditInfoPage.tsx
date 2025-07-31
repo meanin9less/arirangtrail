@@ -20,7 +20,7 @@ interface UserProfile {
     lastname: string;
     nickname: string;
     birthdate: string; // YYYY-MM-DD 형식의 문자열
-    imageurl?: string; // 프로필 이미지 URL은 선택 사항
+    imageurl?: string; // 프로필 이미지 URL은 선택 사항 (소문자 url)
 }
 
 const EditInfoPage: React.FC = () => {
@@ -40,7 +40,7 @@ const EditInfoPage: React.FC = () => {
     const [lastname, setLastname] = useState<string>(storedUserProfile?.lastname || '');
     const [nickname, setNickname] = useState<string>(storedUserProfile?.nickname || '');
     const [birthdate, setBirthdate] = useState<string>(storedUserProfile?.birthdate || '');
-    const [currentImageUrl, setCurrentImageUrl] = useState<string | null>(storedUserProfile?.imageurl || null);
+    const [currentImageUrl, setCurrentImageUrl] = useState<string | null>(storedUserProfile?.imageurl || null); // storedUserProfile?.imageurl 사용
     const [imagePreviewUrl, setImagePreviewUrl] = useState<string | null>(null);
 
     const [loading, setLoading] = useState(true);
@@ -72,7 +72,7 @@ const EditInfoPage: React.FC = () => {
                 setLastname(userData.lastname);
                 setNickname(userData.nickname);
                 setBirthdate(userData.birthdate);
-                setCurrentImageUrl(userData.imageurl || null);
+                setCurrentImageUrl(userData.imageurl || null); // userData.imageurl 사용
                 setImagePreviewUrl(null); // 새 정보 로드 시 미리보기 초기화
 
             } catch (err: any) {
@@ -99,7 +99,7 @@ const EditInfoPage: React.FC = () => {
             setSelectedFile(null);
             setImagePreviewUrl(null);
             // 파일 선택 취소 시 기존 이미지 URL로 돌아감
-            setCurrentImageUrl(originalProfile?.imageurl || null);
+            setCurrentImageUrl(originalProfile?.imageurl || null); // originalProfile?.imageurl 사용
         }
     };
 
@@ -146,7 +146,7 @@ const EditInfoPage: React.FC = () => {
                     }
                 );
                 finalImageUrl = imageUploadResponse.data; // 업로드된 새 이미지 URL로 업데이트
-            } else if (originalProfile.imageurl && currentImageUrl === null) {
+            } else if (originalProfile.imageurl && currentImageUrl === null) { // originalProfile.imageurl 사용
                 // 2. '기본 프로필' 버튼을 눌러 기존 이미지를 명시적으로 제거한 경우
                 //    이 경우 백엔드 /update-inform으로 imageurl: null을 보냅니다.
                 finalImageUrl = null;
