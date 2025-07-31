@@ -72,7 +72,7 @@ const EditInfoPage: React.FC = () => {
                 setLastname(userData.lastname);
                 setNickname(userData.nickname);
                 setBirthdate(userData.birthdate);
-                setCurrentImageUrl(userData.imageUrl || null);
+                setCurrentImageUrl(userData.imageurl || null);
                 setImagePreviewUrl(null); // 새 정보 로드 시 미리보기 초기화
 
             } catch (err: any) {
@@ -99,7 +99,7 @@ const EditInfoPage: React.FC = () => {
             setSelectedFile(null);
             setImagePreviewUrl(null);
             // 파일 선택 취소 시 기존 이미지 URL로 돌아감
-            setCurrentImageUrl(originalProfile?.imageUrl || null);
+            setCurrentImageUrl(originalProfile?.imageurl || null);
         }
     };
 
@@ -146,7 +146,7 @@ const EditInfoPage: React.FC = () => {
                     }
                 );
                 finalImageUrl = imageUploadResponse.data; // 업로드된 새 이미지 URL로 업데이트
-            } else if (originalProfile.imageUrl && currentImageUrl === null) {
+            } else if (originalProfile.imageurl && currentImageUrl === null) {
                 // 2. '기본 프로필' 버튼을 눌러 기존 이미지를 명시적으로 제거한 경우
                 //    이 경우 백엔드 /update-inform으로 imageurl: null을 보냅니다.
                 finalImageUrl = null;
