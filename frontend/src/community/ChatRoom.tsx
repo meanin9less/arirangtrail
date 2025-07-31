@@ -16,6 +16,7 @@ interface ChatMessage {
     type: 'ENTER' | 'TALK' | 'LEAVE' | 'IMAGE';
     roomId: string;
     sender: string;
+    senderNickname?: string;
     message: string;
     messageSeq?: number;
 }
@@ -28,6 +29,7 @@ interface ChatRoomProps {
 const ChatRoom = ({ roomId, onLeave }: ChatRoomProps) => {
     const userProfile = useSelector((state: RootState) => state.token.userProfile);
     const userName = userProfile?.username;
+    const userNickname = userProfile?.nickname;
 
     const [messages, setMessages] = useState<ChatMessage[]>([]);
     const [inputMessage, setInputMessage] = useState('');
@@ -42,9 +44,7 @@ const ChatRoom = ({ roomId, onLeave }: ChatRoomProps) => {
     const dispatch = useDispatch();
     const API_URL = process.env.REACT_APP_API_URL;
 
-    const handleExitToLobby = () => {
-        onLeave(lastMessageSeqRef.current);
-    };
+
 
     const updateLastReadSequence = useCallback(async (seqToUpdate: number) => {
         if (!userName || seqToUpdate === 0) return;
@@ -120,7 +120,7 @@ const ChatRoom = ({ roomId, onLeave }: ChatRoomProps) => {
 
                 client.publish({
                     destination: '/api/pub/chat/enter',
-                    body: JSON.stringify({ roomId, sender: userName, type: 'ENTER' }),
+                    body: JSON.stringify({ roomId, sender: userName, nickname: userNickname, type: 'ENTER' }),
                 });
             },
             onStompError: (frame) => { console.error('STOMP Error:', frame); },
@@ -151,7 +151,6 @@ const ChatRoom = ({ roomId, onLeave }: ChatRoomProps) => {
         initializeAndConnect();
 
         return () => {
-            updateLastReadSequence(lastMessageSeqRef.current);
             if (clientRef.current?.connected) {
                 clientRef.current.publish({
                     destination: '/api/pub/chat/leave',
@@ -160,7 +159,7 @@ const ChatRoom = ({ roomId, onLeave }: ChatRoomProps) => {
                 clientRef.current.deactivate();
             }
         };
-    }, [roomId, userName, dispatch, fetchRoomInfo, fetchPreviousMessages, updateLastReadSequence, connectWebSocket]);
+    }, [roomId, userName,userNickname, dispatch, fetchRoomInfo, fetchPreviousMessages, updateLastReadSequence, connectWebSocket]);
 
     useEffect(() => {
         if (messageContainerRef.current) {
@@ -173,7 +172,7 @@ const ChatRoom = ({ roomId, onLeave }: ChatRoomProps) => {
         if (inputMessage.trim() && clientRef.current?.connected && userName) {
             clientRef.current.publish({
                 destination: '/api/pub/chat/message',
-                body: JSON.stringify({ roomId, sender: userName, message: inputMessage, type: 'TALK' }),
+                body: JSON.stringify({ roomId, sender: userName, nickname: userNickname,message: inputMessage, type: 'TALK' }),
             });
             setInputMessage('');
         }
@@ -193,7 +192,7 @@ const ChatRoom = ({ roomId, onLeave }: ChatRoomProps) => {
             if (clientRef.current?.connected) {
                 clientRef.current.publish({
                     destination: '/api/pub/chat/message',
-                    body: JSON.stringify({ roomId, sender: userName, message: imageUrl, type: 'IMAGE' }),
+                    body: JSON.stringify({ roomId, sender: userName, nickname: userNickname,message: imageUrl, type: 'IMAGE' }),
                 });
             }
             setIsOptionsOpen(false);
@@ -211,15 +210,23 @@ const ChatRoom = ({ roomId, onLeave }: ChatRoomProps) => {
 
     const handleLeaveRoom = async () => {
         if (!userName) return;
+
         try {
             await apiClient.post(`chat/rooms/${roomId}/leave`, { username: userName });
             alert("채팅방에서 나갔습니다.");
-            onLeave(0); // 읽음 처리 필요 없음
+
+            onLeave(-1); // ✅ -1을 명확히 하드코딩
+
         } catch (error) {
             console.error("채팅방 나가기에 실패했습니다.", error);
             alert("채팅방을 나가는 중 오류가 발생했습니다.");
         }
     };
+
+    const handleExitToLobby = () => {
+        onLeave(lastMessageSeqRef.current);
+    };
+
 
     const handleDeleteRoom = async () => {
         if (!userName || !window.confirm("정말로 이 방을 삭제하시겠습니까?")) return;
@@ -272,7 +279,7 @@ const ChatRoom = ({ roomId, onLeave }: ChatRoomProps) => {
                             </div>
                             <div style={styles.metaItem}>
                                 <IoChatbubblesOutline style={styles.metaIcon} />
-                                <span>개설자: <strong>{roomInfo.creator}</strong></span>
+                                <span>개설자: <strong>{roomInfo.creatorNickname || roomInfo.creator}</strong></span>
                             </div>
                         </div>
                     </div>
@@ -289,9 +296,11 @@ const ChatRoom = ({ roomId, onLeave }: ChatRoomProps) => {
                         ...styles.messageWrapper,
                         justifyContent: msg.sender === userName ? 'flex-end' : 'flex-start'
                     }}>
-                        {msg.sender !== userName && <div style={styles.avatar}></div>}
+                        {/*{msg.sender !== userName && <div style={styles.avatar}></div>}*/}
                         <div style={{ maxWidth: '70%' }}>
-                            <small style={{ ...styles.senderName, textAlign: msg.sender === userName ? 'right' : 'left' }}>{msg.sender}</small>
+                            <small style={{ ...styles.senderName, textAlign: msg.sender === userName ? 'right' : 'left' }}>
+                                {msg.senderNickname || msg.sender}
+                            </small>
                             <div style={{
                                 ...styles.messageBubble,
                                 backgroundColor: msg.type === 'IMAGE' ? 'transparent' : (msg.type === 'ENTER' || msg.type === 'LEAVE' ? '#fffac1' : (msg.sender === userName ? '#dcf8c6' : '#fff')),

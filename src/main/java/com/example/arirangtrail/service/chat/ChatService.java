@@ -100,6 +100,7 @@ public class ChatService {
         newRoom.setId(roomId); // Long 타입 ID 설정
         newRoom.setTitle(createRoomDTO.getTitle());
         newRoom.setCreator(createRoomDTO.getUsername());
+        newRoom.setCreatorNickname(createRoomDTO.getUsername());
         newRoom.setSubject(createRoomDTO.getSubject());
         newRoom.setMeetingDate(createRoomDTO.getMeetingDate());
         newRoom.setMaxParticipants(createRoomDTO.getMaxParticipants());
@@ -134,6 +135,7 @@ public class ChatService {
         chatMessage.setRoomId(messageDTO.getRoomId());
         chatMessage.setMessageSeq(nextSeq);
         chatMessage.setSender(messageDTO.getSender());
+        chatMessage.setSenderNickname(messageDTO.getNickname());
         chatMessage.setMessage(messageDTO.getMessage());
         chatMessage.setMessageType(messageDTO.getType().name());
         chatMessage.setTimestamp(LocalDateTime.now());
@@ -214,7 +216,23 @@ public class ChatService {
     // userchatsatus의 seq를 변경
     @Transactional
     public void updateUserChatStatus(Long roomId, String username, long lastReadSeq) {
+        // 디버그용 추가 기록
+        log.info(">>>>> [읽음 상태 업데이트 요청] Room: {}, User: {}, Seq: {}", roomId, username, lastReadSeq);
+
         Query query = new Query(Criteria.where("roomId").is(roomId).and("username").is(username));
+
+        // 디버그용 추가 기록2
+        UserChatStatus existingStatus = mongoTemplate.findOne(query, UserChatStatus.class);
+
+        if (existingStatus == null) {
+            log.warn(">>>>> [업데이트 중단] UserChatStatus가 존재하지 않음 - Room: {}, User: {}", roomId, username);
+            return;
+        }
+
+        log.info(">>>>> [읽음 상태 업데이트 실행] Room: {}, User: {}, 기존 Seq: {} -> 새 Seq: {}",
+                roomId, username, existingStatus.getLastReadMessageSeq(), lastReadSeq);
+
+
         Update update = new Update()
                 .set("lastReadMessageSeq", lastReadSeq)
                 .set("lastReadAt", LocalDateTime.now())

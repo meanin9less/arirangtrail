@@ -11,6 +11,7 @@ import Modal from "../components/Modal";
     id: string;
     title: string;
     creator: string;
+    creatorNickname?: string; // ✅ 추가
     participantCount?: number;
     maxMembers?: number;
     maxParticipants?: number;
@@ -23,6 +24,7 @@ import Modal from "../components/Modal";
 const CommunityPage = () => {
     const userProfile = useSelector((state: RootState) => state.token.userProfile);
     const userName = userProfile?.username;
+    const userNickname = userProfile?.nickname;
     const navigate = useNavigate();
     const location = useLocation();
     const dispatch = useDispatch();
@@ -79,6 +81,7 @@ const CommunityPage = () => {
                 maxParticipants: parseInt(newRoomInfo.maxParticipants, 10),
                 meetingDate: formattedDate, // ISO로 변경
                 username: userName,
+                nickname: userNickname, // ✅ 생성자 닉네임 추가
             });
 
             dispatch(updateLobby());
@@ -93,7 +96,7 @@ const CommunityPage = () => {
             console.error("채팅방 생성에 실패했습니다.", error);
             setFormError('채팅방 생성에 실패했습니다. 서버 로그를 확인해주세요.');
         }
-    }, [validateForm, userName, newRoomInfo, dispatch]);
+    }, [validateForm, userName, userNickname, newRoomInfo, dispatch]);
 
     const handleEnterRoom = async (roomId: string) => {
         if (!userName) return;
@@ -139,37 +142,12 @@ const CommunityPage = () => {
         }
     };
 
-// ✅ 수정: handleLeaveRoom이 lastReadSeq를 인자로 받도록 하고, async 함수로 변경
-    const handleLeaveRoom = async (lastReadSeq: number) => {
-        if (userName && selectedRoomId) {
-            try {
-                // 1. 읽음 처리 API를 '먼저' 호출하고 완료될 때까지 기다립니다.
-                await apiClient.post(`chat/rooms/update-status`, {
-                    roomId: selectedRoomId,
-                    username: userName,
-                    lastReadSeq: lastReadSeq
-                });
-                console.log(`[로비 나가기] 읽음 처리 완료: Room ${selectedRoomId}, Seq ${lastReadSeq}`);
 
-                // 2. ✅ [핵심 추가] 읽음 처리가 끝난 직후, 서버로부터 최신 totalUnreadCount를 다시 가져옵니다.
-                const response = await apiClient.get(`/chat/users/${userName}/unread-count`);
-
-                // 3. ✅ 가져온 최신 값으로 Redux 스토어를 업데이트합니다.
-                dispatch(setTotalUnreadCount(response.data.totalUnreadCount));
-            } catch (error) {
-                console.error("로비로 나가기 전 읽음 상태 갱신에 실패했습니다.", error);
-            }
-        }
-
-        // 2. 비동기 작업이 모두 끝난 후, 컴포넌트를 언마운트시킵니다.
-        setSelectedRoomId(null);
-    };
-
-    // ✅ 역할 1: ChatRoom을 닫고, '로비로 가기' 시에만 읽음 처리를 하는 함수
+    //표지2
+// CommunityPage.tsx의 handleCloseChatRoom 수정
     const handleCloseChatRoom = async (lastReadSeq: number) => {
         if (userName && selectedRoomId) {
-            // lastReadSeq가 0보다 클 때만 (즉, '로비로 가기'일 때만) 읽음 처리 실행
-            if (lastReadSeq > 0) {
+            if (lastReadSeq >= 0) {
                 try {
                     await apiClient.post(`/chat/rooms/update-status`, {
                         roomId: selectedRoomId,
@@ -180,14 +158,12 @@ const CommunityPage = () => {
                     const response = await apiClient.get(`/chat/users/${userName}/unread-count`);
                     dispatch(setTotalUnreadCount(response.data.totalUnreadCount));
                 } catch (error) {
-                    console.error("로비로 나가기 전 읽음 상태 갱신에 실패했습니다.", error);
+                    console.error("읽음 상태 갱신에 실패했습니다.", error);
                 }
             }
         }
-        // 모든 작업이 끝나면 ChatRoom을 닫음
         setSelectedRoomId(null);
     };
-
 
     const openCreateModal = () => {
         setFormError('');
@@ -233,7 +209,7 @@ const CommunityPage = () => {
                 <div>
                     <h1 style={styles.headerTitle}>아리랑 트레일 커뮤니티</h1>
                     <p style={styles.welcomeMessage}>
-                        <strong>{userName}</strong>님, 환영합니다.
+                        <strong>{userNickname || userName}</strong>님, 환영합니다.
                     </p>
                 </div>
             </header>

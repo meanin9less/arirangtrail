@@ -9,8 +9,9 @@ import java.time.LocalDateTime;
 @Setter
 public class CreateRoomDTO {
     private String title;
-    private String username;
     private String subject;
     private LocalDateTime meetingDate;
     private Integer maxParticipants;
+    private String username;
+    private String nickname; // ✅ 추가: 방 생성자 닉네임
 }

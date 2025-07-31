@@ -25,9 +25,12 @@ public class ChatMessageController {
     private final SimpMessagingTemplate template;
     private final ChatService chatService;
 
-    @MessageMapping("/chat/enter") // ★ 메세지 매핑은 리퀘스트 매핑에 영향을 받지 않는 웹소켓 전용창구이므로 분리해서 생각!
+    @MessageMapping("/chat/enter")
     public void enter(ChatMessageDTO message) {
-        message.setMessage(message.getSender() + "님이 입장하셨습니다.");
+        // 프론트에서 nickname을 보내주지 않으면 null이 될 수 있으므로, 방어 코드 추가
+        String nickname = message.getNickname() != null ? message.getNickname() : message.getSender();
+        message.setMessage(nickname + "님이 입장하셨습니다.");
+
         // DB 저장 없이, 입장 메시지만 모두에게 방송
         template.convertAndSend("/sub/chat/room/" + message.getRoomId(), message);
         template.convertAndSend("/sub/chat/lobby", "user-entered-or-left");
