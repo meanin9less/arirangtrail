@@ -130,4 +130,23 @@ public class ReviewController {
         return ResponseEntity.notFound().build();
     }
 
+    @PutMapping("/comments/{commentId}")
+    public ResponseEntity<String> updateComment(@PathVariable Long commentId,
+                                                @RequestBody Map<String, Object> payload) {
+        String newContent = (String) payload.get("content");
+        if (newContent == null || newContent.equals("")) {
+            return ResponseEntity.badRequest().build();
+        }
+        if(!this.reviewCommentService.updateReviewComment(commentId, newContent)){
+            return ResponseEntity.badRequest().build();
+        };
+        return ResponseEntity.ok("update successful");
+    }
+
+    @DeleteMapping("/comments/{commentId}")
+    public ResponseEntity<String> deleteComment(@PathVariable Long commentId) {
+        this.reviewCommentService.deleteReviewComment(commentId);
+        return ResponseEntity.ok("delete successful");
+    }
+
 }
