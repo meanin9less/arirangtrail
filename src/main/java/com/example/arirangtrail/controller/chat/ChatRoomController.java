@@ -2,6 +2,7 @@ package com.example.arirangtrail.controller.chat;
 
 
 import com.example.arirangtrail.data.document.ChatRoom;
+import com.example.arirangtrail.data.dto.chat.ChatRoomDetailDTO;
 import com.example.arirangtrail.data.dto.chat.ChatRoomListDTO;
 import com.example.arirangtrail.data.dto.chat.CreateRoomDTO;
 import com.example.arirangtrail.data.dto.chat.UpdateReqDTO;
@@ -13,26 +14,26 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 @Slf4j
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/chat/rooms")
 public class ChatRoomController {
-
     private final ChatService chatService;
 
     // 모든 채팅방 목록 반환
     @GetMapping
-    public ResponseEntity<List<ChatRoomListDTO>> getAllRooms() {
-        return ResponseEntity.ok(chatService.findAllRoom());
+    public ResponseEntity<List<ChatRoomListDTO>> getAllRooms(@RequestParam String username) {
+        return ResponseEntity.ok(chatService.findAllRoom(username));
     }
 
     // 채팅방 생성
     @PostMapping// 루트 생략하면 레스트매핑 그대로 "/api/chat/rooms"
     public ResponseEntity<ChatRoom> createRoom(@RequestBody CreateRoomDTO createRoomDTO) {
-
-        return ResponseEntity.ok(chatService.createRoom(createRoomDTO.getTitle(),createRoomDTO.getUsername()));
+        System.out.println("방 생성 요청 도착: " + createRoomDTO);
+        return ResponseEntity.ok(chatService.createRoom(createRoomDTO));
     }
 
     // 사용자가 마지막으로 읽은 메세지에 대하여 userchatstatus의 seq를 업데이트함
@@ -48,10 +49,10 @@ public class ChatRoomController {
 
     //해당 방 정보 읽어옴(방 컬렉션 내용)
     @GetMapping("/{roomId}")
-    public ResponseEntity<ChatRoom> getRoomInfo(@PathVariable String roomId) { // ★ 여기도 String으로 변경
+    public ResponseEntity<ChatRoomDetailDTO> getRoomInfo(@PathVariable String roomId) {
         try {
             Long roomIdLong = Long.parseLong(roomId);
-            ChatRoom roomInfo = chatService.findRoomById(roomIdLong);
+            ChatRoomDetailDTO roomInfo = chatService.findRoomDetailsById(roomIdLong);
             return ResponseEntity.ok(roomInfo);
         } catch (NumberFormatException e) {
             return ResponseEntity.badRequest().build();
@@ -96,5 +97,73 @@ public class ChatRoomController {
         List<Long> myRoomIds = chatService.findMyRoomIdsByUsername(username);
         return ResponseEntity.ok(myRoomIds);
     }
+
+    //조인 룸 컨트롤러
+    @PostMapping("/{roomId}/join")
+    public ResponseEntity<?> joinRoom(
+            @PathVariable Long roomId,
+            @RequestBody Map<String, String> payload) {
+
+        String username = payload.get("username");
+
+        if (username == null) {
+            return ResponseEntity.badRequest()
+                    .body(Map.of("success", false, "message", "사용자 정보가 없습니다."));
+        }
+
+        try {
+            // ✅ 입장 시도 (정원 체크, 밴 체크 등 포함)
+            chatService.joinRoom(roomId, username);
+
+            // ✅ 성공 시 방 정보도 함께 반환
+            ChatRoomDetailDTO roomInfo = chatService.findRoomDetailsById(roomId);
+
+            return ResponseEntity.ok(Map.of(
+                    "success", true,
+                    "message", "입장 성공",
+                    "roomInfo", roomInfo
+            ));
+
+        } catch (IllegalStateException e) {
+            // 정원 초과 등의 상태 오류
+            log.warn(">>>>> [입장 실패] Room: {}, User: {}, Reason: {}", roomId, username, e.getMessage());
+            return ResponseEntity.status(409) // Conflict
+                    .body(Map.of("success", false, "message", e.getMessage()));
+
+        } catch (SecurityException e) {
+            // 밴당한 사용자 등의 보안 오류
+            log.warn(">>>>> [입장 거부] Room: {}, User: {}, Reason: {}", roomId, username, e.getMessage());
+            return ResponseEntity.status(403) // Forbidden
+                    .body(Map.of("success", false, "message", e.getMessage()));
+
+        } catch (IllegalArgumentException e) {
+            // 존재하지 않는 방 등
+            log.error(">>>>> [입장 오류] Room: {}, User: {}, Reason: {}", roomId, username, e.getMessage());
+            return ResponseEntity.status(404) // Not Found
+                    .body(Map.of("success", false, "message", "존재하지 않는 채팅방입니다."));
+
+        } catch (Exception e) {
+            // 기타 예상치 못한 오류
+            log.error(">>>>> [입장 실패] Room: {}, User: {}, Unexpected error: ", roomId, username, e);
+            return ResponseEntity.status(500)
+                    .body(Map.of("success", false, "message", "서버 오류가 발생했습니다."));
+        }
+    }
+
+
+//  공지 수정
+//    @PatchMapping("/{roomId}/notice")
+//    public ResponseEntity<?> updateNotice(@PathVariable Long roomId, @RequestBody NoticeDTO noticeDTO) {
+//        Optional<ChatRoom> roomOpt = chatRoomRepository.findById(roomId);
+//        if (roomOpt.isPresent()) {
+//            ChatRoom room = roomOpt.get();
+//            room.setNotice(noticeDTO.getNotice());
+//            room.setUpdatedAt(LocalDateTime.now());
+//            chatRoomRepository.save(room);
+//            return ResponseEntity.ok("공지사항이 업데이트되었습니다.");
+//        } else {
+//            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("채팅방이 존재하지 않습니다.");
+//        }
+//    }
 
 }

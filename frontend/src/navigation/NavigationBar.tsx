@@ -85,11 +85,11 @@ const NavigationBar = () => {
                         <div className={styles.userMenuContainer}>
                             {/* --- ✨ 여기가 새로 추가된 부분입니다 --- */}
                             {/* 커뮤니티 링크를 감싸는 컨테이너를 하나 만들어서, 뱃지를 위치시킵니다. */}
-                            <Link to={"/community"} className={styles.communityLinkContainer}>
+                            <Link to={"/community/my-rooms"} className={styles.communityLinkContainer}>
                                 나의 채팅기록
                                 {/* 안 읽은 메시지가 1개 이상일 때만 뱃지를 표시합니다. */}
                                 {totalUnreadCount > 0 && (
-                                    <span className={styles.unreadBadge}>안 읽은 메세지 {totalUnreadCount}</span>
+                                    <span className={styles.unreadBadge}>새로운 메세지 {totalUnreadCount}</span>
                                 )}
                             </Link>
                             <button

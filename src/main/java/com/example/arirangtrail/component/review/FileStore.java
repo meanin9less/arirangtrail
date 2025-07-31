@@ -13,10 +13,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
-
-//잠시 컴퍼넌트 꺼놓기
 @Component
-@Profile("prod") // "prod" 프로필이 활성화될 때만 이 빈(Bean)을 생성하라는 의미!
+//@Profile("prod") // "prod" 프로필이 활성화될 때만 이 빈(Bean)을 생성하라는 의미!
 @RequiredArgsConstructor
 public class FileStore {
 

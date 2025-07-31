@@ -3,9 +3,7 @@ package com.example.arirangtrail.service.chat;
 import com.example.arirangtrail.data.document.ChatMessage;
 import com.example.arirangtrail.data.document.ChatRoom;
 import com.example.arirangtrail.data.document.UserChatStatus;
-import com.example.arirangtrail.data.dto.chat.ChatMessageDTO;
-import com.example.arirangtrail.data.dto.chat.ChatRoomListDTO;
-import com.example.arirangtrail.data.dto.chat.UnreadUpdateDTO;
+import com.example.arirangtrail.data.dto.chat.*;
 import com.example.arirangtrail.data.repository.chat.ChatMessageRepository;
 import com.example.arirangtrail.data.repository.chat.ChatRoomRepository;
 import com.example.arirangtrail.data.repository.chat.UserChatStatusRepository;
@@ -23,17 +21,13 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional; // ★★★ 2. Spring의 Transactional을 사용하는 것이 좋습니다.
 
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Slf4j
 @Service
 @RequiredArgsConstructor
 public class ChatService {
-
     private final ChatRoomRepository chatRoomRepository;
     private final ChatMessageRepository chatMessageRepository;
     private final SequenceService sequenceService;
@@ -42,38 +36,77 @@ public class ChatService {
     private final SimpMessagingTemplate messagingTemplate;
 
     // 모든 채팅방 찾기
-    public List<ChatRoomListDTO> findAllRoom() {
+// ✅ 수정: '누가' 요청했는지 알기 위해 username 파라미터를 받도록 변경
+    public List<ChatRoomListDTO> findAllRoom(String currentUsername) {
         List<ChatRoom> rooms = chatRoomRepository.findAll();
 
-        // ✨ stream을 사용하여 각 방의 정보를 DTO로 변환합니다.
         return rooms.stream()
                 .map(room -> {
-                    // 각 방의 ID로 참여자 수를 센다.
-                    long count = userChatStatusRepository.countByRoomId(room.getId());
-                    // DTO 객체를 생성하여 반환한다.
-                    return new ChatRoomListDTO(room.getId(), room.getTitle(), room.getCreator(), count);
+                    long participantCount = userChatStatusRepository.countByRoomId(room.getId());
+
+                    // ✅ 수정: 현재 사용자의 이 방에 대한 안 읽은 메시지 개수 계산
+                    long unreadCount = userChatStatusRepository.findByRoomIdAndUsername(room.getId(), currentUsername)
+                            .map(status -> {
+                                long totalMessages = chatMessageRepository.countByRoomId(room.getId());
+                                long lastReadSeq = status.getLastReadMessageSeq();
+                                return Math.max(0, totalMessages - lastReadSeq);
+                            })
+                            .orElse(0L); // 참여 기록이 없으면 안 읽은 메시지는 0개
+
+                    return new ChatRoomListDTO(
+                            room.getId(),
+                            room.getTitle(),
+                            room.getCreator(),          // username
+                            room.getMeetingDate(),
+                            participantCount,
+                            room.getMaxParticipants(),
+                            unreadCount,
+                            room.getCreatorNickname()   // 닉네임
+                    );
                 })
                 .collect(Collectors.toList());
     }
-
     // 특정 채팅방 찾기 (ID 타입을 Long으로 통일)
-    public ChatRoom findRoomById(Long roomId) { // ★★★ 3. 파라미터 타입을 Long으로 변경하여 일관성을 유지합니다.
-        ChatRoom chatRoom= chatRoomRepository.findById(roomId)
-                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 채팅방입니다. ID: " + roomId));
-        return chatRoom;
+    public ChatRoomDetailDTO findRoomDetailsById(Long roomId) {
+        ChatRoom room = chatRoomRepository.findById(roomId)
+                .orElseThrow(() -> new IllegalArgumentException("..."));
+
+        Long currentParticipantCount = userChatStatusRepository.countByRoomId(roomId);
+
+        // DTO를 생성해서 반환
+        ChatRoomDetailDTO dto = new ChatRoomDetailDTO();
+        dto.setId(room.getId());
+        dto.setTitle(room.getTitle()); // <-- 이 부분이 제대로 되어 있는지?
+        dto.setSubject(room.getSubject()); // <-- 이 부분이 제대로 되어 있는지?
+        dto.setCreator(room.getCreator()); // <-- 이 부분이 제대로 되어 있는지?
+        dto.setCreatorNickname(room.getCreatorNickname());
+        dto.setMeetingDate(room.getMeetingDate()); // <-- 이 부분이 제대로 되어 있는지?
+        dto.setMaxParticipants(room.getMaxParticipants()); // <-- 이 부분이 제대로 되어 있는지?
+        dto.setNotice(room.getNotice());
+        dto.setLastMessageSeq(room.getLastMessageSeq());
+        dto.setCreatedAt(room.getCreatedAt());
+        dto.setUpdatedAt(room.getUpdatedAt());
+        dto.setParticipantCount(currentParticipantCount); // <-- 이 부분은 계산된 값
+
+        return dto; // 이렇게 필드를 하나씩 다 채워줘야 합니다.
     }
 
     // 채팅방 생성
     @Transactional
-    public ChatRoom createRoom(String title, String username) {
+    public ChatRoom createRoom(CreateRoomDTO createRoomDTO) {
         // 1. 새로운 roomId 발급
         long roomId = sequenceService.generateSequence("roomId");
 
         // 2. ChatRoom 엔티티 생성 및 저장
         ChatRoom newRoom = new ChatRoom();
         newRoom.setId(roomId); // Long 타입 ID 설정
-        newRoom.setTitle(title);
-        newRoom.setCreator(username);
+        newRoom.setTitle(createRoomDTO.getTitle());
+        newRoom.setCreator(createRoomDTO.getUsername());
+        newRoom.setCreatorNickname(createRoomDTO.getNickname());
+        newRoom.setSubject(createRoomDTO.getSubject());
+        newRoom.setMeetingDate(createRoomDTO.getMeetingDate());
+        newRoom.setMaxParticipants(createRoomDTO.getMaxParticipants());
+        newRoom.setNotice("");
         newRoom.setLastMessageSeq(0L);
         newRoom.setCreatedAt(LocalDateTime.now());
         newRoom.setUpdatedAt(LocalDateTime.now());
@@ -81,7 +114,7 @@ public class ChatService {
 
         // 3. 방 생성자의 참여 상태 정보도 함께 저장
         UserChatStatus status = new UserChatStatus();
-        status.setUsername(username);
+        status.setUsername(createRoomDTO.getUsername());
         status.setRoomId(roomId);
         status.setLastReadMessageSeq(0L);
         status.setLastReadAt(LocalDateTime.now());
@@ -97,19 +130,71 @@ public class ChatService {
     @Transactional
     public ChatMessage saveMessage(ChatMessageDTO messageDTO) {
         // 1. 해당 채팅방의 lastMessageSeq를 1 증가시키고, 증가된 값을 가져온다.
-        long nextSeq = getNextMessageSeqForRoom(messageDTO.getRoomId()); // DTO의 roomId도 Long 타입으로 가정
+        long nextSeq = getNextMessageSeqForRoom(messageDTO.getRoomId());
 
         // 2. DTO를 실제 DB에 저장될 ChatMessage 엔티티로 변환
         ChatMessage chatMessage = new ChatMessage();
         chatMessage.setRoomId(messageDTO.getRoomId());
         chatMessage.setMessageSeq(nextSeq);
         chatMessage.setSender(messageDTO.getSender());
+        chatMessage.setSenderNickname(messageDTO.getNickname());
         chatMessage.setMessage(messageDTO.getMessage());
         chatMessage.setMessageType(messageDTO.getType().name());
         chatMessage.setTimestamp(LocalDateTime.now());
 
         // 3. 변환된 메시지를 DB에 저장
-        return chatMessageRepository.save(chatMessage);
+        chatMessageRepository.save(chatMessage); // ✅ 여기서 return 하지 않습니다.
+
+        // ✅ 추가: ENTER/LEAVE 메시지일 때 실시간 참여자 수 브로드캐스트
+        if ("ENTER".equals(messageDTO.getType().name()) || "LEAVE".equals(messageDTO.getType().name())) {
+            // 현재 실제 참여자 수를 다시 계산
+            long currentParticipantCount = userChatStatusRepository.countByRoomId(messageDTO.getRoomId());
+
+            // 해당 방의 모든 구독자에게 정확한 참여자 수 전송
+            messagingTemplate.convertAndSend(
+                    "/sub/chat/room/" + messageDTO.getRoomId(),
+                    Map.of(
+                            "type", "PARTICIPANT_COUNT_UPDATE",
+                            "participantCount", currentParticipantCount
+                    )
+            );
+        }
+        // --- 실시간 안 읽음 카운트 업데이트 로직 시작 ---
+
+        // 4. 이 방에 참여하고 있는 모든 유저의 참여 상태를 가져옵니다.
+        List<UserChatStatus> participants = userChatStatusRepository.findByRoomId(messageDTO.getRoomId());
+
+        // 5. 메시지를 보낸 사람을 제외한 다른 모든 참여자에게 알림을 보냅니다.
+        // 수정: 메세지를 나를 포함한 모든 참여자에게 알림을 보내도록 합니다
+        participants.stream()
+//                .filter(status -> !status.getUsername().equals(messageDTO.getSender()))
+                .forEach(recipientStatus -> {
+                    String recipientUsername = recipientStatus.getUsername();
+
+                    // 5-1. 받는 사람의 총 안 읽은 메시지 개수를 다시 계산합니다.
+                    long totalUnreadCount = getTotalUnreadCount(recipientUsername);
+
+                    // 5-2. "총 안 읽은 메시지 개수"를 해당 유저의 개인 채널로 보냅니다.
+                    messagingTemplate.convertAndSend(
+                            "/sub/user/" + recipientUsername,
+                            Map.of(
+                                    "type", "TOTAL_UNREAD_COUNT_UPDATE",
+                                    "totalUnreadCount", totalUnreadCount
+                            )
+                    );
+                });
+
+        // 6. 로비에 있는 모든 사람에게 "어떤 방"에 새 메시지가 왔는지 알려줍니다.
+        messagingTemplate.convertAndSend(
+                "/sub/chat/lobby",
+                Map.of(
+                        "type", "LOBBY_ROOM_UPDATE",
+                        "roomId", messageDTO.getRoomId()
+                )
+        );
+
+        // 7. ✅ 모든 작업이 끝난 후, 저장된 메시지 객체를 반환합니다.
+        return chatMessage;
     }
 
     /**
@@ -133,18 +218,23 @@ public class ChatService {
     // userchatsatus의 seq를 변경
     @Transactional
     public void updateUserChatStatus(Long roomId, String username, long lastReadSeq) {
-//        // roomId와 username으로 기존 상태를 찾는다.
-//        UserChatStatus userChatStatus = userChatStatusRepository.findByRoomIdAndUsername(roomId, username)
-//                .orElse(new UserChatStatus(roomId, username));
-//
-//        // 받은 seq로 업데이트
-//        userChatStatus.setLastReadMessageSeq(lastReadSeq);
-//
-//        // DB에 저장 (기존 문서가 있으면 덮어쓰고, 없으면 새로 삽입됨)
-//        userChatStatusRepository.save(userChatStatus);
-        // --- Upsert를 이용한 원자적 상태 업데이트 ---
-        // '찾아서 없으면 생성, 있으면 업데이트'를 DB가 한 번에 처리하도록 합니다.
+        // 디버그용 추가 기록
+        log.info(">>>>> [읽음 상태 업데이트 요청] Room: {}, User: {}, Seq: {}", roomId, username, lastReadSeq);
+
         Query query = new Query(Criteria.where("roomId").is(roomId).and("username").is(username));
+
+        // 디버그용 추가 기록2
+        UserChatStatus existingStatus = mongoTemplate.findOne(query, UserChatStatus.class);
+
+        if (existingStatus == null) {
+            log.warn(">>>>> [업데이트 중단] UserChatStatus가 존재하지 않음 - Room: {}, User: {}", roomId, username);
+            return;
+        }
+
+        log.info(">>>>> [읽음 상태 업데이트 실행] Room: {}, User: {}, 기존 Seq: {} -> 새 Seq: {}",
+                roomId, username, existingStatus.getLastReadMessageSeq(), lastReadSeq);
+
+
         Update update = new Update()
                 .set("lastReadMessageSeq", lastReadSeq)
                 .set("lastReadAt", LocalDateTime.now())
@@ -152,7 +242,6 @@ public class ChatService {
                 .setOnInsert("username", username); // 새로 생성될 때만 적용
 
         mongoTemplate.upsert(query, update, UserChatStatus.class);
-
 
         // --- ✨ 2. 기존의 안 읽은 메시지 개수 계산 및 전송 로직은 그대로 유지합니다 ---
         long totalMessageCount = chatMessageRepository.countByRoomId(roomId);
@@ -162,20 +251,6 @@ public class ChatService {
         UnreadUpdateDTO updateInfo = new UnreadUpdateDTO(roomId, unreadCount);
         messagingTemplate.convertAndSend("/sub/user/" + username, updateInfo);
 
-//        // --- ✨ 여기가 새로운 실시간 동기화 로직입니다 ---
-//        // 2. 해당 방의 총 메시지 개수를 가져옵니다.
-//        long totalMessageCount = chatMessageRepository.countByRoomId(roomId);
-//
-//        // 3. 안 읽은 메시지 개수를 계산합니다.
-//        long unreadCount = totalMessageCount - lastReadSeq;
-//        if (unreadCount < 0) unreadCount = 0;
-//
-//        // 4. 이 정보를 DTO에 담습니다.
-//        UnreadUpdateDTO updateInfo = new UnreadUpdateDTO(roomId, unreadCount);
-//
-//        // 5. '특정 유저'만 구독하는 개인 채널로 업데이트 정보를 보냅니다.
-//        //    예: /sub/user/aaa  (aaa 유저만 이 메시지를 받습니다)
-//        messagingTemplate.convertAndSend("/sub/user/" + username, updateInfo);
     }
 
     // 해당 방의 이전 메세지들을 가져옴
@@ -191,8 +266,7 @@ public class ChatService {
         return messages;
     }
 
-    // ChatService.java
-
+    //방 떠나기
     @Transactional
     public void leaveRoom(Long roomId, String username) {
         // 1. 나가려는 사용자의 참여 정보가 실제로 존재하는지 확인합니다.
@@ -235,6 +309,7 @@ public class ChatService {
         chatRoomRepository.deleteById(roomId);
     }
 
+    // 방 지우기
     @Transactional
     public void deleteRoomByCreator(Long roomId, String username) {
         // 1. 채팅방 정보를 가져옵니다.
@@ -283,4 +358,36 @@ public class ChatService {
                 })
                 .sum(); // 7. 모든 방의 안 읽은 개수를 더하여 최종 결과를 반환합니다.
     }
+
+    @Transactional
+    public void joinRoom(Long roomId, String username) {
+        ChatRoom room = chatRoomRepository.findById(roomId)
+                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 채팅방입니다."));
+
+//        // (밴 목록 확인 로직은 여기에...)
+//        if (room.getBannedUsernames() != null && room.getBannedUsernames().contains(username)) {
+//            throw new SecurityException("이 채팅방에 접근할 권한이 없습니다.");
+//        }
+
+        // ✅ [핵심 추가] 정원 제한 로직
+        long currentParticipantCount = userChatStatusRepository.countByRoomId(roomId);
+        // 멤버 목록에 이미 포함된 사람이 다시 들어오는 경우는 제외하고 계산해야 합니다.
+        boolean isAlreadyMember = userChatStatusRepository.existsByRoomIdAndUsername(roomId, username);
+
+        if (!isAlreadyMember && currentParticipantCount >= room.getMaxParticipants()) {
+            throw new IllegalStateException(
+                    String.format("채팅방 정원이 초과되었습니다. (현재: %d명, 최대: %d명)",
+                            currentParticipantCount, room.getMaxParticipants())
+            );
+        }
+        // 멤버 목록에 없으면 추가
+        if (!isAlreadyMember) {
+            // UserChatStatus를 먼저 생성/저장
+            UserChatStatus status = new UserChatStatus(roomId, username);
+            status.setLastReadMessageSeq(0L); // 처음 들어오므로 0
+            userChatStatusRepository.save(status);
+        }
+    }
+
+
 }

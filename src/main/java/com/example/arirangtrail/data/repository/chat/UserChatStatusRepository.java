@@ -22,4 +22,8 @@ public interface UserChatStatusRepository extends MongoRepository<UserChatStatus
     @Query("{ 'roomId': ?0, 'username': ?1 }")
     @Update("{ '$set': { 'lastReadMessageSeq': ?2, 'lastReadAt': new Date() }, '$setOnInsert': { 'roomId': ?0, 'username': ?1 } }")
     void upsertLastReadSeq(Long roomId, String username, long lastReadSeq);
+
+    List<UserChatStatus> findByRoomId(Long roomId);
+
+    boolean existsByRoomIdAndUsername(Long roomId, String username);
 }
