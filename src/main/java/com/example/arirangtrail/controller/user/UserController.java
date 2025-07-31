@@ -140,20 +140,21 @@ public class UserController {
     @PostMapping(value = "/upload-profile-image")
     public ResponseEntity<String> uploadProfileImage(
             @RequestParam("image") MultipartFile imageFile,
-            HttpServletRequest request) throws IOException {
-        String accessToken = request.getHeader("authorization").substring(7);
-        String username = this.jwtUtil.getUserName(accessToken);
-        this.userService.uploadProfileImage(username, imageFile);
+            HttpServletRequest request) {
+        try {
+            String accessToken = request.getHeader("authorization").substring(7);
+            String username = this.jwtUtil.getUserName(accessToken);
 
-        String imageUrl = this.userService.uploadProfileImage(username, imageFile);
-        return ResponseEntity.ok(imageUrl);
+            // userService.uploadProfileImage를 한 번만 호출하고 그 결과를 반환
+            String imageUrl = this.userService.uploadProfileImage(username, imageFile);
+            return ResponseEntity.ok(imageUrl); // 업로드된 이미지 URL 반환
+        } catch (EntityNotFoundException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
+        } catch (IOException e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("파일 업로드 중 오류가 발생했습니다: " + e.getMessage());
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("예상치 못한 오류가 발생했습니다: " + e.getMessage());
+        }
     }
 
-    // ✨ 새로 추가된 이미지 제거 엔드포인트
-    @DeleteMapping(value = "/remove-profile-image")
-    public ResponseEntity<String> removeProfileImage(HttpServletRequest request) {
-
-
-        return ResponseEntity.ok("Profile image removed successfully.");
-    }
 }
