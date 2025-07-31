@@ -3,6 +3,7 @@ package com.example.arirangtrail.controller.user;
 import com.example.arirangtrail.data.dto.token.TokenDTO;
 import com.example.arirangtrail.data.dto.user.JoinDTO;
 import com.example.arirangtrail.data.dto.user.UserDTO;
+import com.example.arirangtrail.data.entity.UserEntity; // UserEntity 임포트 추가 (updateInform 때문)
 import com.example.arirangtrail.jwt.JwtUtil;
 import com.example.arirangtrail.service.user.UserService;
 import jakarta.servlet.http.Cookie;
@@ -12,6 +13,7 @@ import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType; // MediaType 임포트 추가
 import org.springframework.http.ResponseCookie;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -66,6 +68,7 @@ public class UserController {
         }
 
         try {
+            // UserService.updateInform이 UserDTO를 반환하도록 되어 있으므로, 그대로 사용
             UserDTO updatedUserDTO = this.userService.updateInform(userDTO);
             return ResponseEntity.status(HttpStatus.OK).body(updatedUserDTO);
         } catch (IllegalArgumentException e) {
@@ -108,6 +111,7 @@ public class UserController {
 
     @PostMapping(value = "/simplejoin")
     public ResponseEntity<UserDTO> simpleJoin(@RequestBody JoinDTO joinDTO) {
+        // UserService.simpleJoin이 UserDTO를 반환하도록 되어 있으므로, 그대로 사용
         UserDTO userDTO = this.userService.simpleJoin(joinDTO);
         String refresh_Token = this.jwtUtil.createToken("refresh", userDTO.getUsername(), userDTO.getRole(), 300 * 1000L);
         String access_Token = this.jwtUtil.createToken("access", userDTO.getUsername(), userDTO.getRole(), 60 * 1000L);
@@ -136,8 +140,8 @@ public class UserController {
         return ResponseEntity.status(HttpStatus.OK).body(userDTO);
     }
 
-    // ✨ 새로 추가된 이미지 업로드 엔드포인트
-    @PostMapping(value = "/upload-profile-image")
+    // ✨ 프로필 이미지 업로드 엔드포인트 (최종 수정: consumes 추가, 중복 호출 제거)
+    @PostMapping(value = "/upload-profile-image", consumes = MediaType.MULTIPART_FORM_DATA_VALUE) // ✨ consumes 추가
     public ResponseEntity<String> uploadProfileImage(
             @RequestParam("image") MultipartFile imageFile,
             HttpServletRequest request) {
@@ -145,8 +149,7 @@ public class UserController {
             String accessToken = request.getHeader("authorization").substring(7);
             String username = this.jwtUtil.getUserName(accessToken);
 
-            // userService.uploadProfileImage를 한 번만 호출하고 그 결과를 반환
-            String imageUrl = this.userService.uploadProfileImage(username, imageFile);
+            String imageUrl = this.userService.uploadProfileImage(username, imageFile); // 한 번만 호출
             return ResponseEntity.ok(imageUrl); // 업로드된 이미지 URL 반환
         } catch (EntityNotFoundException e) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
@@ -157,4 +160,18 @@ public class UserController {
         }
     }
 
+    // ✨ 프로필 이미지 제거 엔드포인트 (삭제: 프론트엔드에서 imageurl: null로 /update-inform 호출로 대체됨)
+    // @DeleteMapping(value = "/remove-profile-image")
+    // public ResponseEntity<String> removeProfileImage(HttpServletRequest request) {
+    //     try {
+    //         String accessToken = request.getHeader("authorization").substring(7);
+    //         String username = this.jwtUtil.getUserName(accessToken);
+    //         this.userService.removeProfileImage(username);
+    //         return ResponseEntity.ok("프로필 이미지가 성공적으로 제거되었습니다.");
+    //     } catch (EntityNotFoundException e) {
+    //         return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
+    //     } catch (Exception e) {
+    //         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("이미지 제거 중 오류가 발생했습니다: " + e.getMessage());
+    //     }
+    // }
 }
