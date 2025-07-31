@@ -6,6 +6,7 @@ import com.example.arirangtrail.data.entity.ReviewEntity;
 import com.example.arirangtrail.data.repository.ReviewCommentRepository;
 import com.example.arirangtrail.data.repository.ReviewRepository;
 import com.example.arirangtrail.data.repository.UserRepository;
+import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -56,6 +57,19 @@ public class ReviewCommentService {
             return true;
         }
         return false;
+    }
+
+    public boolean updateReviewComment(Long commentid, String content){
+        ReviewCommentEntity comment = this.reviewCommentRepository.findById(commentid).orElse(null);
+        if (comment != null) {
+            comment.setContent(content);
+            this.reviewCommentRepository.save(comment);
+        }
+        throw new EntityNotFoundException("Review comment not found");
+    }
+
+    public void deleteReviewComment(Long commentid){
+        this.reviewCommentRepository.findById(commentid).ifPresent(this.reviewCommentRepository::delete);
     }
 
 }
