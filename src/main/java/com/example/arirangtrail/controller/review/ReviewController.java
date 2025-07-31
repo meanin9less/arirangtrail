@@ -122,25 +122,26 @@ public class ReviewController {
     }
 
     @PostMapping("/{reviewid}/comments")
-    public ResponseEntity<?> createComment(@PathVariable Long reviewid, @RequestBody ReviewCommentDTO reviewCommentDTO){
-        boolean result = this.reviewCommentService.createReviewComment(reviewid, reviewCommentDTO);
-        if (result) {
+    public ResponseEntity<ReviewCommentDTO> createComment(@PathVariable Long reviewid, @RequestBody ReviewCommentDTO reviewCommentDTO){
+        ReviewCommentDTO result = this.reviewCommentService.createReviewComment(reviewid, reviewCommentDTO);
+        if (result != null) {
             return ResponseEntity.ok().build();
         }
         return ResponseEntity.notFound().build();
     }
 
     @PutMapping("/comments/{commentId}")
-    public ResponseEntity<String> updateComment(@PathVariable Long commentId,
+    public ResponseEntity<ReviewCommentDTO> updateComment(@PathVariable Long commentId,
                                                 @RequestBody Map<String, Object> payload) {
         String newContent = (String) payload.get("content");
         if (newContent == null || newContent.equals("")) {
             return ResponseEntity.badRequest().build();
         }
-        if(!this.reviewCommentService.updateReviewComment(commentId, newContent)){
-            return ResponseEntity.badRequest().build();
-        };
-        return ResponseEntity.ok("update successful");
+        ReviewCommentDTO updatedReviewComment = this.reviewCommentService.updateReviewComment(commentId, newContent);
+        if (updatedReviewComment != null) {
+            return ResponseEntity.ok(updatedReviewComment);
+        }
+        return ResponseEntity.notFound().build();
     }
 
     @DeleteMapping("/comments/{commentId}")
