@@ -14,7 +14,7 @@ interface UserProfileResponseDto {
     lastname: string;
     nickname: string;
     birthdate: string; // MyPage에서 사용하진 않지만, 타입 일관성을 위해 추가
-    imageUrl?: string;
+    imageurl?: string; // ✨ imageUrl -> imageurl (소문자로 변경)
 }
 
 const MyPage: React.FC = () => {
@@ -28,7 +28,8 @@ const MyPage: React.FC = () => {
     // 사용자 정보 상태 (storedUserProfile을 초기값으로 사용)
     const [userName, setUserName] = useState<string | null>(storedUserProfile?.nickname || storedUserProfile?.username || null);
     const [userEmail, setUserEmail] = useState<string | null>(storedUserProfile?.email || null);
-    const [userProfileImage, setUserProfileImage] = useState<string | null>(storedUserProfile?.imageUrl || null);
+    // ✨ storedUserProfile.imageurl로 접근하도록 변경
+    const [userProfileImage, setUserProfileImage] = useState<string | null>(storedUserProfile?.imageurl || null);
 
     const [loadingUserInfo, setLoadingUserInfo] = useState<boolean>(true);
     const [userInfoError, setUserInfoError] = useState<string | null>(null);
@@ -50,8 +51,9 @@ const MyPage: React.FC = () => {
 
                     setUserName(response.data.nickname || response.data.username);
                     setUserEmail(response.data.email);
+                    // ✨ response.data.imageurl로 접근하도록 변경
                     setUserProfileImage(
-                        response.data.imageUrl || 'https://placehold.co/100x100/cccccc/ffffff?text=User'
+                        response.data.imageurl || 'https://placehold.co/100x100/cccccc/ffffff?text=User'
                     );
 
                     setLoadingUserInfo(false);
@@ -78,7 +80,7 @@ const MyPage: React.FC = () => {
             setLoadingUserInfo(false);
             setUserInfoError(null);
         }
-    }, [isLoggedIn, jwtToken, storedUserProfile]); // ✨ storedUserProfile을 의존성 배열에 추가
+    }, [isLoggedIn, jwtToken, storedUserProfile]); // storedUserProfile을 의존성 배열에 추가
 
     const [showPasswordAuth, setShowPasswordAuth] = useState(false);
     const [currentPassword, setCurrentPassword] = useState('');
