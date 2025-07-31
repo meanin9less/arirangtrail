@@ -40,7 +40,7 @@ const EditInfoPage: React.FC = () => {
     const [lastname, setLastname] = useState<string>(storedUserProfile?.lastname || '');
     const [nickname, setNickname] = useState<string>(storedUserProfile?.nickname || '');
     const [birthdate, setBirthdate] = useState<string>(storedUserProfile?.birthdate || '');
-    const [currentImageUrl, setCurrentImageUrl] = useState<string | null>(storedUserProfile?.imageUrl || null);
+    const [currentImageUrl, setCurrentImageUrl] = useState<string | null>(storedUserProfile?.imageurl || null);
     const [imagePreviewUrl, setImagePreviewUrl] = useState<string | null>(null);
 
     const [loading, setLoading] = useState(true);
