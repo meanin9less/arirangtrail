@@ -135,11 +135,11 @@ const MyRooms = () => {
                                 <div style={styles.roomInfoGrid}>
                                     <div style={styles.infoItem}>
                                         <IoPeopleOutline style={styles.infoIcon} />
-                                        <span>{`${room.participantCount || 0} / ${room.maxParticipants || '-'}`}</span>
+                                        <span>인원수: {`${room.participantCount || 0} / ${room.maxParticipants || '-'}`}</span>
                                     </div>
                                     <div style={styles.infoItem}>
                                         <IoCalendarOutline style={styles.infoIcon} />
-                                        <span>{room.meetingDate ? new Date(room.meetingDate).toLocaleDateString() : '날짜 미정'}</span>
+                                        <span>모임 날짜: {room.meetingDate ? new Date(room.meetingDate).toLocaleDateString() : '날짜 미정'}</span>
                                     </div>
                                     <div style={styles.infoItem}>
                                         <IoChatbubblesOutline style={styles.infoIcon} />

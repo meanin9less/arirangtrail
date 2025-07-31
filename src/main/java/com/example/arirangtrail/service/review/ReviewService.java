@@ -28,11 +28,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 @Service
-<<<<<<< HEAD
-//@Profile("prod") // "prod" 프로필이 활성화될 때만 이 빈(Bean)을 생성하라는 의미!
-=======
-@Profile("prod")
->>>>>>> 0238f30d1c19a369ec024c68918fb6d3bc5750b1
+//@Profile("prod")
 @RequiredArgsConstructor
 public class ReviewService {
 
