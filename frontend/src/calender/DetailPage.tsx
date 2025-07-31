@@ -12,7 +12,7 @@ import {
 } from "react-icons/io5";
 import React, {useEffect, useState} from "react";
 import axios from "axios";
-import {useNavigate, useParams} from "react-router-dom";
+import {useNavigate, useParams} from "react-router-dom"; // ✨ useNavigate 임포트 확인
 import {Swiper, SwiperSlide} from "swiper/react";
 import {Navigation, Pagination} from "swiper/modules";
 import 'swiper/css';
@@ -99,6 +99,7 @@ const DetailPage = () => {
         title: string;
     } | null>(null); // 선택된 목적지 정보
     const [starRating, setStarRating] = useState<number>(0); // 별점 상태 추가
+    const navigate = useNavigate(); // ✨ useNavigate 훅 사용
 
     useEffect(() => {
         if (festivalId) {
@@ -217,10 +218,15 @@ const DetailPage = () => {
     }, [festival]); // festival 상태가 변경되면 실행
 
     useEffect(() => {
-        // festival 데이터나 '구글맵' API(window.google)가 준비되지 않았으면 실행하지 않음
-        if (!festival || !festival.mapy || !festival.mapx || !window.google) return;
+        // festival 데이터, '구글맵' API(window.google), 그리고 'marker' 라이브러리가 준비되지 않았으면 실행하지 않음
+        if (!festival || !festival.mapy || !festival.mapx || !window.google || !window.google.maps.marker) return;
+
         const mapContainer = document.getElementById('map');
-        if (!mapContainer) return;
+        // mapContainer가 존재하는지 확인
+        if (!mapContainer) {
+            console.warn("Google Map container element not found.");
+            return;
+        }
 
         const lat = parseFloat(festival.mapy);
         const lng = parseFloat(festival.mapx);
@@ -237,15 +243,17 @@ const DetailPage = () => {
         // 구글맵 생성
         const map = new window.google.maps.Map(mapContainer, mapOptions);
 
-        // 구글맵 마커 생성
-        const marker = new window.google.maps.Marker({
+        // ✨ AdvancedMarkerElement 사용
+        const marker = new window.google.maps.marker.AdvancedMarkerElement({
             position: position,
             map: map,
+            title: festival.title, // 마커에 툴팁으로 제목 표시
         });
 
-        // 구글맵 인포윈도우 생성
+        // ✨ InfoWindow 생성 및 연결 (AdvancedMarkerElement와 호환)
         const infowindow = new window.google.maps.InfoWindow({
-            content: `<div class="google-infowindow">${festival.title}</div>`
+            content: `<div class="google-infowindow">${festival.title}</div>`,
+            ariaLabel: festival.title,
         });
 
         marker.addListener('click', () => {
@@ -254,7 +262,7 @@ const DetailPage = () => {
                 map,
             });
         });
-    }, [festival]);
+    }, [festival]); // festival 상태가 변경되면 실행
 
     // // 현재 위치로 길찾기 함수
     // const handleRouteFromCurrentLocation = () => {
@@ -276,7 +284,9 @@ const DetailPage = () => {
         // API 요청 중임을 시각적으로 표시 (선택사항이지만 권장)
         setIsLikeLoading(true);
         try {
-            const response = await apiClient.get(`/festivals/${festivalId}/status`, {
+            // contentId는 Long 타입으로 백엔드에 전달되어야 하므로, string -> number로 변환
+            const contentIdNum = Number(festivalId);
+            const response = await apiClient.get(`/festivals/${contentIdNum}/status`, {
                 params: { username: userProfile?.username || undefined }
             });
             // 서버가 준 값으로만 상태를 업데이트
@@ -295,10 +305,18 @@ const DetailPage = () => {
         if (festivalId) {
             fetchLikeData();
         }
-    }, [festivalId, jwtToken]);
+    }, [festivalId, jwtToken, userProfile]); // userProfile 추가
 
     const handleLikeClick = async () => {
-        if (!jwtToken || isLikeLoading) return;
+        if (!jwtToken || isLikeLoading) {
+            alert("로그인이 필요하거나 요청 처리 중입니다."); // 사용자에게 명확한 메시지
+            return;
+        }
+        if (!userProfile?.username) {
+            // ✨ navigate 제거: 사용자 정보를 찾을 수 없다는 메시지만 표시
+            alert('사용자 정보를 찾을 수 없습니다. 다시 로그인해주세요.');
+            return;
+        }
 
         const previousLiked = isLiked;
         const previousCount = likeCount;
@@ -309,8 +327,10 @@ const DetailPage = () => {
         setIsLikeLoading(true);
 
         try {
-            await apiClient.post(`/festivals/${festivalId}/like`, null, {
-                params: { username: userProfile?.username }
+            // contentId는 Long 타입으로 백엔드에 전달되어야 하므로, string -> number로 변환
+            const contentIdNum = Number(festivalId);
+            await apiClient.post(`/festivals/${contentIdNum}/like`, null, {
+                params: { username: userProfile.username }
             });
 
             // 성공하면 서버에서 정확한 상태 조회
