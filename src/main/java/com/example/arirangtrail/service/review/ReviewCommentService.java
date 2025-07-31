@@ -44,7 +44,7 @@ public class ReviewCommentService {
         return null;
     }
 
-    public boolean createReviewComment(Long reviewid, ReviewCommentDTO reviewCommentDTO){
+    public ReviewCommentDTO createReviewComment(Long reviewid, ReviewCommentDTO reviewCommentDTO){
         ReviewEntity review = this.reviewRepository.findById(reviewid).orElse(null);
         if (review != null) {
             ReviewCommentEntity reviewCommentEntity = new ReviewCommentEntity();
@@ -53,17 +53,34 @@ public class ReviewCommentService {
             reviewCommentEntity.setUsername(reviewCommentDTO.getUsername());
             reviewCommentEntity.setNickname(reviewCommentDTO.getNickname());
             reviewCommentEntity.setReviewid(review);
-            reviewCommentRepository.save(reviewCommentEntity);
-            return true;
+            ReviewCommentEntity reviewComment = reviewCommentRepository.save(reviewCommentEntity);
+            ReviewCommentDTO newReviewCommentDTO = ReviewCommentDTO.builder()
+                    .reviewid(review.getId())
+                    .commentid(reviewComment.getCommentid())
+                    .content(reviewComment.getContent())
+                    .createdat(reviewComment.getCreatedat())
+                    .updatedat(reviewComment.getUpdatedat())
+                    .username(reviewComment.getUsername())
+                    .nickname(reviewComment.getNickname())
+                    .build();
+            return newReviewCommentDTO;
         }
-        return false;
+        return null;
     }
 
-    public boolean updateReviewComment(Long commentid, String content){
+    public ReviewCommentDTO updateReviewComment(Long commentid, String content){
         ReviewCommentEntity comment = this.reviewCommentRepository.findById(commentid).orElse(null);
         if (comment != null) {
             comment.setContent(content);
-            this.reviewCommentRepository.save(comment);
+            ReviewCommentEntity updatedReviewComment = this.reviewCommentRepository.save(comment);
+            return ReviewCommentDTO.builder()
+                    .reviewid(updatedReviewComment.getReviewid().getId())
+                    .commentid(updatedReviewComment.getCommentid())
+                    .content(updatedReviewComment.getContent())
+                    .createdat(updatedReviewComment.getCreatedat())
+                    .updatedat(updatedReviewComment.getUpdatedat())
+                    .username(updatedReviewComment.getUsername())
+                    .build();
         }
         throw new EntityNotFoundException("Review comment not found");
     }
