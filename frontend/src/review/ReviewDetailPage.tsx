@@ -123,7 +123,7 @@ function ReviewDetailPage() {
                     content: newContent,
                 });
                 setComments(comments.map(com => {
-                    return com.content === response.data.commentid ? response.data : com
+                    return com.commentid === response.data.commentid ? response.data : com
                 }))
             } catch (error) {
                 console.error("댓글 수정 실패:", error);
