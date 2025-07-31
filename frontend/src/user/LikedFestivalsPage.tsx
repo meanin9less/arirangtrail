@@ -32,7 +32,7 @@ interface LikedItem {
 
 
 // 한국관광공사 API 서비스 키 (CalendarPage에서 가져옴)
-const SERVICE_KEY = "WCIc8hzzBS3Jdod%2BVa357JmB%2FOS0n4D2qPHaP9PkN4bXIfcryZyg4iaZeTj1fEYJ%2B8q2Ol8FIGe3RkW3d72FHA%3D%3D";
+const SERVICE_KEY = "WCIc8hzzBS3Jdod%2BVa357JmB%2FOS0n4D2qPHaP9PkN4bXIfcryZyg4iaZeTj1fEYJ%2B8q2Ol8FIGe3D72FHA%3D%3D";
 const KTO_API_BASE_URL = "https://apis.data.go.kr/B551011/KorService2";
 
 // 찜한 축제/관광지 아이템 컴포넌트 (간결화)
