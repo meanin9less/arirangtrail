@@ -102,6 +102,8 @@ function ReviewDetailPage() {
         try {
             await apiClient.post(`/reviews/${reviewId}/comments`, {
                 content: newCommentText,
+                username: currentUser.username,
+                nickname: currentUser.nickname
             });
             setNewCommentText('');
             fetchComments();
@@ -120,7 +122,7 @@ function ReviewDetailPage() {
                 await apiClient.put(`/reviews/comments/${commentId}`, {
                     content: newContent,
                 });
-                fetchComments();
+                await fetchComments();
             } catch (error) {
                 console.error("댓글 수정 실패:", error);
                 alert("댓글 수정에 실패했습니다.");
@@ -132,7 +134,7 @@ function ReviewDetailPage() {
         if (window.confirm("정말로 이 댓글을 삭제하시겠습니까?")) {
             try {
                 await apiClient.delete(`/reviews/comments/${commentId}`);
-                fetchComments();
+                await fetchComments();
             } catch (error) {
                 console.error("댓글 삭제 실패:", error);
                 alert("댓글 삭제에 실패했습니다.");
