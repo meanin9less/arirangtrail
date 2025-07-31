@@ -1,0 +1,187 @@
+/* src/pages/LikedFestivalsPage.module.css */
+
+.container {
+    max-width: 800px;
+    margin: 50px auto;
+    padding: 30px;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    background-color: #fff;
+    box-sizing: border-box;
+}
+
+.pageTitle {
+    text-align: center;
+    color: #333;
+    margin-bottom: 30px;
+    font-size: 2em;
+    font-weight: bold;
+}
+
+.message {
+    text-align: center;
+    color: #666;
+    margin-bottom: 10px;
+}
+
+.errorMessage {
+    color: red;
+    font-weight: bold;
+    text-align: center;
+    margin-top: 5px;
+}
+
+.backButton {
+    display: block;
+    width: fit-content;
+    margin: 0 auto 20px auto;
+    padding: 10px 20px;
+    background-color: #007bff;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    font-size: 1em;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+    text-align: center;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+}
+
+.backButton:hover {
+    background-color: #0056b3;
+}
+
+.noContentMessage {
+    text-align: center;
+    color: #666;
+    padding: 40px 0;
+    font-size: 1.1em;
+}
+
+/* --- 찜 목록 아이템 스타일 --- */
+.festivalList {
+    list-style: none;
+    padding: 0;
+    margin-top: 20px;
+}
+
+.festivalItem {
+    display: flex;
+    align-items: center;
+    gap: 15px; /* 이미지와 텍스트 사이 간격 */
+    border: 1px solid #eee;
+    border-radius: 8px;
+    padding: 15px;
+    background-color: #fcfcfc;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+    margin-bottom: 10px;
+    transition: background-color 0.2s ease, transform 0.2s ease;
+    cursor: pointer; /* 아이템 전체 클릭 가능하도록 */
+}
+
+.festivalItem:hover {
+    background-color: #f0f8ff; /* 호버 시 배경색 변경 */
+    transform: translateY(-2px); /* 약간 위로 올라가는 효과 */
+}
+
+.festivalImage {
+    width: 80px;
+    height: 80px;
+    object-fit: cover;
+    border-radius: 6px;
+    flex-shrink: 0; /* 이미지가 줄어들지 않도록 */
+}
+
+.festivalDetails {
+    flex-grow: 1; /* 상세 정보가 남은 공간을 차지하도록 */
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start; /* 왼쪽 정렬 */
+}
+
+.festivalTitleLink {
+    font-size: 1.1em;
+    font-weight: bold;
+    color: #333;
+    text-decoration: none;
+    margin-bottom: 5px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 100%; /* 부모 너비를 넘지 않도록 */
+}
+
+.festivalTitleLink:hover {
+    color: #007bff;
+    text-decoration: underline;
+}
+
+.festivalMeta, .likedDate {
+    font-size: 0.85em;
+    color: #888;
+    margin-bottom: 3px;
+    display: flex;
+    align-items: center;
+}
+
+.unlikeButton {
+    background-color: #dc3545; /* 빨간색 */
+    color: white;
+    padding: 6px 12px;
+    border: none;
+    border-radius: 5px;
+    font-size: 0.85em;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+    margin-top: 8px; /* 위쪽 여백 */
+    align-self: flex-end; /* 오른쪽 아래 정렬 */
+}
+
+.unlikeButton:hover {
+    background-color: #c82333;
+}
+
+/* 모바일 반응형 */
+@media (max-width: 768px) {
+    .container {
+        margin: 20px auto;
+        padding: 20px;
+    }
+
+    .pageTitle {
+        font-size: 1.8em;
+    }
+
+    .backButton {
+        padding: 8px 15px;
+        font-size: 0.9em;
+    }
+
+    .festivalItem {
+        flex-direction: column; /* 모바일에서는 세로로 쌓이도록 */
+        align-items: flex-start; /* 왼쪽 정렬 */
+        padding: 10px;
+        gap: 10px;
+    }
+
+    .festivalImage {
+        width: 60px;
+        height: 60px;
+    }
+
+    .festivalDetails {
+        width: 100%;
+    }
+
+    .festivalTitleLink {
+        font-size: 1em;
+    }
+
+    .unlikeButton {
+        padding: 5px 10px;
+        font-size: 0.8em;
+        align-self: stretch; /* 모바일에서 너비 꽉 채우기 */
+        text-align: center;
+    }
+}

@@ -1,42 +1,40 @@
 import React, { useState, useEffect } from 'react';
-import styles from './MyPage.module.css'; // 마이페이지 스타일 임포트
+import styles from './MyPage.module.css';
 import { useSelector } from 'react-redux';
-import { RootState } from '../store'; // Redux RootState 임포트
-import { useNavigate } from 'react-router-dom'; // useNavigate 훅 임포트
-import apiClient from '../api/axiosInstance'; // API 클라이언트 임포트
-import axios from 'axios'; // axios.isAxiosError를 위해
+import { RootState } from '../store';
+import { useNavigate } from 'react-router-dom';
+import apiClient from '../api/axiosInstance';
+import axios from 'axios';
 
-// ✨ 1. 백엔드 API 응답 및 요청에 사용할 DTO 인터페이스 정의
+// 백엔드 API 응답 및 요청에 사용할 DTO 인터페이스 정의 (store.ts의 userProfile 타입과 일치해야 함)
 interface UserProfileResponseDto {
     username: string;
     email: string;
     firstname: string;
     lastname: string;
     nickname: string;
-    imageUrl?: string;
+    birthdate: string; // MyPage에서 사용하진 않지만, 타입 일관성을 위해 추가
+    imageurl?: string; // ✨ imageUrl -> imageurl (소문자로 변경)
 }
-
-
-type PasswordVerificationResponseDto = boolean;
 
 const MyPage: React.FC = () => {
     const navigate = useNavigate();
 
-    // Redux store에서 JWT 토큰 가져오기 (로그인 여부 확인용)
     const jwtToken = useSelector((state: RootState) => state.token.token);
     const isLoggedIn = !!jwtToken;
     // Redux store에서 사용자 프로필 정보 가져오기 (초기 로딩 시 활용)
     const storedUserProfile = useSelector((state: RootState) => state.token.userProfile);
 
-    // 사용자 정보 상태
+    // 사용자 정보 상태 (storedUserProfile을 초기값으로 사용)
     const [userName, setUserName] = useState<string | null>(storedUserProfile?.nickname || storedUserProfile?.username || null);
-    const [userEmail, setUserEmail] = useState<string | null>(storedUserProfile?.email || null); // email은 UserProfileResponseDto에 있으므로 추가
-    const [userProfileImage, setUserProfileImage] = useState<string | null>(storedUserProfile?.imageUrl || null); // 프로필 이미지 URL 추가
+    const [userEmail, setUserEmail] = useState<string | null>(storedUserProfile?.email || null);
+    // ✨ storedUserProfile.imageurl로 접근하도록 변경
+    const [userProfileImage, setUserProfileImage] = useState<string | null>(storedUserProfile?.imageurl || null);
 
     const [loadingUserInfo, setLoadingUserInfo] = useState<boolean>(true);
     const [userInfoError, setUserInfoError] = useState<string | null>(null);
 
-    // 컴포넌트 마운트 시 또는 로그인 상태 변경 시 사용자 정보 가져오기
+    // 컴포넌트 마운트 시 또는 로그인/저장된 프로필 상태 변경 시 사용자 정보 가져오기
     useEffect(() => {
         if (isLoggedIn) {
             const fetchUserInfo = async () => {
@@ -44,13 +42,18 @@ const MyPage: React.FC = () => {
                     setLoadingUserInfo(true);
                     setUserInfoError(null);
 
-                    // ✅ username 파라미터 제거
-                    const response = await apiClient.get<UserProfileResponseDto>('/userinfo');
+                    // API 호출을 통해 최신 사용자 정보를 가져옴
+                    const response = await apiClient.get<UserProfileResponseDto>('/userinfo', {
+                        headers: {
+                            Authorization: `Bearer ${jwtToken}`,
+                        },
+                    });
 
                     setUserName(response.data.nickname || response.data.username);
                     setUserEmail(response.data.email);
+                    // ✨ response.data.imageurl로 접근하도록 변경
                     setUserProfileImage(
-                        response.data.imageUrl || 'https://placehold.co/100x100/cccccc/ffffff?text=User'
+                        response.data.imageurl || 'https://placehold.co/100x100/cccccc/ffffff?text=User'
                     );
 
                     setLoadingUserInfo(false);
@@ -66,7 +69,10 @@ const MyPage: React.FC = () => {
                 }
             };
 
+            // isLoggedIn 또는 storedUserProfile이 변경될 때 fetchUserInfo 호출
+            // 이렇게 하면 EditInfoPage에서 Redux Store를 업데이트하면 MyPage가 자동으로 반응합니다.
             fetchUserInfo();
+
         } else {
             setUserName(null);
             setUserEmail(null);
@@ -74,30 +80,23 @@ const MyPage: React.FC = () => {
             setLoadingUserInfo(false);
             setUserInfoError(null);
         }
-    }, [isLoggedIn]); // isLoggedIn과 storedUserProfile 변경 시 실행
+    }, [isLoggedIn, jwtToken, storedUserProfile]); // storedUserProfile을 의존성 배열에 추가
 
-    // 비밀번호 인증 섹션 표시 여부
     const [showPasswordAuth, setShowPasswordAuth] = useState(false);
-    // 비밀번호 입력 값
     const [currentPassword, setCurrentPassword] = useState('');
-    // 인증 메시지 (성공/실패)
     const [authMessage, setAuthMessage] = useState<string | null>(null);
-    // 인증 로딩 상태
     const [authLoading, setAuthLoading] = useState(false);
 
-    // "내 정보 수정" 버튼 클릭 핸들러
     const handleEditInfoClick = () => {
-        setShowPasswordAuth(true); // 비밀번호 입력 섹션 표시
-        setAuthMessage(null); // 이전 메시지 초기화
-        setCurrentPassword(''); // 비밀번호 입력 필드 초기화
+        setShowPasswordAuth(true);
+        setAuthMessage(null);
+        setCurrentPassword('');
     };
 
-    // 비밀번호 입력 필드 변경 핸들러
     const handlePasswordAuthChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         setCurrentPassword(e.target.value);
     };
 
-    // 간편 인증 제출 핸들러
     const handleSimpleAuth = async () => {
         setAuthLoading(true);
         setAuthMessage(null);
@@ -109,7 +108,6 @@ const MyPage: React.FC = () => {
         }
 
         try {
-            // username을 쿼리 파라미터로 보내고, body는 빈값 또는 null로 보내기
             const username = storedUserProfile?.username;
             if (!username) {
                 setAuthMessage('사용자 정보가 없습니다.');
@@ -117,7 +115,6 @@ const MyPage: React.FC = () => {
                 return;
             }
 
-            // 쿼리 스트링 직접 작성
             const response = await apiClient.post<boolean>(
                 `/compare-password?username=${encodeURIComponent(username)}&password=${encodeURIComponent(currentPassword)}`,
                 null
@@ -141,7 +138,6 @@ const MyPage: React.FC = () => {
         }
     };
 
-    // 로그인되지 않은 경우
     if (!isLoggedIn) {
         return (
             <div className={styles.myPageContainer}>
@@ -152,7 +148,6 @@ const MyPage: React.FC = () => {
         );
     }
 
-    // 사용자 정보 로딩 중일 때 표시
     if (loadingUserInfo) {
         return (
             <div className={styles.myPageContainer}>
@@ -162,7 +157,6 @@ const MyPage: React.FC = () => {
         );
     }
 
-    // 사용자 정보 로딩 에러 발생 시 표시
     if (userInfoError) {
         return (
             <div className={styles.myPageContainer}>
@@ -176,15 +170,14 @@ const MyPage: React.FC = () => {
         <div className={styles.myPageContainer}>
             <h2 className={styles.pageTitle}>마이페이지</h2>
             <div className={styles.userInfoSection}>
-                {/* 프로필 이미지 표시 (없으면 기본 플레이스홀더) */}
                 <img
                     src={userProfileImage || 'https://placehold.co/100x100/cccccc/ffffff?text=User'}
                     alt="프로필 이미지"
                     className={styles.profileImage}
                     onError={(e) => {
                         const target = e.target as HTMLImageElement;
-                        target.onerror = null; // 무한 루프 방지
-                        target.src = 'https://placehold.co/100x100/cccccc/ffffff?text=User'; // 이미지 로드 실패 시 기본 이미지
+                        target.onerror = null;
+                        target.src = 'https://placehold.co/100x100/cccccc/ffffff?text=User';
                     }}
                 />
                 <p><strong>환영합니다, {userName || '사용자'}!</strong></p>
@@ -199,7 +192,7 @@ const MyPage: React.FC = () => {
                             내 정보 수정
                         </button>
                     </li>
-                    {showPasswordAuth && ( // 비밀번호 인증 섹션 조건부 렌더링
+                    {showPasswordAuth && (
                         <li className={styles.authSection}>
                             <p className={styles.authPrompt}>정보 수정을 위해 비밀번호를 입력해주세요.</p>
                             <input
@@ -225,18 +218,26 @@ const MyPage: React.FC = () => {
                     )}
                     <li><button className={styles.menuButton}
                                 onClick={()=>navigate('/mypage/passwordchange')}>
-                        비밀번호 변경</button></li>
+                        비밀번호 변경</button>
+                    </li>
                     <li><button className={styles.menuButton}
                                 onClick={() => navigate('/mypage/delete-account')}>
-                        회원 탈퇴</button></li>
+                        회원 탈퇴</button>
+                    </li>
                 </ul>
             </div>
 
             <div className={styles.menuSection}>
                 <h3 className={styles.sectionTitle}>활동 내역</h3>
                 <ul className={styles.menuList}>
-                    <li><button className={styles.menuButton}>내가 쓴 리뷰</button></li>
-                    <li><button className={styles.menuButton}>찜한 축제/관광지</button></li>
+                    <li><button className={styles.menuButton}
+                                onClick={() => navigate('/mypage/my-reviews')}>
+                        내가 쓴 리뷰</button>
+                    </li>
+                    <li><button className={styles.menuButton}
+                                onClick={() => navigate('/mypage/liked-festivals')}>
+                        찜한 축제/관광지</button>
+                    </li>
                 </ul>
             </div>
         </div>

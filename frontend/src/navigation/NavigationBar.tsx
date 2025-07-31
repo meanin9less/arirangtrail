@@ -52,7 +52,7 @@ const NavigationBar = () => {
     };
 
     // 프로필 이미지 URL 결정 (userProfile에서 가져오거나 기본값 사용)
-    const profileImageUrl = userProfile?.imageUrl || defaultProfileIcon;
+    const profileImageUrl = userProfile?.imageurl || defaultProfileIcon;
     // 표시할 닉네임 (userProfile에서 가져오거나 사용자명, 없으면 '사용자')
     const displayNickname = userProfile?.nickname || userProfile?.username || '사용자';
 

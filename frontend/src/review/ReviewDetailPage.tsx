@@ -1,15 +1,22 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import apiClient from '../api/axiosInstance';
 import axios from 'axios';
-import styles from './ReviewDetailPage.module.css'; // ✨ 새 CSS 모듈 임포트
+import styles from './ReviewDetailPage.module.css';
+import { Swiper, SwiperSlide } from 'swiper/react';
+import 'swiper/css';
+import 'swiper/css/navigation';
+import 'swiper/css/pagination';
+import './swiper-custom.css';
+import { Navigation, Pagination } from 'swiper/modules';
+import { useSelector } from 'react-redux';
+import { RootState } from '../store';
 
 interface Photo {
-    photoId: number,
-    photoUrl: string
+    photoId: number;
+    photoUrl: string;
 }
 
-// 데이터 모델 정의 (ReviewPage.tsx와 동일하게 유지)
 interface Review {
     reviewId: string;
     username: string;
@@ -19,32 +26,55 @@ interface Review {
     content: string;
     rating: number;
     visitDate?: string;
-    photos?: Photo[]; // 단일 이미지 URL (reviewphotos에서 가져올 경우)
+    photos?: Photo[];
     caption?: string;
     createdAt: string;
     updatedAt: string;
 }
 
+interface Comment {
+    commentid: string;
+    reviewid: string;
+    content: string;
+    username: string;
+    nickname: string;
+    createdat: string;
+    updatedat: string;
+}
+
 function ReviewDetailPage() {
-    const { reviewId } = useParams<{ reviewId: string }>(); // URL에서 reviewId 가져오기
+    const { reviewId } = useParams<{ reviewId: string }>();
     const navigate = useNavigate();
+    const currentUser = useSelector((state: RootState) => state.token.userProfile);
 
     const [review, setReview] = useState<Review | null>(null);
     const [loading, setLoading] = useState<boolean>(true);
     const [error, setError] = useState<string | null>(null);
-    console.log(reviewId);
+    const [comments, setComments] = useState<Comment[]>([]);
+    const [newCommentText, setNewCommentText] = useState<string>('');
+
+    const fetchComments = useCallback(async () => {
+        if (!reviewId) return;
+        try {
+            const response = await apiClient.get(`/reviews/${reviewId}/comments`);
+            setComments(response.data || []);
+        } catch (error) {
+            console.error("댓글 로딩 실패:", error);
+            setComments([]);
+        }
+    }, [reviewId]);
+
     useEffect(() => {
         if (!reviewId) {
             setError('리뷰 ID가 제공되지 않았습니다.');
             setLoading(false);
             return;
         }
+
         const fetchReviewDetail = async () => {
             setLoading(true);
             setError(null);
             try {
-                // [백엔드 연동 필요] 단일 리뷰를 가져오는 API 엔드포인트
-                // 예: GET /reviews/{reviewId}
                 const response = await apiClient.get(`/reviews/${reviewId}`);
                 setReview(response.data);
             } catch (err: any) {
@@ -58,15 +88,64 @@ function ReviewDetailPage() {
                 setLoading(false);
             }
         };
+
         fetchReviewDetail();
-    }, []); // reviewId가 변경될 때마다 다시 불러오기
+        fetchComments();
+    }, [reviewId, fetchComments]);
+
+    const handleAddComment = async () => {
+        if (!newCommentText.trim() || !currentUser?.username) {
+            alert("댓글 내용을 입력하거나 로그인해야 합니다.");
+            return;
+        }
+
+        try {
+            const response = await apiClient.post(`/reviews/${reviewId}/comments`, {
+                content: newCommentText,
+                username: currentUser.username,
+                nickname: currentUser.nickname
+            });
+            setNewCommentText('');
+            setComments([...comments, response.data])
+        } catch (error) {
+            console.error("댓글 추가 실패:", error);
+            alert("댓글 추가에 실패했습니다.");
+        }
+    };
+
+    const handleUpdateComment = async (commentId: string) => {
+        const currentComment = comments.find(c => c.commentid === commentId);
+        const newContent = prompt("수정할 댓글 내용을 입력하세요:", currentComment?.content);
+
+        if (newContent && newContent.trim() !== "") {
+            try {
+                const response = await apiClient.put(`/reviews/comments/${commentId}`, {
+                    content: newContent,
+                });
+                setComments(comments.map(com => {
+                    return com.commentid === response.data.commentid ? response.data : com
+                }))
+            } catch (error) {
+                console.error("댓글 수정 실패:", error);
+                alert("댓글 수정에 실패했습니다.");
+            }
+        }
+    };
+
+    const handleDeleteComment = async (commentId: string) => {
+        if (window.confirm("정말로 이 댓글을 삭제하시겠습니까?")) {
+            try {
+                await apiClient.delete(`/reviews/comments/${commentId}`);
+                setComments(comments.filter(com => com.commentid !== commentId));
+            } catch (error) {
+                console.error("댓글 삭제 실패:", error);
+                alert("댓글 삭제에 실패했습니다.");
+            }
+        }
+    };
 
     if (loading) {
-        return (
-            <div className={styles.detailContainer}>
-                <p>리뷰를 불러오는 중...</p>
-            </div>
-        );
+        return <div className={styles.detailContainer}><p>리뷰를 불러오는 중...</p></div>;
     }
 
     if (error) {
@@ -94,41 +173,110 @@ function ReviewDetailPage() {
     return (
         <div className={styles.detailContainer}>
             <h2 className={styles.reviewTitle}>{review.title}</h2>
-            <p className={styles.reviewMeta}>
-                작성자: <strong>{review.username}</strong> | 별점: {'⭐'.repeat(review.rating)}
-            </p>
-            {review.contentTitle && (
-                <p className={styles.reviewMeta}>
-                    행사: {review.contentTitle} (ID: {review.contentId})
-                </p>
+
+            {review.photos && review.photos.length > 0 && (
+                <Swiper
+                    modules={[Navigation, Pagination]}
+                    spaceBetween={10}
+                    slidesPerView={1}
+                    navigation
+                    pagination={{ clickable: true }}
+                    className={styles.detailSwiper}
+                >
+                    {review.photos.map(photo => (
+                        <SwiperSlide key={photo.photoId}>
+                            <img src={photo.photoUrl} alt={review.caption || review.title} className={styles.detailImage} />
+                        </SwiperSlide>
+                    ))}
+                </Swiper>
             )}
-            {review.visitDate && (
-                <p className={styles.reviewMeta}>방문일: {review.visitDate}</p>
-            )}
+
+            <div className={styles.reviewDetailsGroup}>
+                <div className={styles.reviewDetailsLine}>
+                    <p className={styles.reviewDetailItem}>작성자: <strong>{review.username}</strong></p>
+                    <p className={styles.reviewDetailItem}>별점: ⭐ {review.rating}</p>
+                </div>
+                {(review.contentTitle || review.visitDate) && (
+                    <div className={styles.reviewDetailsLine}>
+                        {review.contentTitle && (
+                            <p className={styles.reviewDetailItem}>행사: {review.contentTitle} (ID: {review.contentId})</p>
+                        )}
+                        {review.visitDate && (
+                            <p className={styles.reviewDetailItem}>방문일: {review.visitDate}</p>
+                        )}
+                    </div>
+                )}
+            </div>
 
             <div className={styles.reviewContent}>
                 <p>{review.content}</p>
             </div>
 
-            {review.photos && ( // 이미지 URL이 있을 경우 이미지 표시
-                review.photos.map(
-                    photo =>
-                        <div className={styles.reviewImageContainer}>
-                            <img src={photo.photoUrl} alt={review.caption || review.title} className={styles.reviewImage} />
-                        </div>
-                )
-            )}
-
-            <p className={styles.reviewDate}>
-                작성일: {new Date(review.createdAt).toLocaleString()}
-            </p>
-            <p className={styles.reviewDate}>
-                최종 수정일: {new Date(review.updatedAt).toLocaleString()}
-            </p>
+            <p className={styles.reviewDate}>작성일: {new Date(review.createdAt).toLocaleString()}</p>
+            <p className={styles.reviewDate}>최종 수정일: {new Date(review.updatedAt).toLocaleString()}</p>
 
             <button onClick={() => navigate('/review')} className={styles.backButton}>
-                목록으로 돌아가기
+                목록으로
             </button>
+            {currentUser && currentUser?.username === review.username && (
+                <div className={styles.actionButtons}>
+                    <button onClick={() => navigate(`/review/update/${reviewId}`)} className={styles.editButton}>
+                        수정
+                    </button>
+                    <button onClick={async () => {
+                        if (window.confirm("정말로 이 리뷰를 삭제하시겠습니까?")) {
+                            try {
+                                await apiClient.delete(`/reviews/${reviewId}`);
+                                navigate(`/review`);
+                            } catch (error) {
+                                console.error("리뷰 삭제 실패:", error);
+                                alert("리뷰 삭제에 실패했습니다.");
+                            }
+                        }
+                    }} className={styles.editButton}>
+                        삭제
+                    </button>
+                </div>
+            )}
+
+            <div className={styles.commentsSection}>
+                <h3>댓글 ({comments.length})</h3>
+                <div className={styles.commentsList}>
+                    {comments.length === 0 ? (
+                        <p className={styles.noComments}>아직 댓글이 없습니다. 첫 댓글을 남겨보세요!</p>
+                    ) : (
+                        comments.map((comment) => (
+                            <div key={comment.commentid} className={styles.commentItem}>
+                                <p className={styles.commentAuthor}>{comment.nickname}<span> ({comment.username})</span></p>
+                                <p className={styles.commentText}>{comment.content}</p>
+                                <p className={styles.commentDate}>{new Date(comment.createdat).toLocaleString()}</p>
+                                {currentUser && currentUser.username === comment.username && (
+                                    <div className={styles.commentActionButtons}>
+                                        <button onClick={() => handleUpdateComment(comment.commentid)} className={styles.commentEditButton}>
+                                            수정
+                                        </button>
+                                        <button onClick={() => handleDeleteComment(comment.commentid)} className={styles.commentDeleteButton}>
+                                            삭제
+                                        </button>
+                                    </div>
+                                )}
+                            </div>
+                        ))
+                    )}
+                </div>
+
+                <div className={styles.commentInputContainer}>
+                    <textarea
+                        className={styles.commentTextarea}
+                        placeholder="댓글을 입력하세요..."
+                        value={newCommentText}
+                        onChange={(e) => setNewCommentText(e.target.value)}
+                    />
+                    <button onClick={handleAddComment} className={styles.commentSubmitButton}>
+                        댓글 작성
+                    </button>
+                </div>
+            </div>
         </div>
     );
 }

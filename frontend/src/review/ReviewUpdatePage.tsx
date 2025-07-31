@@ -1,7 +1,8 @@
+
 import React, { useState, ChangeEvent, FormEvent, useEffect } from 'react';
 import apiClient from '../api/axiosInstance';
 import axios from 'axios';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 import styles from './ReviewWrite.module.css';
 import {useSelector} from "react-redux";
 import {RootState} from "../store";
@@ -11,7 +12,21 @@ interface Location {
     title: string;
 }
 
-function ReviewWritePage() {
+interface ReviewData {
+    username: string;
+    contentid: string;
+    contenttitle: string;
+    title: string;
+    content: string;
+    rating: number;
+    visitdate: string;
+    photos: {
+        s3Url: string;
+    }[];
+}
+
+function ReviewUpdatePage() {
+    const { reviewId } = useParams<{ reviewId: string }>();
     const navigate = useNavigate();
     const username = useSelector((state: RootState) => state.token.userProfile?.username);
     if(!username){
@@ -23,6 +38,7 @@ function ReviewWritePage() {
     const [visitDate, setVisitDate] = useState<string>('');
     const [photos, setPhotos] = useState<File[]>([]);
     const [imagePreviews, setImagePreviews] = useState<string[]>([]);
+    const [existingPhotos, setExistingPhotos] = useState<{ s3Url: string }[]>([]);
 
     const [locations, setLocations] = useState<Location[]>([]);
     const [selectedLocation, setSelectedLocation] = useState<string>('');
@@ -33,33 +49,52 @@ function ReviewWritePage() {
     const [messageType, setMessageType] = useState<'success' | 'error' | null>(null);
 
     useEffect(() => {
+        const fetchReviewData = async () => {
+            try {
+                const response = await apiClient.get(`/reviews/${reviewId}`);
+                const review: ReviewData = response.data;
+                setTitle(review.title);
+                setContent(review.content);
+                setRating(review.rating);
+                setVisitDate(review.visitdate);
+                setSelectedLocation(review.contentid);
+                setExistingPhotos(review.photos);
+                setImagePreviews(review.photos.map(p => p.s3Url));
+            } catch (error) {
+                console.error('리뷰 정보 조회 오류:', error);
+                setModalMessage('리뷰 정보를 불러오는 데 실패했습니다.');
+                setMessageType('error');
+                setShowModal(true);
+            }
+        };
+        fetchReviewData();
+    }, [reviewId]);
+
+
+    useEffect(() => {
         if (visitDate) {
             const fetchLocations = async () => {
                 setLoading(true);
                 try {
-                    // <<< 수정된 부분: 날짜 형식을 YYYY-MM-DD에서 YYYYMMDD로 변경
                     const formattedDate = visitDate.replace(/-/g, '');
                     const SERVICE_KEY = "WCIc8hzzBS3Jdod%2BVa357JmB%2FOS0n4D2qPHaP9PkN4bXIfcryZyg4iaZeTj1fEYJ%2B8q2Ol8FIGe3RkW3d72FHA%3D%3D";
                     const API_URL =
                         `https://apis.data.go.kr/B551011/KorService2/searchFestival2?serviceKey=${SERVICE_KEY}&MobileApp=AppTest&MobileOS=ETC&_type=json`;
                     const response = await axios.get(API_URL, {
-                        params: { // 요청 파라미터
+                        params: {
                             numOfRows: 150,
                             pageNo: 1,
-                            arrange: "B", // 조회순
-                            eventStartDate: formattedDate, // 오늘부터 시작하는 행사만 요청
+                            arrange: "B",
+                            eventStartDate: formattedDate,
                             eventEndDate: formattedDate
                         },
                     });
-                    console.log(response.data);
                     const items = response.data.response.body.items.item;
-                    console.log(items);
                     if (items) {
                         const extractedLocations = items.map((item: any) => ({
                             contentid: item.contentid,
                             title: item.title,
                         }));
-                        console.log(extractedLocations);
                         setLocations(extractedLocations);
                     } else {
                         setLocations([]);
@@ -93,7 +128,7 @@ function ReviewWritePage() {
         setShowModal(false);
         setModalMessage('');
         if (messageType === 'success') {
-            navigate('/review');
+            navigate(`/review/${reviewId}`);
         }
     };
 
@@ -115,7 +150,8 @@ function ReviewWritePage() {
         }
 
         const formData = new FormData();
-        const createRequest = {
+        const updateRequest = {
+            reviewId,
             username: username,
             contentid: selectedLocationInfo?.contentid,
             contenttitle: selectedLocationInfo?.title,
@@ -125,40 +161,29 @@ function ReviewWritePage() {
             visitdate: visitDate,
         };
 
-        formData.append('createRequest', new Blob([JSON.stringify(createRequest)], { type: "application/json" }));
+        formData.append('updateRequest', new Blob([JSON.stringify(updateRequest)], { type: "application/json" }));
 
         photos.forEach(photo => {
             formData.append('photos', photo);
         });
 
-        console.log(formData);
-
         try {
-            const response = await apiClient.post('/reviews', formData, {
+            const response = await apiClient.put(`/reviews`, formData, {
                 headers: {
                     'Content-Type': 'multipart/form-data',
                 },
             });
 
-            const successMsg = response.data.message || '리뷰가 성공적으로 작성되었습니다!';
+            const successMsg = response.data.message || '리뷰가 성공적으로 수정되었습니다!';
             setModalMessage(successMsg);
             setMessageType('success');
             setShowModal(true);
 
-            setTitle('');
-            setContent('');
-            setRating(5);
-            setVisitDate('');
-            setSelectedLocation('');
-            setLocations([]);
-            setPhotos([]);
-            setImagePreviews([]);
-
         } catch (error: any) {
-            console.error('리뷰 작성 오류:', error);
-            let errorMessage = '리뷰 작성에 실패했습니다: 네트워크 오류 또는 알 수 없는 오류';
+            console.error('리뷰 수정 오류:', error);
+            let errorMessage = '리뷰 수정에 실패했습니다: 네트워크 오류 또는 알 수 없는 오류';
             if (axios.isAxiosError(error) && error.response) {
-                errorMessage = error.response.data?.message || '리뷰 작성 실패: 서버 오류';
+                errorMessage = error.response.data?.message || '리뷰 수정 실패: 서버 오류';
             }
             setModalMessage(errorMessage);
             setMessageType('error');
@@ -170,7 +195,7 @@ function ReviewWritePage() {
 
     return (
         <div className={styles.reviewWriteContainer}>
-            <h2>새 리뷰 작성</h2>
+            <h2>리뷰 수정</h2>
 
             <form onSubmit={handleSubmitReview} className={styles.reviewForm}>
                 <div className={styles.formGroup}>
@@ -268,11 +293,11 @@ function ReviewWritePage() {
                         disabled={loading}
                         className={styles.submitButton}
                     >
-                        {loading ? '작성 중...' : '리뷰 제출'}
+                        {loading ? '수정 중...' : '리뷰 수정'}
                     </button>
                     <button
                         type="button"
-                        onClick={() => navigate('/review')}
+                        onClick={() => navigate(`/review/${reviewId}`)}
                         className={styles.cancelButton}
                     >
                         취소
@@ -300,4 +325,4 @@ function ReviewWritePage() {
     );
 }
 
-export default ReviewWritePage;
+export default ReviewUpdatePage;

@@ -54,7 +54,7 @@ DROP TABLE IF EXISTS `reviews`;
 /*!50503 SET character_set_client = utf8mb4 */;
 CREATE TABLE `reviews` (
   `reviewid` bigint NOT NULL AUTO_INCREMENT COMMENT '리뷰 고유 ID',
-  `username` varchar(20) NOT NULL COMMENT '작성자 ID (users 테이블 참조)',
+  `username` varchar(255) NOT NULL COMMENT '작성자 ID (users 테이블 참조)',
   `contentid` bigint NOT NULL COMMENT '행사 ID',
   `contenttitle` varchar(255) NOT NULL,
   `title` varchar(255) NOT NULL COMMENT '리뷰 제목',
