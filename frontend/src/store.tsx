@@ -1,63 +1,88 @@
-import { configureStore, createSlice, PayloadAction } from '@reduxjs/toolkit';
+import { combineReducers, configureStore, createSlice, PayloadAction } from '@reduxjs/toolkit';
+import storage from 'redux-persist/lib/storage';
+import { persistReducer, persistStore } from 'redux-persist';
 
-// 사용자 프로필 정보 인터페이스 (백엔드 UserDTO와 일치하도록 정의)
-interface UserProfile {
-    username: string;
-    email: string;
-    firstname: string;
-    lastname: string;
-    nickname: string;
-    birthdate: string; // YYYY-MM-DD 형식의 문자열
-    imageurl?: string; // ✨ imageUrl -> imageurl (소문자로 변경)
-}
-
-// 초기 상태 정의
-interface AuthState {
+// 1. 상태(State)의 타입을 정의합니다.
+interface TokenState {
     token: string | null;
-    userProfile: UserProfile | null;
+    userProfile: {
+        username: string;
+        nickname?: string;
+        imageurl?: string; // ✨ imageUrl -> imageurl (소문자로 변경)
+        email?: string;
+        firstname?: string; // EditInfoPage에서 전달하는 정보에 맞춰 추가
+        lastname?: string; // EditInfoPage에서 전달하는 정보에 맞춰 추가
+        birthdate?: string; // EditInfoPage에서 전달하는 정보에 맞춰 추가
+    } | null;
+    totalUnreadCount: number;
+    lobbyLastUpdated: number | null;
 }
 
-const initialState: AuthState = {
-    token: localStorage.getItem('jwtToken') || null, // 로컬 스토리지에서 토큰 불러오기
-    userProfile: null, // 초기에는 사용자 프로필 없음
+// 2. 'token' 슬라이스의 초기 상태를 정의합니다.
+const initState: TokenState = {
+    token: null,
+    userProfile: null,
+    totalUnreadCount: 0,
+    lobbyLastUpdated: null as number | null,
 };
 
-// 인증 슬라이스 생성
-const authSlice = createSlice({
-    name: 'auth',
-    initialState,
+// 3. Redux Toolkit의 createSlice를 사용하여 'token' 슬라이스를 생성합니다.
+const tokenSlice = createSlice({
+    name: "token",
+    initialState: initState,
     reducers: {
         setToken: (state, action: PayloadAction<string | null>) => {
             state.token = action.payload;
             if (action.payload) {
-                localStorage.setItem('jwtToken', action.payload); // 토큰 저장
+                localStorage.setItem('jwtToken', action.payload);
             } else {
-                localStorage.removeItem('jwtToken'); // 토큰 삭제
+                localStorage.removeItem('jwtToken');
+                state.userProfile = null; // 토큰 제거 시 프로필도 초기화
             }
         },
-        setUserProfile: (state, action: PayloadAction<UserProfile | null>) => {
+        // ✨ 'setUserProfile' 액션: 사용자 프로필 정보를 업데이트합니다.
+        setUserProfile: (state, action: PayloadAction<TokenState['userProfile']>) => {
             state.userProfile = action.payload;
+        },
+        setTotalUnreadCount: (state, action: PayloadAction<number>) => {
+            state.totalUnreadCount = action.payload;
         },
         clearAuth: (state) => {
             state.token = null;
             state.userProfile = null;
-            localStorage.removeItem('jwtToken'); // 토큰 삭제
+            state.totalUnreadCount = 0;
+        },
+        updateLobby: (state) => {
+            state.lobbyLastUpdated = Date.now();
         },
     },
 });
 
-// 액션과 리듀서 내보내기
-export const { setToken, setUserProfile, clearAuth } = authSlice.actions;
-export default authSlice.reducer;
+// 영속화 설정
+const persistConfig = {
+    key: 'root',
+    storage,
+    whitelist: ['token'],
+};
 
-// 스토어 설정
-export const store = configureStore({
-    reducer: {
-        token: authSlice.reducer, // 'token'이라는 이름으로 authSlice의 리듀서를 등록
-    },
+// 리듀서 결합
+const rootReducer = combineReducers({
+    token: tokenSlice.reducer,
 });
 
-// RootState 타입 정의 (모든 슬라이스의 상태를 포함)
+// 영속화된 리듀서
+const persistedReducer = persistReducer(persistConfig, rootReducer);
+
+// 스토어 설정
+const store = configureStore({
+    reducer: persistedReducer,
+    middleware: (getDefaultMiddleware) => getDefaultMiddleware({ serializableCheck: false }),
+});
+
+export const persistor = persistStore(store);
 export type RootState = ReturnType<typeof store.getState>;
-// AppDispatch 타입 정의 (디스패치 함수 타입)
 export type AppDispatch = typeof store.dispatch;
+
+export const { setToken, setUserProfile, clearAuth, setTotalUnreadCount,updateLobby } = tokenSlice.actions;
+
+export default store;
