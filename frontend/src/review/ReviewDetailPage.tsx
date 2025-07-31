@@ -106,7 +106,7 @@ function ReviewDetailPage() {
                 nickname: currentUser.nickname
             });
             setNewCommentText('');
-            fetchComments();
+            await fetchComments();
         } catch (error) {
             console.error("댓글 추가 실패:", error);
             alert("댓글 추가에 실패했습니다.");
