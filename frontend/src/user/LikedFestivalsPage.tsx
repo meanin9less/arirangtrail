@@ -24,10 +24,12 @@ interface KTOFestivalDetail {
 }
 
 // 백엔드에서 찜한 목록을 가져올 때의 인터페이스
+// 백엔드 FestivalService.getLikedFestivalsByUser()가 Set<String>을 반환하므로,
+// 여기서는 List<string>으로 받아서 처리합니다.
 interface LikedItem {
-    contentId: string;
-    // 백엔드에서 찜한 시각 등 추가 정보가 있을 수 있음 (현재 목록에서는 사용 안 함)
+    contentId: string; // Set<String>의 각 요소가 contentId이므로, 이 인터페이스는 단순화될 수 있습니다.
 }
+
 
 // 한국관광공사 API 서비스 키 (CalendarPage에서 가져옴)
 const SERVICE_KEY = "WCIc8hzzBS3Jdod%2BVa357JmB%2FOS0n4D2qPHaP9PkN4bXIfcryZyg4iaZeTj1fEYJ%2B8q2Ol8FIGe3RkW3d72FHA%3D%3D";
@@ -72,13 +74,15 @@ const LikedFestivalsPage: React.FC = () => {
             }
 
             // 1. 백엔드에서 사용자가 찜한 contentId 목록을 가져옵니다.
-            // ✨ API 경로 수정: '/likes/my' -> '/festivals/likes/my'로 변경
-            const likedResponse = await apiClient.get<LikedItem[]>('/festivals/likes/my', {
+            // ✨ API 경로 최종 수정: '/festivals/my-page/likes'로 변경
+            const likedResponse = await apiClient.get<string[]>('/festivals/my-page/likes', {
                 headers: {
                     Authorization: `Bearer ${jwtToken}`,
                 },
             });
-            const likedContentIds = likedResponse.data.map(item => item.contentId);
+            // 백엔드 FestivalService.getLikedFestivalsByUser()가 Set<String>을 반환하므로,
+            // Axios는 이를 배열(string[])로 받습니다.
+            const likedContentIds = likedResponse.data;
 
             if (likedContentIds.length === 0) {
                 setLikedFestivals([]);
@@ -87,7 +91,6 @@ const LikedFestivalsPage: React.FC = () => {
             }
 
             // 2. 각 contentId에 대해 한국관광공사 API에서 상세 정보를 가져옵니다.
-            // 병렬로 여러 API 요청을 처리
             const festivalDetailsPromises = likedContentIds.map(async (contentId) => {
                 const detailApiUrl = `${KTO_API_BASE_URL}/detailCommon2?serviceKey=${SERVICE_KEY}&MobileApp=AppTest&MobileOS=ETC&_type=json`;
                 try {
