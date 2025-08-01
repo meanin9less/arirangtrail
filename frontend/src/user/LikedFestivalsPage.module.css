@@ -1,3 +1,5 @@
+/* LikedFestivalsPage.module.css */
+
 .container {
     max-width: 800px;
     margin: 50px auto;
@@ -18,10 +20,12 @@
     font-weight: bold;
 }
 
-.message {
+.message,
+.noContentMessage {
     text-align: center;
     color: #666;
     margin-bottom: 10px;
+    padding: 20px 0;
 }
 
 .errorMessage {
@@ -43,51 +47,51 @@
     font-size: 1em;
     cursor: pointer;
     transition: background-color 0.3s ease;
-    text-align: center;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.2);
 }
 
 .backButton:hover {
     background-color: #0056b3;
 }
 
-.noContentMessage {
-    text-align: center;
-    color: #666;
-    padding: 40px 0;
-    font-size: 1.1em;
-}
-
-/* --- 찜 목록 아이템 스타일 (간소화) --- */
 .festivalList {
     list-style-type: none;
     padding: 0;
     margin: 0;
 }
 
+/* 개별 축제 아이템 스타일 */
 .festivalItem {
     display: flex;
-    justify-content: space-between; /* 제목과 버튼을 양 끝으로 정렬 */
-    align-items: center; /* 세로 중앙 정렬 */
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px;
+    margin-bottom: 10px;
     border: 1px solid #eee;
-    border-radius: 6px;
-    padding: 12px 15px;
-    background-color: #fcfcfc;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.08);
-    cursor: pointer; /* 전체 아이템 클릭 가능하도록 */
-    transition: background-color 0.2s ease, transform 0.2s ease;
+    border-radius: 8px;
+    background-color: #f9f9f9;
+    transition: box-shadow 0.2s ease-in-out;
+    min-height: 100px; /* 항목의 최소 높이를 설정하여 통일감 부여 */
 }
 
 .festivalItem:hover {
-    background-color: #f0f8ff; /* 호버 시 배경색 변경 */
-    transform: translateY(-2px); /* 약간 위로 올라가는 효과 */
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
 }
 
 .festivalDetails {
-    flex-grow: 1; /* 제목이 남은 공간을 차지하도록 */
     display: flex;
-    flex-direction: column;
-    align-items: flex-start;
+    align-items: center; /* 이미지와 텍스트를 수직 중앙 정렬 */
+    cursor: pointer;
+    flex-grow: 1;
+    overflow: hidden; /* 자식 요소가 넘치는 것을 방지 */
+}
+
+.festivalImage {
+    width: 80px;
+    height: 80px;
+    object-fit: cover; /* 이미지가 잘리더라도 비율을 유지하며 컨테이너를 채움 */
+    border-radius: 5px;
+    margin-right: 15px;
+    flex-shrink: 0; /* 이미지 크기가 줄어들지 않도록 고정 */
 }
 
 .festivalTitleLink {
@@ -95,10 +99,12 @@
     font-weight: bold;
     color: #333;
     text-decoration: none;
-    white-space: nowrap; /* 줄바꿈 방지 */
-    overflow: hidden; /* 넘치는 텍스트 숨김 */
-    text-overflow: ellipsis; /* 넘치는 텍스트 ... 처리 */
-    margin-right: 15px; /* 제목과 버튼 사이 간격 */
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    /* 제목이 긴 경우, flex-basis: 0; 와 flex-grow: 1; 을 통해 남은 공간을 모두 차지하도록 함 */
+    flex: 1;
+    min-width: 0; /* 텍스트가 넘칠 때를 대비하여 최소 너비 설정 */
 }
 
 .festivalTitleLink:hover {
@@ -107,15 +113,15 @@
 }
 
 .unlikeButton {
-    background-color: #dc3545; /* 빨간색 */
+    background-color: #dc3545;
     color: white;
-    padding: 6px 12px;
+    padding: 8px 16px; /* 버튼 패딩을 늘려 터치 영역 확장 */
     border: none;
     border-radius: 5px;
-    font-size: 0.85em;
+    font-size: 0.9em;
     cursor: pointer;
     transition: background-color 0.3s ease;
-    flex-shrink: 0; /* 버튼이 줄어들지 않도록 */
+    flex-shrink: 0;
 }
 
 .unlikeButton:hover {
@@ -130,34 +136,35 @@
     }
 
     .pageTitle {
-        font-size: 1.8em;
-    }
-
-    .backButton {
-        padding: 8px 15px;
-        font-size: 0.9em;
+        font-size: 1.5em;
     }
 
     .festivalItem {
-        flex-direction: column; /* 모바일에서는 세로로 쌓이도록 */
-        align-items: flex-start; /* 왼쪽 정렬 */
-        padding: 10px;
+        flex-direction: row;
+        align-items: center;
+        padding: 8px;
     }
 
     .festivalDetails {
-        width: 100%;
-        margin-bottom: 10px; /* 제목 아래 여백 */
+        flex-direction: row;
+        align-items: center;
+    }
+
+    .festivalImage {
+        width: 60px;
+        height: 60px;
+        margin-right: 10px;
     }
 
     .festivalTitleLink {
-        width: 100%;
-        margin-right: 0;
-        margin-bottom: 5px;
-    }
-
-    .unlikeButton {
-        width: 100%; /* 버튼 너비 꽉 채우기 */
-        text-align: center;
-        padding: 8px; /* 버튼 패딩 조정 */
+        font-size: 1em;
+        /* 모바일에서는 제목이 2줄까지 표시되도록 변경 */
+        white-space: normal;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
+        max-height: 2.5em; /* 2줄 높이 */
     }
 }
