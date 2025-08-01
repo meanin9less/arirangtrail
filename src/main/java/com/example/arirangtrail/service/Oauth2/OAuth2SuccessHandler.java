@@ -50,7 +50,7 @@ public class OAuth2SuccessHandler implements AuthenticationSuccessHandler {
 
         String clientType = request.getParameter("client_type");
         boolean isApp = "app".equalsIgnoreCase(clientType);
-        System.out.printf("@@@@@@@@@@@@@@@@@@@@@@@@@client type: %s\n", isApp);
+        System.out.printf("@@@@@@@@@@@@@@@@@@@@@@@@@client type: %s\n", clientType);
         System.out.println("@@@@@@@@@@@@@@@@@@@@@@@@@@isApp: " + isApp);
 //        String appHeader = request.getHeader("androidApp");
 //        boolean isApp = appHeader != null && appHeader.equalsIgnoreCase("AndroidApp");
