@@ -1,33 +1,31 @@
-package com.example.arirangtrail.controller.redis;
+package com.example.arirangtrail.controller.redis; // 패키지명 확인
 
 import com.example.arirangtrail.data.dto.festival.FestivalStatusDTO;
 import com.example.arirangtrail.data.dto.festival.LikeStatusDTO;
 import com.example.arirangtrail.data.dto.festival.LikedUserDTO;
 import com.example.arirangtrail.data.entity.redis.FestivalMetaEntity;
-import com.example.arirangtrail.service.redis.FestivalService;
+import com.example.arirangtrail.service.redis.FestivalService; // FestivalService 임포트 확인
 import lombok.RequiredArgsConstructor;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.http.HttpStatus; // HttpStatus 임포트 추가
+import java.security.Principal; // Principal 임포트 추가
 
 import java.util.List;
 import java.util.Set;
 
 @RestController
-@RequestMapping("/api/festivals")
+@RequestMapping("/api/festivals") // 기본 경로 /api/festivals
 @RequiredArgsConstructor
-public class FestivalController {
+public class FestivalController { // 이름이 FestivalController로 되어있습니다.
     private final FestivalService festivalService;
 
     // 특정축제 좋아요 토글
     @PostMapping("/{contentid}/like")
     public ResponseEntity<LikeStatusDTO> toggleLike(
             @PathVariable Long contentid,
-            @RequestParam String username// 어슨 수정할 생각 해놔야 함.
+            @RequestParam String username // 어슨 수정할 생각 해놔야 함.
 //            @AuthenticationPrincipal String username // security context holder를 통해 현재 토큰의 로그인한 사용자 username 가져오기 자동완성// 근데 경로 닫아놔야 인증함
     ) {
         LikeStatusDTO likestatus = festivalService.toggleLike(username, contentid);
@@ -49,10 +47,16 @@ public class FestivalController {
     }
 
     // 현재 로그인 한 사용자가 누른 모든 축제 id 목록을 조회합니다.
-    @GetMapping("/my-page/likes")
+    // ✨ 경로 수정: `/api/festivals` 기본 경로 아래 `/likes/my`로 변경
+    @GetMapping("/likes/my") // ✨ 수정된 경로
     public ResponseEntity<Set<String>> getMyLikedFestivals(
-            @AuthenticationPrincipal String username
+            // Principal을 사용하여 username을 가져오는 것이 더 유연합니다.
+            Principal principal
     ) {
+        if (principal == null || principal.getName() == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build(); // 로그인되지 않은 경우 401 반환
+        }
+        String username = principal.getName();
         Set<String> likedFestivalIds = festivalService.getLikedFestivalsByUser(username);
         return ResponseEntity.ok(likedFestivalIds);
     }

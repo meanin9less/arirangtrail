@@ -184,7 +184,7 @@ function ReviewWritePage() {
                         className={styles.inputField}
                     />
                 </div>
-
+                {/*표기*/}
                 <div className={styles.formGroup}>
                     <label htmlFor="locationSelect">여행지 선택:</label>
                     <select

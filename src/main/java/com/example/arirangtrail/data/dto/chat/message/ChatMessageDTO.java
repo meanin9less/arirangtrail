@@ -1,4 +1,4 @@
-package com.example.arirangtrail.data.dto.chat;
+package com.example.arirangtrail.data.dto.chat.message;
 
 import lombok.Getter;
 import lombok.Setter;

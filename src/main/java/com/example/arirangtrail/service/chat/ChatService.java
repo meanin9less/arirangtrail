@@ -3,7 +3,12 @@ package com.example.arirangtrail.service.chat;
 import com.example.arirangtrail.data.document.ChatMessage;
 import com.example.arirangtrail.data.document.ChatRoom;
 import com.example.arirangtrail.data.document.UserChatStatus;
-import com.example.arirangtrail.data.dto.chat.*;
+import com.example.arirangtrail.data.dto.chat.chatRoom.ChatRoomDetailDTO;
+import com.example.arirangtrail.data.dto.chat.chatRoom.ChatRoomListDTO;
+import com.example.arirangtrail.data.dto.chat.chatRoom.CreateRoomDTO;
+import com.example.arirangtrail.data.dto.chat.chatRoom.ParticipantDTO;
+import com.example.arirangtrail.data.dto.chat.message.ChatMessageDTO;
+import com.example.arirangtrail.data.dto.chat.message.UnreadUpdateDTO;
 import com.example.arirangtrail.data.repository.chat.ChatMessageRepository;
 import com.example.arirangtrail.data.repository.chat.ChatRoomRepository;
 import com.example.arirangtrail.data.repository.chat.UserChatStatusRepository;
@@ -56,7 +61,8 @@ public class ChatService {
                     return new ChatRoomListDTO(
                             room.getId(),
                             room.getTitle(),
-                            room.getCreator(),          // username
+                            room.getSubject(),
+                            room.getCreator(),
                             room.getMeetingDate(),
                             participantCount,
                             room.getMaxParticipants(),
@@ -115,6 +121,7 @@ public class ChatService {
         // 3. 방 생성자의 참여 상태 정보도 함께 저장
         UserChatStatus status = new UserChatStatus();
         status.setUsername(createRoomDTO.getUsername());
+        status.setNickname(createRoomDTO.getNickname());
         status.setRoomId(roomId);
         status.setLastReadMessageSeq(0L);
         status.setLastReadAt(LocalDateTime.now());
@@ -360,14 +367,14 @@ public class ChatService {
     }
 
     @Transactional
-    public void joinRoom(Long roomId, String username) {
+    public void joinRoom(Long roomId, String username, String nickname) {
         ChatRoom room = chatRoomRepository.findById(roomId)
                 .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 채팅방입니다."));
 
-//        // (밴 목록 확인 로직은 여기에...)
-//        if (room.getBannedUsernames() != null && room.getBannedUsernames().contains(username)) {
-//            throw new SecurityException("이 채팅방에 접근할 권한이 없습니다.");
-//        }
+        // (밴 목록 확인 로직은 여기에...)
+        if (room.getBannedUsernames() != null && room.getBannedUsernames().contains(username)) {
+            throw new SecurityException("이 채팅방에 접근할 권한이 없습니다.");
+        }
 
         // ✅ [핵심 추가] 정원 제한 로직
         long currentParticipantCount = userChatStatusRepository.countByRoomId(roomId);
@@ -383,11 +390,95 @@ public class ChatService {
         // 멤버 목록에 없으면 추가
         if (!isAlreadyMember) {
             // UserChatStatus를 먼저 생성/저장
-            UserChatStatus status = new UserChatStatus(roomId, username);
+            UserChatStatus status = new UserChatStatus(roomId, username,nickname);
             status.setLastReadMessageSeq(0L); // 처음 들어오므로 0
             userChatStatusRepository.save(status);
         }
     }
 
+    // ✅ [신규] 특정 방의 참여자 목록 조회 서비스
+    public List<ParticipantDTO> getParticipants(Long roomId, String requesterUsername) {
+        // 방장이 요청한게 맞는지 확인 (선택적이지만, 보안상 좋음)
+        chatRoomRepository.findById(roomId)
+                .filter(room -> room.getCreator().equals(requesterUsername))
+                .orElseThrow(() -> new SecurityException("참여자 목록을 조회할 권한이 없습니다."));
 
+        return userChatStatusRepository.findByRoomId(roomId).stream()
+                .filter(status -> !status.getUsername().equals(requesterUsername))
+                // ✅ UserChatStatus에서 직접 username과 nickname을 가져와 DTO 생성
+                .map(status -> new ParticipantDTO(status.getUsername(), status.getNickname()))
+                .collect(Collectors.toList());
+    }
+
+    // ✅ [신규] 유저 강퇴 및 밴 처리 서비스
+    @Transactional
+    public void kickAndBanUser(Long roomId, String creatorUsername, String userToKick) {
+        ChatRoom room = chatRoomRepository.findById(roomId)
+                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 채팅방입니다."));
+
+        // 1. 요청자가 방장인지 재확인 (필수)
+        if (!room.getCreator().equals(creatorUsername)) {
+            throw new SecurityException("사용자를 강퇴할 권한이 없습니다.");
+        }
+
+        // 2. 자기 자신은 강퇴할 수 없음
+        if (creatorUsername.equals(userToKick)) {
+            throw new IllegalArgumentException("자기 자신을 강퇴할 수 없습니다.");
+        }
+
+        // 3. 밴 목록에 추가 (중복 방지를 위해 Set 사용 후 List 변환 또는 contains 확인)
+        if (!room.getBannedUsernames().contains(userToKick)) {
+            room.getBannedUsernames().add(userToKick);
+            chatRoomRepository.save(room);
+        }
+
+        // 4. UserChatStatus에서 해당 유저 정보 삭제 (채팅방에서 즉시 나가게 됨)
+        userChatStatusRepository.deleteByRoomIdAndUsername(roomId, userToKick);
+
+        // 5. WebSocket으로 KICK 이벤트 브로드캐스트
+        messagingTemplate.convertAndSend(
+                "/sub/chat/room/" + roomId,
+                Map.of(
+                        "type", "KICK",
+                        "roomId", roomId,
+                        "kickedUsername", userToKick
+                )
+        );
+
+        // 6. 참가자 수 변경 이벤트도 함께 보내주면 좋음
+        long currentParticipantCount = userChatStatusRepository.countByRoomId(roomId);
+        messagingTemplate.convertAndSend(
+                "/sub/chat/room/" + roomId,
+                Map.of(
+                        "type", "PARTICIPANT_COUNT_UPDATE",
+                        "participantCount", currentParticipantCount
+                )
+        );
+    }
+
+    @Transactional
+    public void updateNotice(Long roomId, String username, String notice) {
+        // 1. 채팅방 정보를 가져옵니다.
+        ChatRoom room = chatRoomRepository.findById(roomId)
+                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 채팅방입니다. ID: " + roomId));
+
+        // 2. 요청자가 방장인지 확인합니다.
+        if (!room.getCreator().equals(username)) {
+            throw new SecurityException("공지사항을 수정할 권한이 없습니다.");
+        }
+
+        // 3. 공지사항 내용을 업데이트하고 수정 시간을 기록합니다.
+        room.setNotice(notice);
+        room.setUpdatedAt(LocalDateTime.now());
+        chatRoomRepository.save(room);
+
+        // 4. WebSocket으로 NOTICE_UPDATE 이벤트를 브로드캐스트합니다.
+        messagingTemplate.convertAndSend(
+                "/sub/chat/room/" + roomId,
+                Map.of(
+                        "type", "NOTICE_UPDATE",
+                        "notice", notice
+                )
+        );
+    }
 }
