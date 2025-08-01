@@ -137,4 +137,8 @@ public class UserDAO {
                 .build();
         return this.userRepository.save(userEntity);
     }
+
+    public UserEntity findByEmail(String email) {
+        return this.userRepository.findByEmail(email).orElseThrow(() -> new EntityNotFoundException("user not found"));
+    }
 }

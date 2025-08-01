@@ -144,4 +144,18 @@ public class UserService {
         // 이 메서드에서는 DB 업데이트를 하지 않습니다.
         // DB 업데이트는 프론트에서 imageurl: null을 받아 /update-inform으로 다시 요청할 때 이루어집니다.
     }
+
+    public UserDTO findByEmail(String email) {
+        UserEntity user = this.userDAO.findByEmail(email);
+        return UserDTO.builder()
+                .username(user.getUsername())
+                .firstname(user.getFirstname())
+                .lastname(user.getLastname())
+                .email(user.getEmail())
+                .birthdate(user.getBirthdate())
+                .nickname(user.getNickname())
+                .imageurl(user.getImageurl())
+                .role(user.getRole())
+                .build();
+    }
 }
