@@ -9,6 +9,7 @@ import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
@@ -26,6 +27,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 
+@Slf4j
 @Component
 @RequiredArgsConstructor
 public class OAuth2SuccessHandler implements AuthenticationSuccessHandler {
@@ -48,7 +50,8 @@ public class OAuth2SuccessHandler implements AuthenticationSuccessHandler {
 
         String clientType = request.getParameter("client_type");
         boolean isApp = "app".equalsIgnoreCase(clientType);
-
+        System.out.printf("@@@@@@@@@@@@@@@@@@@@@@@@@client type: %s\n", isApp);
+        System.out.println("@@@@@@@@@@@@@@@@@@@@@@@@@@isApp: " + isApp);
 //        String appHeader = request.getHeader("androidApp");
 //        boolean isApp = appHeader != null && appHeader.equalsIgnoreCase("AndroidApp");
 
