@@ -10,7 +10,7 @@ import styles from './LikedFestivalsPage.module.css';
 type MyLikedFestivalDTO = {
     contentid: string;
     title: string;
-    firstimage: string;
+    firstImage: string;
 };
 
 
@@ -42,7 +42,7 @@ const LikedFestivalItem: React.FC<LikedFestivalItemProps> = ({ festival, onItemC
             <div className={styles.festivalDetails} onClick={() => onItemClick(festival.contentid)}>
                 {/* 썸네일 이미지가 있다면 표시, 없다면 기본 이미지 표시 */}
                 <img
-                    src={festival.firstimage || "https://placehold.co/80x80/cccccc/ffffff?text=No+Image"}
+                    src={festival.firstImage || "https://placehold.co/80x80/cccccc/ffffff?text=No+Image"} // 'i'를 대문자 'I'로 수정
                     alt={festival.title}
                     className={styles.festivalImage}
                 />
