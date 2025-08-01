@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 
 // 한국관광공사 API 응답 (detailCommon2) 인터페이스
@@ -28,10 +28,7 @@ const LikedFestivalItem: React.FC<LikedFestivalItemProps> = ({ festival, onItemC
     return (
         <div className="festivalItem">
             <div className="festivalDetails" onClick={() => onItemClick(festival.contentid)}>
-                {/* useNavigate 대신 일반 <a> 태그를 사용하여 클릭 이동을 처리 */}
-                <a href={`/calender/${festival.contentid}`} className="festivalTitleLink" onClick={(e) => e.stopPropagation()}>
-                    {festival.title}
-                </a>
+                <span className="festivalTitleLink">{festival.title}</span>
             </div>
             <button className="unlikeButton" onClick={() => onUnlike(festival.contentid)}>찜 해제</button>
         </div>
@@ -44,39 +41,65 @@ const LikedFestivalsPage: React.FC = () => {
         window.location.href = path;
     };
 
-    // API 호출 대신 가짜(Mock) 데이터를 사용합니다.
-    const mockLikedFestivals: KTOFestivalDetail[] = [
-        {
-            contentid: "2781491",
-            contenttypeid: "15",
-            title: "보성다향대축제",
-            addr1: "전라남도 보성군 보성읍 녹차로 775",
-            addr2: "",
-            firstimage: "http://tong.visitkorea.or.kr/cms/resource/50/2781450_image2_1.jpg",
-            firstimage2: "http://tong.visitkorea.or.kr/cms/resource/50/2781450_image2_2.jpg",
-            tel: "061-852-6014",
-            overview: "보성다향대축제는 보성차밭에서 펼쳐지는 다양한 문화행사와 차 관련 체험을 즐길 수 있는 축제이다. 다례 시연, 찻잎 따기, 차 만들기 등 다채로운 프로그램이 마련되어 있다.",
-            homepage: "<a href=\"https://dianakorean.com\" target=\"_blank\" title=\"새창 : 보성다향대축제 홈페이지\">https://dianakorean.com</a>",
-            eventstartdate: "20240503",
-            eventenddate: "20240507"
-        },
-        {
-            contentid: "2825501",
-            contenttypeid: "15",
-            title: "진해군항제",
-            addr1: "경상남도 창원시 진해구 중원로터리 외 진해구 일대",
-            addr2: "",
-            firstimage: "http://tong.visitkorea.or.kr/cms/resource/97/2825597_image2_1.jpg",
-            firstimage2: "http://tong.visitkorea.or.kr/cms/resource/97/2825597_image2_2.jpg",
-            tel: "055-225-2342",
-            overview: "진해군항제는 세계 최대의 벚꽃축제로, 진해구 일대에 만개한 벚꽃을 감상하며 다양한 문화예술행사와 군악의장 페스티벌을 즐길 수 있다.",
-            homepage: "<a href=\"https://cherryblossom.changwon.go.kr\" target=\"_blank\" title=\"새창 : 진해군항제 홈페이지\">https://cherryblossom.changwon.go.kr</a>",
-            eventstartdate: "20240322",
-            eventenddate: "20240401"
-        }
-    ];
+    const [likedFestivals, setLikedFestivals] = useState<KTOFestivalDetail[]>([]);
+    const [isLoading, setIsLoading] = useState<boolean>(true);
+    const [error, setError] = useState<string | null>(null);
 
-    const [likedFestivals, setLikedFestivals] = useState<KTOFestivalDetail[]>(mockLikedFestivals);
+    // 컴포넌트가 처음 렌더링될 때 찜 목록 데이터를 불러옵니다.
+    useEffect(() => {
+        // 실제 API URL로 변경해야 합니다.
+        // 예를 들어, 찜 목록을 가져오는 백엔드 API 엔드포인트
+        const fetchLikedFestivals = async () => {
+            try {
+                // 이 부분에 실제 백엔드 API URL을 넣어주세요.
+                // const response = await axios.get('/api/liked-festivals');
+
+                // 임시로 성공 응답을 시뮬레이션합니다.
+                const mockResponse = {
+                    data: [
+                        {
+                            contentid: "2781491",
+                            contenttypeid: "15",
+                            title: "보성다향대축제",
+                            addr1: "전라남도 보성군 보성읍 녹차로 775",
+                            addr2: "",
+                            firstimage: "http://tong.visitkorea.or.kr/cms/resource/50/2781450_image2_1.jpg",
+                            firstimage2: "http://tong.visitkorea.or.kr/cms/resource/50/2781450_image2_2.jpg",
+                            tel: "061-852-6014",
+                            overview: "보성다향대축제는 보성차밭에서 펼쳐지는 다양한 문화행사와 차 관련 체험을 즐길 수 있는 축제이다. 다례 시연, 찻잎 따기, 차 만들기 등 다채로운 프로그램이 마련되어 있다.",
+                            homepage: "<a href=\"https://dianakorean.com\" target=\"_blank\" title=\"새창 : 보성다향대축제 홈페이지\">https://dianakorean.com</a>",
+                            eventstartdate: "20240503",
+                            eventenddate: "20240507"
+                        },
+                        {
+                            contentid: "2825501",
+                            contenttypeid: "15",
+                            title: "진해군항제",
+                            addr1: "경상남도 창원시 진해구 중원로터리 외 진해구 일대",
+                            addr2: "",
+                            firstimage: "http://tong.visitkorea.or.kr/cms/resource/97/2825597_image2_1.jpg",
+                            firstimage2: "http://tong.visitkorea.or.kr/cms/resource/97/2825597_image2_2.jpg",
+                            tel: "055-225-2342",
+                            overview: "진해군항제는 세계 최대의 벚꽃축제로, 진해구 일대에 만개한 벚꽃을 감상하며 다양한 문화예술행사와 군악의장 페스티벌을 즐길 수 있다.",
+                            homepage: "<a href=\"https://cherryblossom.changwon.go.kr\" target=\"_blank\" title=\"새창 : 진해군항제 홈페이지\">https://cherryblossom.changwon.go.kr</a>",
+                            eventstartdate: "20240322",
+                            eventenddate: "20240401"
+                        }
+                    ]
+                };
+
+                // API 응답 데이터로 상태 업데이트
+                setLikedFestivals(mockResponse.data);
+            } catch (err) {
+                setError("찜 목록을 불러오는 중 오류가 발생했습니다.");
+                console.error("API 호출 오류:", err);
+            } finally {
+                setIsLoading(false);
+            }
+        };
+
+        fetchLikedFestivals();
+    }, []);
 
     // 아이템 클릭 시 상세 페이지로 이동
     const handleItemClick = (contentId: string) => {
@@ -84,11 +107,18 @@ const LikedFestivalsPage: React.FC = () => {
     };
 
     // 찜 해제 기능 (예시)
-    const handleUnlike = (contentId: string) => {
-        // 실제로는 백엔드 API를 호출하여 찜 해제 처리를 해야 합니다.
-        console.log(`${contentId} 찜 해제 요청`);
-        // UI에서 해당 아이템 제거
-        setLikedFestivals(prev => prev.filter(festival => festival.contentid !== contentId));
+    const handleUnlike = async (contentId: string) => {
+        try {
+            // 이 부분에 실제 찜 해제 백엔드 API URL을 넣어주세요.
+            // await axios.post('/api/unlike-festival', { contentId });
+
+            // UI에서 해당 아이템 제거
+            setLikedFestivals(prev => prev.filter(festival => festival.contentid !== contentId));
+            console.log(`${contentId} 찜 해제 성공`);
+        } catch (err) {
+            console.error("찜 해제 오류:", err);
+            setError("찜 해제 중 오류가 발생했습니다.");
+        }
     };
 
     return (
@@ -266,7 +296,11 @@ const LikedFestivalsPage: React.FC = () => {
                 <button onClick={() => navigate('/mypage')} className="backButton">
                     마이페이지로 돌아가기
                 </button>
-                {likedFestivals.length === 0 ? (
+                {isLoading ? (
+                    <p className="message">찜 목록을 불러오는 중...</p>
+                ) : error ? (
+                    <p className="errorMessage">{error}</p>
+                ) : likedFestivals.length === 0 ? (
                     <p className="noContentMessage">아직 찜한 축제/관광지가 없습니다.</p>
                 ) : (
                     <ul className="festivalList">
