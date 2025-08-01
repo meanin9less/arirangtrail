@@ -109,6 +109,11 @@ const MyRooms = () => {
                             <div style={styles.cardLeft}>
                                 <h3 style={styles.roomTitle}>
                                     {room.title || '제목 없음'}
+
+                                    {room.unreadCount && room.unreadCount > 0 && (
+                                        <span style={styles.newBadge}>NEW</span>
+                                    )}
+
                                     <span style={styles.subjectPill}>{room.subject || '일반'}</span>
                                 </h3>
                                 <div style={styles.creatorInfo}>
@@ -229,6 +234,16 @@ const styles: { [key: string]: React.CSSProperties } = {
         color: '#495057',
     },
     infoIcon: { fontSize: '18px', color: '#868e96' },
+    newBadge: {
+        fontSize: '11px',
+        color: 'white',
+        backgroundColor: '#dc3545', // 붉은색 배경
+        padding: '2px 7px',
+        borderRadius: '12px',
+        fontWeight: 'bold',
+        marginLeft: '8px', // 제목과의 간격
+        animation: 'pulse 1.5s infinite', // 애니메이션 효과 적용
+    },
 };
 
 export default MyRooms;
