@@ -3,6 +3,7 @@ package com.example.arirangtrail.controller.redis; // 패키지명 확인
 import com.example.arirangtrail.data.dto.festival.FestivalStatusDTO;
 import com.example.arirangtrail.data.dto.festival.LikeStatusDTO;
 import com.example.arirangtrail.data.dto.festival.LikedUserDTO;
+import com.example.arirangtrail.data.dto.festival.MyLikedFestivalDTO;
 import com.example.arirangtrail.data.entity.redis.FestivalMetaEntity;
 import com.example.arirangtrail.service.redis.FestivalService; // FestivalService 임포트 확인
 import lombok.RequiredArgsConstructor;
@@ -12,6 +13,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.http.HttpStatus; // HttpStatus 임포트 추가
 import java.security.Principal; // Principal 임포트 추가
 
+import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 
@@ -46,20 +48,27 @@ public class FestivalController { // 이름이 FestivalController로 되어있�
         return ResponseEntity.ok(meta);
     }
 
-    // 현재 로그인 한 사용자가 누른 모든 축제 id 목록을 조회합니다.
-    // ✨ 경로 수정: `/api/festivals` 기본 경로 아래 `/likes/my`로 변경
-    @GetMapping("/likes/my") // ✨ 수정된 경로
-    public ResponseEntity<Set<String>> getMyLikedFestivals(
-            // Principal을 사용하여 username을 가져오는 것이 더 유연합니다.
-            Principal principal
+    @GetMapping("/likes/my-list")
+    public ResponseEntity<List<MyLikedFestivalDTO>> getMyLikedFestivalsDetails(
+            // (추후 복구) Principal principal
+            //  @RequestParam을 사용하여 URL 쿼리 파라미터로 username을 직접 받습니다.
+            @RequestParam String username
     ) {
+        /*
+         (추후 복구) 아래 로직은 Principal을 다시 사용할 때 활성화합니다.
         if (principal == null || principal.getName() == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build(); // 로그인되지 않은 경우 401 반환
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build(); // 401 Unauthorized
         }
         String username = principal.getName();
-        Set<String> likedFestivalIds = festivalService.getLikedFestivalsByUser(username);
-        return ResponseEntity.ok(likedFestivalIds);
+        */
+
+        // 서비스를 호출하여 DTO 리스트를 받아옵니다.
+        List<MyLikedFestivalDTO> likedFestivals = festivalService.getMyLikedFestivalsDetails(username);
+
+        // 결과를 반환합니다.
+        return ResponseEntity.ok(likedFestivals);
     }
+
 
     // 현재 축제의 좋아요 상태와 공유 횟수를 조회후 가져옵니다.(redis->rdbms순)
     @GetMapping("/{contentid}/status")
@@ -79,4 +88,5 @@ public class FestivalController { // 이름이 FestivalController로 되어있�
         List<LikedUserDTO> likedUsers = festivalService.getLikedUsersByFestival(contentid);
         return ResponseEntity.ok(likedUsers);
     }
+
 }

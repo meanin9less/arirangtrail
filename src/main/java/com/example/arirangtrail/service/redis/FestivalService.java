@@ -3,31 +3,39 @@ package com.example.arirangtrail.service.redis;
 import com.example.arirangtrail.data.dto.festival.FestivalStatusDTO;
 import com.example.arirangtrail.data.dto.festival.LikeStatusDTO;
 import com.example.arirangtrail.data.dto.festival.LikedUserDTO;
+import com.example.arirangtrail.data.dto.festival.MyLikedFestivalDTO;
 import com.example.arirangtrail.data.entity.UserEntity;
 import com.example.arirangtrail.data.entity.redis.FestivalMetaEntity;
 import com.example.arirangtrail.data.entity.redis.LikeEntity;
 import com.example.arirangtrail.data.repository.UserRepository;
 import com.example.arirangtrail.data.repository.redis.FestivalMetaRepository;
 import com.example.arirangtrail.data.repository.redis.LikeRepository;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
+import lombok.Value;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.client.RestTemplate;
+import org.springframework.web.util.UriComponentsBuilder;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.NoSuchElementException;
-import java.util.Set;
+import java.net.URI;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
 public class FestivalService {
-
     private final RedisTemplate<String, String> redisTemplate;
+    private final RestTemplate restTemplate;
     private final LikeRepository likeRepository;
     private final FestivalMetaRepository festivalMetaRepository;
     private final UserRepository userRepository;
+
+    private final ObjectMapper objectMapper;
+
+    private String serviceKey="WCIc8hzzBS3Jdod%2BVa357JmB%2FOS0n4D2qPHaP9PkN4bXIfcryZyg4iaZeTj1fEYJ%2B8q2Ol8FIGe3RkW3d72FHA%3D%3D";
 
     // --- 좋아요 관련 로직 ---
 
@@ -167,4 +175,91 @@ public class FestivalService {
                 ))
                 .collect(Collectors.toList());
     }
+
+    // ✨✨✨ 핵심 로직: 상세 정보 목록을 가져오는 전체 과정 ✨✨✨
+    public List<MyLikedFestivalDTO> getMyLikedFestivalsDetails(String username) {
+        // 1. Redis/DB에서 사용자가 좋아요 누른 'contentid' 목록을 가져옵니다. (표준화된 List<String> 형태)
+        List<String> likedFestivalIds = getLikedFestivalIdsForUser(username);
+
+        if (likedFestivalIds.isEmpty()) {
+            return Collections.emptyList();
+        }
+
+        // 2. 각 ID를 사용하여 외부 API를 호출하고, 결과를 DTO 리스트로 변환합니다.
+        //    하나의 API 호출이 실패하더라도 전체가 멈추지 않도록 null을 필터링합니다.
+        return likedFestivalIds.parallelStream() // ✨ 병렬 처리로 여러 API를 동시에 호출하여 속도 향상
+                .map(this::fetchFestivalDetailsFromApi) // 각 ID에 대해 API 호출
+                .filter(Objects::nonNull) // 호출 실패(null)한 결과는 걸러냄
+                .collect(Collectors.toList());
+    }
+
+    private MyLikedFestivalDTO fetchFestivalDetailsFromApi(String contentid) {
+        // 1. URI를 안전하게 생성하기 위해 UriComponentsBuilder를 사용합니다.
+        final String BASE_URL = "https://apis.data.go.kr/B551011/KorService2/detailCommon2";
+
+        UriComponentsBuilder builder = UriComponentsBuilder.fromHttpUrl(BASE_URL)
+                .queryParam("serviceKey", serviceKey) // 서비스키는 빌더가 알아서 인코딩해줍니다. (이 경우엔 이미 인코딩된 값을 사용)
+                .queryParam("contentId", contentid)
+                .queryParam("MobileOS", "ETC")
+                .queryParam("MobileApp", "AppTest")
+                .queryParam("_type", "json");
+
+        // ✨ RestTemplate은 이미 인코딩된 URI를 그대로 사용하도록 URI 객체를 넘겨줍니다.
+        // build(true)를 하면 서비스키의 %가 %25로 바뀌는 것을 막아줍니다.
+        URI uri = builder.build(true).toUri();
+
+        // 디버깅을 위해 최종 생성된 URL 출력
+        System.out.println("API 호출 URI: " + uri);
+
+        try {
+            String jsonResponse = restTemplate.getForObject(uri, String.class);
+
+            System.out.println("API 응답 (JSON): " + jsonResponse);
+            JsonNode root = objectMapper.readTree(jsonResponse);
+            JsonNode itemNode = root.path("response").path("body").path("items").path("item");
+
+            if (itemNode.isArray()) {
+                itemNode = itemNode.get(0);
+            }
+
+            if (itemNode == null || itemNode.isMissingNode() || itemNode.isNull()) {
+                System.err.println("API 응답에 item 정보가 없습니다. contentid: " + contentid);
+                return null;
+            }
+
+            String title = itemNode.path("title").asText("제목 없음");
+            String firstImage = itemNode.path("firstimage").asText(null);
+
+            return new MyLikedFestivalDTO(contentid, title, firstImage);
+
+        } catch (Exception e) {
+            System.err.println("API 호출 또는 JSON 파싱 실패 - contentid: " + contentid + ", 오류: " + e.getMessage());
+            return null;
+        }
+    }
+
+    private List<String> getLikedFestivalIdsForUser(String username) {
+        String userLikesKey = "user:" + username + ":likes";
+        Set<String> idsFromRedis = redisTemplate.opsForSet().members(userLikesKey);
+
+        if (idsFromRedis != null && !idsFromRedis.isEmpty()) {
+            return new ArrayList<>(idsFromRedis); // Set을 List로 변환하여 반환
+        }
+
+        // Redis에 없으면 DB에서 조회
+        List<LikeEntity> likesFromDb = likeRepository.findByUser_Username(username);
+        if (likesFromDb.isEmpty()) {
+            return Collections.emptyList();
+        }
+
+        List<String> idsFromDb = likesFromDb.stream()
+                .map(like -> String.valueOf(like.getContentid()))
+                .collect(Collectors.toList());
+
+        // DB 결과를 Redis에 저장 (Cache Warming)
+        redisTemplate.opsForSet().add(userLikesKey, idsFromDb.toArray(new String[0]));
+
+        return idsFromDb;
+    }
 }
+
