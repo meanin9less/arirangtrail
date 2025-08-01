@@ -78,12 +78,12 @@ const LikedFestivalsPage: React.FC = () => {
                 setError(null);
 
                 // 1. 백엔드에서 사용자가 찜한 콘텐츠 ID 목록을 가져옵니다.
-                const likedListResponse = await apiClient.get<{ contentIds: number[] }>(`/festivals/liked-list`, {
+                // 백엔드 컨트롤러에 맞춰 API 경로를 '/api/festivals/likes/my'로 수정했습니다.
+                // 이제 백엔드가 Principal을 통해 사용자를 식별하므로, username 쿼리 파라미터는 필요 없습니다.
+                const likedListResponse = await apiClient.get<string[]>(`/festivals/likes/my`, {
                     headers: { Authorization: `Bearer ${jwtToken}` },
-                    params: { username: userProfile?.username }
                 });
-
-                const likedContentIds = likedListResponse.data.contentIds;
+                const likedContentIds = likedListResponse.data.map(id => Number(id));
 
                 // 찜한 목록이 없으면 빈 배열로 상태 업데이트 후 종료
                 if (likedContentIds.length === 0) {
@@ -139,7 +139,10 @@ const LikedFestivalsPage: React.FC = () => {
         try {
             // 백엔드 API 호출하여 찜 해제 요청
             const contentIdNum = Number(contentId);
+            // 백엔드 API 경로가 `/api/festivals/{contentid}/like`이므로 이전에 작성한 코드는 유효합니다.
+            // 백엔드 컨트롤러에 명시된 대로 username을 쿼리 파라미터로 전달합니다.
             await apiClient.post(`/festivals/${contentIdNum}/like`, null, {
+                headers: { Authorization: `Bearer ${jwtToken}` },
                 params: { username: userProfile.username }
             });
 
