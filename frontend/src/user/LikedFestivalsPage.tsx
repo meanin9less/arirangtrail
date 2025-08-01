@@ -114,7 +114,7 @@ const LikedFestivalsPage: React.FC = () => {
     // 아이템 클릭 시 상세 페이지로 이동하는 핸들러
     const handleItemClick = (festivalId: string) => {
         // 상세 페이지 경로로 이동
-        navigate(`/detail/${festivalId}`);
+        navigate(`/calender/${festivalId}`);
     };
 
     // '찜 해제' 버튼 클릭 시 실행되는 핸들러
