@@ -47,14 +47,16 @@ const LikedFestivalsPage: React.FC = () => {
 
     // 컴포넌트가 처음 렌더링될 때 찜 목록 데이터를 불러옵니다.
     useEffect(() => {
-        // 실제 API URL로 변경해야 합니다.
-        // 예를 들어, 찜 목록을 가져오는 백엔드 API 엔드포인트
+        // 이 부분에 실제 백엔드 API URL을 넣어주세요.
         const fetchLikedFestivals = async () => {
             try {
-                // 이 부분에 실제 백엔드 API URL을 넣어주세요.
+                // TODO: 실제 백엔드 API를 호출하여 찜 목록(contentId 배열)을 가져오는 코드로 교체하세요.
                 // const response = await axios.get('/api/liked-festivals');
+                // const likedContentIds = response.data.contentIds;
+                //
+                // 그리고 아래 목업(mock) 데이터 대신, 가져온 contentId를 바탕으로 한국관광공사 API를 호출하는 로직을 추가하면 됩니다.
 
-                // 임시로 성공 응답을 시뮬레이션합니다.
+                // 현재는 테스트를 위해 임시로 성공 응답을 시뮬레이션하는 데이터를 사용합니다.
                 const mockResponse = {
                     data: [
                         {
