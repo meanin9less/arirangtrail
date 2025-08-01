@@ -46,8 +46,11 @@ public class OAuth2SuccessHandler implements AuthenticationSuccessHandler {
         String code = UUID.randomUUID().toString();
         redisTemplate.opsForValue().set("code:" + code, email, Duration.ofMinutes(3));
 
-        String appHeader = request.getHeader("androidApp");
-        boolean isApp = appHeader != null && appHeader.equalsIgnoreCase("AndroidApp");
+        String clientType = request.getParameter("client_type");
+        boolean isApp = "app".equalsIgnoreCase(clientType);
+
+//        String appHeader = request.getHeader("androidApp");
+//        boolean isApp = appHeader != null && appHeader.equalsIgnoreCase("AndroidApp");
 
         Optional<UserEntity> loginUserOptional = this.userRepository.findByEmail(email);
         if (loginUserOptional.isEmpty()) {
