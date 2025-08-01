@@ -11,6 +11,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType; // MediaType 임포트 추가
@@ -20,6 +21,8 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
+import java.util.HashMap;
+import java.util.Map;
 
 @RestController
 @RequiredArgsConstructor
@@ -27,6 +30,7 @@ import java.io.IOException;
 public class UserController {
     private final JwtUtil jwtUtil;
     private final UserService userService;
+    private final RedisTemplate<String, String> redisTemplate;
 
     @PostMapping(value = "/join")
     public ResponseEntity<String> join(@RequestBody JoinDTO joinDTO) {
@@ -160,18 +164,45 @@ public class UserController {
         }
     }
 
-    // ✨ 프로필 이미지 제거 엔드포인트 (삭제: 프론트엔드에서 imageurl: null로 /update-inform 호출로 대체됨)
-    // @DeleteMapping(value = "/remove-profile-image")
-    // public ResponseEntity<String> removeProfileImage(HttpServletRequest request) {
-    //     try {
-    //         String accessToken = request.getHeader("authorization").substring(7);
-    //         String username = this.jwtUtil.getUserName(accessToken);
-    //         this.userService.removeProfileImage(username);
-    //         return ResponseEntity.ok("프로필 이미지가 성공적으로 제거되었습니다.");
-    //     } catch (EntityNotFoundException e) {
-    //         return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
-    //     } catch (Exception e) {
-    //         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("이미지 제거 중 오류가 발생했습니다: " + e.getMessage());
-    //     }
-    // }
+    @PostMapping("/app/login")
+    public ResponseEntity<?> oauth2Login(@RequestBody Map<String, String> payload) {
+        String authorizationCode = payload.get("code");
+
+        if (authorizationCode == null) {
+            return ResponseEntity.badRequest().body("Authorization code is missing.");
+        }
+
+        String redisKey = "code:" + authorizationCode;
+        String email = redisTemplate.opsForValue().get(redisKey);
+
+        if (email == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Invalid or expired authorization code.");
+        }
+        redisTemplate.delete(redisKey);
+
+        UserDTO user = this.userService.findByEmail(email);
+
+
+        String access = jwtUtil.createToken("access", user.getUsername(), user.getRole(), 60 * 10 * 1000L);
+        String refresh = jwtUtil.createToken("refresh", user.getUsername(), user.getRole(), 24 * 60 * 60 * 1000L);
+
+        Map<String, String> result = new HashMap<>();
+        result.put("access", "Bearer " + access);
+        result.put("refresh", refresh);
+        result.put("username", user.getUsername());
+        result.put("email", user.getEmail());
+        result.put("firstname",  user.getFirstname());
+        result.put("lastname",  user.getLastname());
+        result.put("nickname",  user.getNickname());
+        result.put("birthdate", user.getBirthdate().toString());
+        result.put("imageurl", user.getImageurl());
+
+        return ResponseEntity.ok(result);
+    }
+
+    @PostMapping("/app/simplejoin")
+    public ResponseEntity<UserDTO> appSimpleJoin(){
+
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(null);
+    }
 }
