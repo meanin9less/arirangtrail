@@ -2,10 +2,8 @@ package com.example.arirangtrail.controller.chat;
 
 
 import com.example.arirangtrail.data.document.ChatRoom;
-import com.example.arirangtrail.data.dto.chat.ChatRoomDetailDTO;
-import com.example.arirangtrail.data.dto.chat.ChatRoomListDTO;
-import com.example.arirangtrail.data.dto.chat.CreateRoomDTO;
-import com.example.arirangtrail.data.dto.chat.UpdateReqDTO;
+import com.example.arirangtrail.data.dto.chat.chatRoom.*;
+import com.example.arirangtrail.data.dto.chat.message.UpdateReqDTO;
 import com.example.arirangtrail.service.chat.ChatService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -14,7 +12,6 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 
 @Slf4j
 @RestController
@@ -102,9 +99,10 @@ public class ChatRoomController {
     @PostMapping("/{roomId}/join")
     public ResponseEntity<?> joinRoom(
             @PathVariable Long roomId,
-            @RequestBody Map<String, String> payload) {
+            @RequestBody JoinRoomRequestDTO request) {
 
-        String username = payload.get("username");
+        String username = request.getUsername();
+        String nickname = request.getNickname();
 
         if (username == null) {
             return ResponseEntity.badRequest()
@@ -113,7 +111,7 @@ public class ChatRoomController {
 
         try {
             // ✅ 입장 시도 (정원 체크, 밴 체크 등 포함)
-            chatService.joinRoom(roomId, username);
+            chatService.joinRoom(roomId, username,nickname);
 
             // ✅ 성공 시 방 정보도 함께 반환
             ChatRoomDetailDTO roomInfo = chatService.findRoomDetailsById(roomId);
@@ -150,20 +148,36 @@ public class ChatRoomController {
         }
     }
 
+    // ✅ [신규] 참여자 목록 조회 API
+    @GetMapping("/{roomId}/participants")
+    public ResponseEntity<List<ParticipantDTO>> getParticipants(
+            @PathVariable Long roomId,
+            @RequestParam String username) { // 실제로는 @AuthenticationPrincipal 로 가져와야 안전
+        List<ParticipantDTO> participants = chatService.getParticipants(roomId, username);
+        return ResponseEntity.ok(participants);
+    }
 
-//  공지 수정
-//    @PatchMapping("/{roomId}/notice")
-//    public ResponseEntity<?> updateNotice(@PathVariable Long roomId, @RequestBody NoticeDTO noticeDTO) {
-//        Optional<ChatRoom> roomOpt = chatRoomRepository.findById(roomId);
-//        if (roomOpt.isPresent()) {
-//            ChatRoom room = roomOpt.get();
-//            room.setNotice(noticeDTO.getNotice());
-//            room.setUpdatedAt(LocalDateTime.now());
-//            chatRoomRepository.save(room);
-//            return ResponseEntity.ok("공지사항이 업데이트되었습니다.");
-//        } else {
-//            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("채팅방이 존재하지 않습니다.");
-//        }
-//    }
+    // ✅ [신규] 강퇴/밴 처리 API
+    @PostMapping("/{roomId}/kick")
+    public ResponseEntity<Void> kickUser(
+            @PathVariable Long roomId,
+            @RequestBody Map<String, String> payload) { // { "creatorUsername": "...", "userToKick": "..." }
+
+        String creatorUsername = payload.get("creatorUsername"); // 방장
+        String userToKick = payload.get("userToKick"); // 강퇴할 유저
+
+        chatService.kickAndBanUser(roomId, creatorUsername, userToKick);
+        return ResponseEntity.ok().build();
+    }
+
+
+    // ✅ [신규] 공지사항 업데이트(수정/삭제) API
+    @PatchMapping("/{roomId}/notice")
+    public ResponseEntity<Void> updateNotice(
+            @PathVariable Long roomId,
+            @RequestBody NoticeDTO noticeDTO) {
+        chatService.updateNotice(roomId, noticeDTO.getUsername(), noticeDTO.getNotice());
+        return ResponseEntity.ok().build();
+    }
 
 }

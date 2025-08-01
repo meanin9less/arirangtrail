@@ -5,6 +5,8 @@ import org.springframework.data.mongodb.core.mapping.Document;
 import lombok.Getter;
 import lombok.Setter;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 
 @Getter
 @Setter
@@ -25,4 +27,7 @@ public class ChatRoom {
     private long lastMessageSeq; // 마지막 메시지 순번
     private LocalDateTime createdAt; // 방 생성일 (이미 존재)
     private LocalDateTime updatedAt; // 방 수정일
+
+    // ✅ 밴 당한 유저 목록 필드 추가
+    private List<String> bannedUsernames = new ArrayList<>();
 }
