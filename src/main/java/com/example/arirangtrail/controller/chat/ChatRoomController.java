@@ -2,7 +2,8 @@ package com.example.arirangtrail.controller.chat;
 
 
 import com.example.arirangtrail.data.document.ChatRoom;
-import com.example.arirangtrail.data.dto.chat.*;
+import com.example.arirangtrail.data.dto.chat.chatRoom.*;
+import com.example.arirangtrail.data.dto.chat.message.UpdateReqDTO;
 import com.example.arirangtrail.service.chat.ChatService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -11,7 +12,6 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 
 @Slf4j
 @RestController
@@ -171,19 +171,13 @@ public class ChatRoomController {
     }
 
 
-//  공지 수정
-//    @PatchMapping("/{roomId}/notice")
-//    public ResponseEntity<?> updateNotice(@PathVariable Long roomId, @RequestBody NoticeDTO noticeDTO) {
-//        Optional<ChatRoom> roomOpt = chatRoomRepository.findById(roomId);
-//        if (roomOpt.isPresent()) {
-//            ChatRoom room = roomOpt.get();
-//            room.setNotice(noticeDTO.getNotice());
-//            room.setUpdatedAt(LocalDateTime.now());
-//            chatRoomRepository.save(room);
-//            return ResponseEntity.ok("공지사항이 업데이트되었습니다.");
-//        } else {
-//            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("채팅방이 존재하지 않습니다.");
-//        }
-//    }
+    // ✅ [신규] 공지사항 업데이트(수정/삭제) API
+    @PatchMapping("/{roomId}/notice")
+    public ResponseEntity<Void> updateNotice(
+            @PathVariable Long roomId,
+            @RequestBody NoticeDTO noticeDTO) {
+        chatService.updateNotice(roomId, noticeDTO.getUsername(), noticeDTO.getNotice());
+        return ResponseEntity.ok().build();
+    }
 
 }

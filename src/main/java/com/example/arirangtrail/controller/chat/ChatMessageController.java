@@ -1,7 +1,7 @@
 package com.example.arirangtrail.controller.chat;
 
 import com.example.arirangtrail.data.document.ChatMessage;
-import com.example.arirangtrail.data.dto.chat.ChatMessageDTO;
+import com.example.arirangtrail.data.dto.chat.message.ChatMessageDTO;
 import com.example.arirangtrail.service.chat.ChatService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Pageable;

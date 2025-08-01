@@ -1,4 +1,4 @@
-package com.example.arirangtrail.data.dto.chat;
+package com.example.arirangtrail.data.dto.chat.chatRoom;
 import lombok.*;
 
 import java.time.LocalDateTime;

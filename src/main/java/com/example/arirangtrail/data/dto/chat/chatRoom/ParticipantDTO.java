@@ -1,4 +1,4 @@
-package com.example.arirangtrail.data.dto.chat;
+package com.example.arirangtrail.data.dto.chat.chatRoom;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -7,8 +7,7 @@ import lombok.NoArgsConstructor;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class UpdateReqDTO {
-    private Long roomId;
+public class ParticipantDTO {
     private String username;
-    private long lastReadSeq;
+    private String nickname;
 }

@@ -3,7 +3,12 @@ package com.example.arirangtrail.service.chat;
 import com.example.arirangtrail.data.document.ChatMessage;
 import com.example.arirangtrail.data.document.ChatRoom;
 import com.example.arirangtrail.data.document.UserChatStatus;
-import com.example.arirangtrail.data.dto.chat.*;
+import com.example.arirangtrail.data.dto.chat.chatRoom.ChatRoomDetailDTO;
+import com.example.arirangtrail.data.dto.chat.chatRoom.ChatRoomListDTO;
+import com.example.arirangtrail.data.dto.chat.chatRoom.CreateRoomDTO;
+import com.example.arirangtrail.data.dto.chat.chatRoom.ParticipantDTO;
+import com.example.arirangtrail.data.dto.chat.message.ChatMessageDTO;
+import com.example.arirangtrail.data.dto.chat.message.UnreadUpdateDTO;
 import com.example.arirangtrail.data.repository.chat.ChatMessageRepository;
 import com.example.arirangtrail.data.repository.chat.ChatRoomRepository;
 import com.example.arirangtrail.data.repository.chat.UserChatStatusRepository;
@@ -451,5 +456,29 @@ public class ChatService {
         );
     }
 
+    @Transactional
+    public void updateNotice(Long roomId, String username, String notice) {
+        // 1. 채팅방 정보를 가져옵니다.
+        ChatRoom room = chatRoomRepository.findById(roomId)
+                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 채팅방입니다. ID: " + roomId));
 
+        // 2. 요청자가 방장인지 확인합니다.
+        if (!room.getCreator().equals(username)) {
+            throw new SecurityException("공지사항을 수정할 권한이 없습니다.");
+        }
+
+        // 3. 공지사항 내용을 업데이트하고 수정 시간을 기록합니다.
+        room.setNotice(notice);
+        room.setUpdatedAt(LocalDateTime.now());
+        chatRoomRepository.save(room);
+
+        // 4. WebSocket으로 NOTICE_UPDATE 이벤트를 브로드캐스트합니다.
+        messagingTemplate.convertAndSend(
+                "/sub/chat/room/" + roomId,
+                Map.of(
+                        "type", "NOTICE_UPDATE",
+                        "notice", notice
+                )
+        );
+    }
 }
