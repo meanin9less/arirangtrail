@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useCallback } from 'react';
+import React, { useState } from 'react';
 import axios from 'axios';
 
 // 한국관광공사 API 응답 (detailCommon2) 인터페이스
@@ -17,10 +17,6 @@ interface KTOFestivalDetail {
     eventenddate?: string;
 }
 
-// 한국관광공사 API 서비스 키
-const SERVICE_KEY = "D%2BNvbQO6awBrrWwItvgBA9pGA1QRcHz3RIcGbOsWO74yK2VW1omMg95mNyvjfzH91o%2BM3SydBdBdHCrdGtPaNrQ%3D%3D"; // 가상의 서비스 키
-const KTO_API_BASE_URL = "https://apis.data.go.kr/B551011/KorService2";
-
 // 찜한 축제/관광지 아이템 컴포넌트
 interface LikedFestivalItemProps {
     festival: KTOFestivalDetail;
@@ -32,105 +28,55 @@ const LikedFestivalItem: React.FC<LikedFestivalItemProps> = ({ festival, onItemC
     return (
         <div className="festivalItem">
             <div className="festivalDetails" onClick={() => onItemClick(festival.contentid)}>
-                {/* `useNavigate` 대신 일반 <a> 태그를 사용하여 클릭 이동을 처리 */}
+                {/* useNavigate 대신 일반 <a> 태그를 사용하여 클릭 이동을 처리 */}
                 <a href={`/calender/${festival.contentid}`} className="festivalTitleLink" onClick={(e) => e.stopPropagation()}>
                     {festival.title}
                 </a>
             </div>
-            {/* onUnlike 함수는 실제 백엔드 연동이 필요합니다. 여기서는 기능만 구현 */}
             <button className="unlikeButton" onClick={() => onUnlike(festival.contentid)}>찜 해제</button>
         </div>
     );
 };
 
 const LikedFestivalsPage: React.FC = () => {
-    // `useNavigate` 대신 `window.location.href` 사용
+    // useNavigate 대신 window.location.href 사용
     const navigate = (path: string) => {
         window.location.href = path;
     };
 
-    // Redux 대신 테스트용 토큰 및 로그인 상태 사용
-    const jwtToken = "mock_jwt_token_for_api_call";
-    const isLoggedIn = !!jwtToken;
-
-    const [likedFestivals, setLikedFestivals] = useState<KTOFestivalDetail[]>([]);
-    const [loading, setLoading] = useState<boolean>(true);
-    const [error, setError] = useState<string | null>(null);
-
-    const fetchLikedFestivals = useCallback(async () => {
-        setLoading(true);
-        setError(null);
-        try {
-            if (!isLoggedIn) {
-                // 로그인하지 않은 경우 로그인 페이지로 리다이렉트
-                navigate('/login');
-                return;
-            }
-
-            // 1. 백엔드에서 사용자가 찜한 contentId 목록을 가져옵니다.
-            const likedResponse = await axios.get<string[]>('/festivals/likes/my', {
-                headers: {
-                    Authorization: `Bearer ${jwtToken}`,
-                },
-            });
-            const likedContentIds = likedResponse.data;
-
-            if (likedContentIds.length === 0) {
-                setLikedFestivals([]);
-                setLoading(false);
-                return;
-            }
-
-            // 2. 각 contentId에 대해 한국관광공사 API에서 상세 정보를 가져옵니다.
-            const festivalDetailsPromises = likedContentIds.map(async (contentId) => {
-                const detailApiUrl = `${KTO_API_BASE_URL}/detailCommon2`;
-                try {
-                    const detailResponse = await axios.get(detailApiUrl, {
-                        params: {
-                            serviceKey: SERVICE_KEY,
-                            MobileApp: 'AppTest',
-                            MobileOS: 'ETC',
-                            _type: 'json',
-                            contentId: contentId,
-                            defaultYN: 'Y',
-                            firstImageYN: 'Y',
-                            areacodeYN: 'Y',
-                            catcodeYN: 'Y',
-                            addrinfoYN: 'Y',
-                            mapinfoYN: 'Y',
-                            overviewYN: 'Y',
-                        },
-                    });
-
-                    const item = detailResponse.data?.response?.body?.items?.item;
-                    if (item) {
-                        return Array.isArray(item) ? item[0] : item;
-                    }
-                    return null;
-                } catch (detailErr) {
-                    console.error(`KTO API 호출 오류 (contentId: ${contentId}):`, detailErr);
-                    return null;
-                }
-            });
-
-            const fetchedDetails = await Promise.all(festivalDetailsPromises);
-            setLikedFestivals(fetchedDetails.filter(detail => detail !== null) as KTOFestivalDetail[]);
-
-        } catch (err: any) {
-            console.error('찜한 축제 불러오기 오류:', err);
-            let errorMessage = '찜한 축제를 불러오는 데 실패했습니다.';
-            if (axios.isAxiosError(err) && err.response) {
-                errorMessage = err.response.data?.message || errorMessage;
-            }
-            setError(errorMessage);
-        } finally {
-            setLoading(false);
+    // API 호출 대신 가짜(Mock) 데이터를 사용합니다.
+    const mockLikedFestivals: KTOFestivalDetail[] = [
+        {
+            contentid: "2781491",
+            contenttypeid: "15",
+            title: "보성다향대축제",
+            addr1: "전라남도 보성군 보성읍 녹차로 775",
+            addr2: "",
+            firstimage: "http://tong.visitkorea.or.kr/cms/resource/50/2781450_image2_1.jpg",
+            firstimage2: "http://tong.visitkorea.or.kr/cms/resource/50/2781450_image2_2.jpg",
+            tel: "061-852-6014",
+            overview: "보성다향대축제는 보성차밭에서 펼쳐지는 다양한 문화행사와 차 관련 체험을 즐길 수 있는 축제이다. 다례 시연, 찻잎 따기, 차 만들기 등 다채로운 프로그램이 마련되어 있다.",
+            homepage: "<a href=\"https://dianakorean.com\" target=\"_blank\" title=\"새창 : 보성다향대축제 홈페이지\">https://dianakorean.com</a>",
+            eventstartdate: "20240503",
+            eventenddate: "20240507"
+        },
+        {
+            contentid: "2825501",
+            contenttypeid: "15",
+            title: "진해군항제",
+            addr1: "경상남도 창원시 진해구 중원로터리 외 진해구 일대",
+            addr2: "",
+            firstimage: "http://tong.visitkorea.or.kr/cms/resource/97/2825597_image2_1.jpg",
+            firstimage2: "http://tong.visitkorea.or.kr/cms/resource/97/2825597_image2_2.jpg",
+            tel: "055-225-2342",
+            overview: "진해군항제는 세계 최대의 벚꽃축제로, 진해구 일대에 만개한 벚꽃을 감상하며 다양한 문화예술행사와 군악의장 페스티벌을 즐길 수 있다.",
+            homepage: "<a href=\"https://cherryblossom.changwon.go.kr\" target=\"_blank\" title=\"새창 : 진해군항제 홈페이지\">https://cherryblossom.changwon.go.kr</a>",
+            eventstartdate: "20240322",
+            eventenddate: "20240401"
         }
-    }, [isLoggedIn, jwtToken]);
+    ];
 
-    useEffect(() => {
-        fetchLikedFestivals();
-    }, [fetchLikedFestivals]);
+    const [likedFestivals, setLikedFestivals] = useState<KTOFestivalDetail[]>(mockLikedFestivals);
 
     // 아이템 클릭 시 상세 페이지로 이동
     const handleItemClick = (contentId: string) => {
@@ -144,22 +90,6 @@ const LikedFestivalsPage: React.FC = () => {
         // UI에서 해당 아이템 제거
         setLikedFestivals(prev => prev.filter(festival => festival.contentid !== contentId));
     };
-
-    if (loading) {
-        return (
-            <div className="container">
-                <p className="message">찜한 축제를 불러오는 중입니다...</p>
-            </div>
-        );
-    }
-
-    if (error) {
-        return (
-            <div className="container">
-                <p className={`message errorMessage`}>{error}</p>
-            </div>
-        );
-    }
 
     return (
         <>
