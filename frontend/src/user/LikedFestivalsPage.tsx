@@ -48,9 +48,11 @@ const LikedFestivalsPage: React.FC = () => {
 
     // 컴포넌트가 처음 렌더링될 때 찜 목록 데이터를 불러옵니다.
     useEffect(() => {
+        // 이 부분에 실제 백엔드 API URL을 넣어주세요.
         const fetchLikedFestivals = async () => {
             try {
                 // TODO: 여기에 찜 목록을 가져오는 실제 백엔드 API 호출 코드를 작성하세요.
+                // TODO: 실제 백엔드 API를 호출하여 찜 목록(contentId 배열)을 가져오는 코드로 교체하세요.
                 // const response = await axios.get('/api/liked-festivals');
 
                 // 백엔드에서 찜한 콘텐츠 ID 목록을 받아오고,
