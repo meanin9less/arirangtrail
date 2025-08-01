@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import './LikedFestivalsPage.module.css';
+// CSS 모듈 파일을 styles 객체로 가져옵니다.
+import styles from './LikedFestivalsPage.module.css';
+// 한국관광공사 API 응답 (detailCommon2) 인터페이스
 interface KTOFestivalDetail {
     contentid: string;
     contenttypeid: string;
@@ -25,11 +27,12 @@ interface LikedFestivalItemProps {
 
 const LikedFestivalItem: React.FC<LikedFestivalItemProps> = ({ festival, onItemClick, onUnlike }) => {
     return (
-        <div className="festivalItem">
-            <div className="festivalDetails" onClick={() => onItemClick(festival.contentid)}>
-                <span className="festivalTitleLink">{festival.title}</span>
+        // CSS 모듈 클래스를 사용하도록 수정
+        <div className={styles.festivalItem}>
+            <div className={styles.festivalDetails} onClick={() => onItemClick(festival.contentid)}>
+                <span className={styles.festivalTitleLink}>{festival.title}</span>
             </div>
-            <button className="unlikeButton" onClick={() => onUnlike(festival.contentid)}>찜 해제</button>
+            <button className={styles.unlikeButton} onClick={() => onUnlike(festival.contentid)}>찜 해제</button>
         </div>
     );
 };
@@ -89,19 +92,20 @@ const LikedFestivalsPage: React.FC = () => {
     };
 
     return (
-        <div className="container">
-            <h2 className="pageTitle">찜한 축제/관광지</h2>
-            <button onClick={() => navigate('/mypage')} className="backButton">
+        // CSS 모듈 클래스를 사용하도록 수정
+        <div className={styles.container}>
+            <h2 className={styles.pageTitle}>찜한 축제/관광지</h2>
+            <button onClick={() => navigate('/mypage')} className={styles.backButton}>
                 마이페이지로 돌아가기
             </button>
             {isLoading ? (
-                <p className="message">찜 목록을 불러오는 중...</p>
+                <p className={styles.message}>찜 목록을 불러오는 중...</p>
             ) : error ? (
-                <p className="errorMessage">{error}</p>
+                <p className={styles.errorMessage}>{error}</p>
             ) : likedFestivals.length === 0 ? (
-                <p className="noContentMessage">아직 찜한 축제/관광지가 없습니다.</p>
+                <p className={styles.noContentMessage}>아직 찜한 축제/관광지가 없습니다.</p>
             ) : (
-                <ul className="festivalList">
+                <ul className={styles.festivalList}>
                     {likedFestivals.map((festival) => (
                         <li key={festival.contentid}>
                             <LikedFestivalItem
