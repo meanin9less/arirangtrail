@@ -97,7 +97,7 @@ const LikedFestivalsPage: React.FC = () => {
                     const detailResponse = await axios.get(detailApiUrl, {
                         params: {
                             contentId: contentId,
-                            defaultYN: 'Y',
+                            defaultYN: 'Y', // 다시 한번 정확히 'Y'로 설정
                             firstImageYN: 'Y',
                             areacodeYN: 'Y',
                             catcodeYN: 'Y',
