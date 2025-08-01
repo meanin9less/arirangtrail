@@ -110,7 +110,7 @@ const MyRooms = () => {
                                 <h3 style={styles.roomTitle}>
                                     {room.title || '제목 없음'}
 
-                                    {room.unreadCount && room.unreadCount > 0 && (
+                                    {typeof room.unreadCount === 'number' && room.unreadCount > 0 && (
                                         <span style={styles.newBadge}>NEW</span>
                                     )}
 
