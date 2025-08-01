@@ -37,29 +37,25 @@ function ReviewWritePage() {
             const fetchLocations = async () => {
                 setLoading(true);
                 try {
-                    // <<< 수정된 부분: 날짜 형식을 YYYY-MM-DD에서 YYYYMMDD로 변경
                     const formattedDate = visitDate.replace(/-/g, '');
                     const SERVICE_KEY = "WCIc8hzzBS3Jdod%2BVa357JmB%2FOS0n4D2qPHaP9PkN4bXIfcryZyg4iaZeTj1fEYJ%2B8q2Ol8FIGe3RkW3d72FHA%3D%3D";
                     const API_URL =
                         `https://apis.data.go.kr/B551011/KorService2/searchFestival2?serviceKey=${SERVICE_KEY}&MobileApp=AppTest&MobileOS=ETC&_type=json`;
                     const response = await axios.get(API_URL, {
-                        params: { // 요청 파라미터
+                        params: {
                             numOfRows: 150,
                             pageNo: 1,
-                            arrange: "B", // 조회순
-                            eventStartDate: formattedDate, // 오늘부터 시작하는 행사만 요청
+                            arrange: "B",
+                            eventStartDate: formattedDate,
                             eventEndDate: formattedDate
                         },
                     });
-                    console.log(response.data);
                     const items = response.data.response.body.items.item;
-                    console.log(items);
                     if (items) {
                         const extractedLocations = items.map((item: any) => ({
                             contentid: item.contentid,
                             title: item.title,
                         }));
-                        console.log(extractedLocations);
                         setLocations(extractedLocations);
                     } else {
                         setLocations([]);
@@ -100,6 +96,13 @@ function ReviewWritePage() {
     const handleSubmitReview = async (e: FormEvent<HTMLFormElement>) => {
         e.preventDefault();
 
+        if (photos.length === 0) {
+            setModalMessage('사진을 한 장 이상 첨부해야 합니다.');
+            setMessageType('error');
+            setShowModal(true);
+            return;
+        }
+
         setLoading(true);
         setModalMessage('');
         setMessageType(null);
@@ -130,8 +133,6 @@ function ReviewWritePage() {
         photos.forEach(photo => {
             formData.append('photos', photo);
         });
-
-        console.log(formData);
 
         try {
             const response = await apiClient.post('/reviews', formData, {
@@ -168,6 +169,11 @@ function ReviewWritePage() {
         }
     };
 
+    const getTodayDate = () => {
+        const today = new Date();
+        return today.toISOString().split('T')[0];
+    };
+
     return (
         <div className={styles.reviewWriteContainer}>
             <h2>새 리뷰 작성</h2>
@@ -181,6 +187,7 @@ function ReviewWritePage() {
                         value={visitDate}
                         onChange={(e) => setVisitDate(e.target.value)}
                         required
+                        max={getTodayDate()} // 미래 날짜 선택 불가
                         className={styles.inputField}
                     />
                 </div>
@@ -245,7 +252,7 @@ function ReviewWritePage() {
                     </select>
                 </div>
                 <div className={styles.formGroup}>
-                    <label htmlFor="reviewImage">이미지 첨부 (선택 사항):</label>
+                    <label htmlFor="reviewImage">이미지 첨부 (필수):</label>
                     <input
                         type="file"
                         id="reviewImage"
@@ -254,6 +261,7 @@ function ReviewWritePage() {
                         onChange={handleFileChange}
                         className={styles.fileInput}
                         multiple
+                        required // 사진 첨부 필수
                     />
                     <div className={styles.imagePreviewContainer}>
                         {imagePreviews.map((preview, index) => (

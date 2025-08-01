@@ -87,7 +87,13 @@ function ReviewPage() {
     }, [loader, fetchReviews]);
 
 
+    const currentUser = useSelector((state: RootState) => state.token.userProfile);
+
     const handleWriteReviewClick = () => {
+        if (!currentUser) {
+            alert('로그인이 필요한 기능입니다.');
+            return;
+        }
         navigate('/review/write');
     };
 
