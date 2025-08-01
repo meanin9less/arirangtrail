@@ -1,4 +1,4 @@
-package com.example.arirangtrail.data.dto.chat;
+package com.example.arirangtrail.data.dto.chat.chatRoom;
 import lombok.*;
 
 import java.time.LocalDateTime;
@@ -10,6 +10,7 @@ import java.time.LocalDateTime;
 public class ChatRoomListDTO {
     private Long id;
     private String title;
+    private String subject;
     private String creator;
     private LocalDateTime meetingDate;
     private long participantCount;

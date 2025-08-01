@@ -6,6 +6,12 @@ import {RootState, setTotalUnreadCount, updateLobby} from '../store';
 import { BsChatDots } from "react-icons/bs";
 import apiClient from "../api/axiosInstance";
 import Modal from "../components/Modal";
+import axios from "axios";
+
+    interface Location {
+    contentid: string;
+    title: string;
+    }
 
     export interface Room {
     id: string;
@@ -40,6 +46,63 @@ const CommunityPage = () => {
         meetingDate: '',
     });
     const [formError, setFormError] = useState('');
+    //날짜 및 축제 선택 관련
+
+    const [loading, setLoading] = useState<boolean>(false);
+    const [locations, setLocations] = useState<Location[]>([]);
+    const [showModal, setShowModal] = useState<boolean>(false);
+    const [modalMessage, setModalMessage] = useState<string>('');
+    const [messageType, setMessageType] = useState<'success' | 'error' | null>(null);
+
+    // 축제 선택
+    useEffect(() => {
+        if (newRoomInfo.meetingDate) {
+            const fetchLocations = async () => {
+                setLoading(true);
+                try {
+                    // <<< 수정된 부분: 날짜 형식을 YYYY-MM-DD에서 YYYYMMDD로 변경
+                    const formattedDate = newRoomInfo.meetingDate.replace(/-/g, '');
+                    const SERVICE_KEY = "WCIc8hzzBS3Jdod%2BVa357JmB%2FOS0n4D2qPHaP9PkN4bXIfcryZyg4iaZeTj1fEYJ%2B8q2Ol8FIGe3RkW3d72FHA%3D%3D";
+                    const API_URL =
+                        `https://apis.data.go.kr/B551011/KorService2/searchFestival2?serviceKey=${SERVICE_KEY}&MobileApp=AppTest&MobileOS=ETC&_type=json`;
+                    const response = await axios.get(API_URL, {
+                        params: { // 요청 파라미터
+                            numOfRows: 150,
+                            pageNo: 1,
+                            arrange: "B", // 조회순
+                            eventStartDate: formattedDate, // 오늘부터 시작하는 행사만 요청
+                            eventEndDate: formattedDate
+                        },
+                    });
+                    console.log(response.data);
+                    const items = response.data.response.body.items.item;
+                    console.log(items);
+                    if (items) {
+                        const extractedLocations = items.map((item: any) => ({
+                            contentid: item.contentid,
+                            title: item.title,
+                        }));
+                        console.log(extractedLocations);
+                        setLocations(extractedLocations);
+                    } else {
+                        setLocations([]);
+                    }
+                    setLoading(false);
+                } catch (error) {
+                    console.error('여행지 정보 조회 오류:', error);
+                    setModalMessage('해당 날짜의 여행지 정보를 불러오는 데 실패했습니다.');
+                    setMessageType('error');
+                    setShowModal(true);
+                    setLocations([]);
+                    setLoading(false);
+                }
+            };
+
+            fetchLocations();
+        }
+    }, [newRoomInfo.meetingDate]);
+
+
 
     useEffect(() => {
         if (userName && location.pathname === '/community') {
@@ -74,6 +137,7 @@ const CommunityPage = () => {
         try {
             // date string을 ISO 형식으로 전환 (React input은 'yyyy-MM-dd' 형식임)
             const formattedDate = new Date(newRoomInfo.meetingDate).toISOString();
+            console.log("보내기 전 newRoomInfo:", newRoomInfo);
 
             await apiClient.post<Room>(`chat/rooms`, {
                 title: newRoomInfo.title,
@@ -81,7 +145,7 @@ const CommunityPage = () => {
                 maxParticipants: parseInt(newRoomInfo.maxParticipants, 10),
                 meetingDate: formattedDate, // ISO로 변경
                 username: userName,
-                nickname: userNickname, // ✅ 생성자 닉네임 추가
+                nickname: userNickname, // ✅ 생성자 닉네임 추
             });
 
             dispatch(updateLobby());
@@ -99,12 +163,13 @@ const CommunityPage = () => {
     }, [validateForm, userName, userNickname, newRoomInfo, dispatch]);
 
     const handleEnterRoom = async (roomId: string) => {
-        if (!userName) return;
+        if (!userName || !userNickname) return;
 
         try {
             // ✅ 1. 먼저 입장 가능한지 서버에 확인 요청
             const response = await apiClient.post(`chat/rooms/${roomId}/join`, {
-                username: userName
+                username: userName,
+                nickname: userNickname
             });
 
             // ✅ 2. 입장 성공 시에만 ChatRoom 컴포넌트로 이동
@@ -234,9 +299,35 @@ const CommunityPage = () => {
                 <Modal isOpen={activeModal === 'create'} onClose={() => setActiveModal(null)} title="새로운 채팅방 만들기">
                     <div style={modalStyles.form}>
                         <input type="text" name="title" placeholder="방 이름" value={newRoomInfo.title} onChange={handleInputChange} style={modalStyles.input}/>
-                        <input type="text" name="subject" placeholder="주제 (예: 축제 맛집 탐방)" value={newRoomInfo.subject} onChange={handleInputChange} style={modalStyles.input}/>
-                        <input type="number" name="maxParticipants" placeholder="최대 인원 (숫자만 입력, 최소 2명 최대 20명)" max={20} min={2} value={newRoomInfo.maxParticipants} onChange={handleInputChange} style={modalStyles.input}/>
                         <input type="date" name="meetingDate" value={newRoomInfo.meetingDate} onChange={handleInputChange} style={modalStyles.input}/>
+                        {/*작업 요 */}
+                        {/*<input type="text" name="subject" placeholder="방문해당일의 축제를 선택하세요" value={newRoomInfo.subject} onChange={handleInputChange} style={modalStyles.input}/>*/}
+                        <select
+                            id="locationSelect"
+                            style={modalStyles.select}
+                            value={newRoomInfo.subject}
+                            onChange={(e) =>
+                                setNewRoomInfo(prev => ({
+                                    ...prev,
+                                    subject: e.target.value,
+                                }))
+                            }
+                            required
+                            disabled={!newRoomInfo.meetingDate || locations.length === 0}
+                        >
+                            <option value="">
+                                {newRoomInfo.meetingDate
+                                    ? '여행지를 선택하세요'
+                                    : '방문 날짜를 먼저 선택하세요'}
+                            </option>
+                            {locations.map((location) => (
+                                <option key={location.contentid} value={location.title}>
+                                    {location.title}
+                                </option>
+                            ))}
+                        </select>
+                        {/*작업 요 */}
+                        <input type="number" name="maxParticipants" placeholder="최대 인원 (숫자만 입력, 최소 2명 최대 20명)" max={20} min={2} value={newRoomInfo.maxParticipants} onChange={handleInputChange} style={modalStyles.input}/>
                         {formError && <p style={modalStyles.error}>{formError}</p>}
                         <button onClick={handleCreateRoom} style={modalStyles.button}>방 만들기</button>
                     </div>
@@ -263,6 +354,7 @@ const CommunityPage = () => {
 const modalStyles: { [key: string]: React.CSSProperties } = {
     form: { display: 'flex', flexDirection: 'column', gap: '15px' },
     input: { padding: '10px', borderRadius: '5px', border: '1px solid #ccc' },
+    select: { padding: '10px', borderRadius: '5px', border: '1px solid #ccc', backgroundColor: 'white'},
     textarea: { padding: '10px', borderRadius: '5px', border: '1px solid #ccc', minHeight: '80px' },
     button: { padding: '10px 20px', borderRadius: '5px', border: 'none', backgroundColor: '#007bff', color: 'white', cursor: 'pointer' },
     error: { color: 'red', fontSize: '14px', textAlign: 'center', margin: 0 }
