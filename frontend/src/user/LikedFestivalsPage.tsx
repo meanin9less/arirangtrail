@@ -7,6 +7,13 @@ import apiClient from '../api/axiosInstance';
 import styles from './LikedFestivalsPage.module.css';
 
 // 한국관광공사 API 응답 (detailCommon2) 인터페이스
+type MyLikedFestivalDTO = {
+    id: number;
+    title: string;
+    imageUrl: string;
+};
+
+
 interface KTOFestivalDetail {
     contentid: string;
     contenttypeid: string;
@@ -80,9 +87,13 @@ const LikedFestivalsPage: React.FC = () => {
                 // 1. 백엔드에서 사용자가 찜한 콘텐츠 ID 목록을 가져옵니다.
                 // 백엔드 컨트롤러에 맞춰 API 경로를 '/api/festivals/likes/my'로 수정했습니다.
                 // 이제 백엔드가 Principal을 통해 사용자를 식별하므로, username 쿼리 파라미터는 필요 없습니다.
-                const likedListResponse = await apiClient.get<string[]>(`/festivals/likes/my-list`, {
-                    headers: { Authorization: `Bearer ${jwtToken}` },
-                });
+                const likedListResponse = await apiClient.get<MyLikedFestivalDTO[]>(
+                    `/festivals/likes/my-list`,
+                    {
+                        headers: { Authorization: `Bearer ${jwtToken}` },
+                        params: { username: userProfile.username },  // ← 여기에 유저네임 전달
+                    }
+                );
                 const likedContentIds = likedListResponse.data.map(id => Number(id));
 
                 // 찜한 목록이 없으면 빈 배열로 상태 업데이트 후 종료
