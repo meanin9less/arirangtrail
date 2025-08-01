@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import './LikedFestivalsPage.module.css';
-// 한국관광공사 API 응답 (detailCommon2) 인터페이스
 interface KTOFestivalDetail {
     contentid: string;
     contenttypeid: string;
