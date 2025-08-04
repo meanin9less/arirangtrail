@@ -27,31 +27,43 @@ public class StompHandler implements ChannelInterceptor {
     @Override
     public Message<?> preSend(Message<?> message, MessageChannel channel) {
         StompHeaderAccessor accessor = StompHeaderAccessor.wrap(message);
+        StompCommand command = accessor.getCommand();
 
-        // STOMP 클라이언트가 연결을 시도할 때(CONNECT) 토큰을 검증합니다.
-        if (StompCommand.CONNECT.equals(accessor.getCommand())) {
-            // 헤더에서 'Authorization' 토큰을 가져옵니다.
-            String jwtToken = accessor.getFirstNativeHeader("Authorization");
-            log.info("STOMP-CONNECT, token: {}", jwtToken);
+        // 💡 3. 어떤 명령이 들어오는지 로그로 확인
+        log.info("STOMP Command: {}", command);
 
-            if (jwtToken != null && jwtToken.startsWith("Bearer ")) {
-                String token = jwtToken.substring(7);
+        // 💡 4. 모든 헤더 정보를 로그로 확인 (어떤 헤더가 들어오는지 정확히 보기 위함)
+        log.info("STOMP Headers: {}", accessor.getMessageHeaders());
 
-                // 토큰 유효성 검사 (JwtFilter 로직과 유사하게)
-                if (!jwtUtil.isExpired(token) && "access".equals(jwtUtil.getCategory(token))) {
-                    String username = jwtUtil.getUserName(token);
+        if (command == StompCommand.CONNECT) {
+            try {
+                String jwtToken = accessor.getFirstNativeHeader("Authorization");
+                log.info("Authorization 헤더에서 추출된 값: {}", jwtToken);
 
-                    // 유저 정보로 CustomUserDetails 생성
-                    CustomUserDetails userDetails = (CustomUserDetails) customUserDetailsService.loadUserByUsername(username);
+                // 'Bearer ' 접두사를 제거해야 할 수도 있습니다.
+                // 아래 removeBearerPrefix 함수를 참고하세요.
+                String pureToken = removeBearerPrefix(jwtToken);
+                log.info("순수 토큰: {}", pureToken);
 
-                    // 인증 객체 생성
-                    Authentication authentication = new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities());
-
-                    // SecurityContext에 저장하지 않고, STOMP 세션에 직접 사용자를 설정합니다.
-                    accessor.setUser(authentication);
+                // ✨ validateToken이 false를 반환하면 (유효하지 않으면) 예외를 던집니다.
+                if (!jwtUtil.validateToken(pureToken)) {
+                    throw new SecurityException("유효하지 않은 토큰입니다.");
                 }
+
+                log.info("토큰 검증 성공!");
+
+            } catch (Exception e) {
+                log.error("STOMP 연결 중 토큰 검증 실패: {}", e.getMessage());
+                throw new SecurityException("토큰 검증에 실패했습니다.");
             }
         }
         return message;
+    }
+
+    private String removeBearerPrefix(String token) {
+        if (token != null && token.startsWith("Bearer ")) {
+            return token.substring(7); // "Bearer " 다음부터의 문자열을 반환
+        }
+        return token;
     }
 }

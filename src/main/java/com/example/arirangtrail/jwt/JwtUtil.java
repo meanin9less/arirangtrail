@@ -49,4 +49,15 @@ public class JwtUtil {
     public Boolean isExpired(String token) {
         return Jwts.parser().verifyWith(this.secretKey).build().parseSignedClaims(token).getPayload().getExpiration().before(new Date());
     }
+
+    public boolean validateToken(String token) {
+        try {
+            // isExpired()는 만료되었으면 true를 반환하므로,
+            // 유효한 토큰은 만료되지 않은(!isExpired) 토큰입니다.
+            return !isExpired(token);
+        } catch (Exception e) {
+            // 파싱 과정에서 예외가 발생하면 (예: 서명이 잘못된 토큰) 유효하지 않은 토큰으로 간주합니다.
+            return false;
+        }
+    }
 }
