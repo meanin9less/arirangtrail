@@ -21,6 +21,8 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
         registry.addEndpoint("/ws-stomp").setAllowedOriginPatterns("*")
 //                .setAllowedOriginPatterns("http://arirangtrail.com")
                 .withSockJS();
+        registry.addEndpoint("/ws-flutter") // 👈 플러터용 경로
+                .setAllowedOriginPatterns("*");
     }
 
     @Override

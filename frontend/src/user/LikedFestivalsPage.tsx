@@ -7,6 +7,13 @@ import apiClient from '../api/axiosInstance';
 import styles from './LikedFestivalsPage.module.css';
 
 // 한국관광공사 API 응답 (detailCommon2) 인터페이스
+type MyLikedFestivalDTO = {
+    contentid: string;
+    title: string;
+    firstImage: string;
+};
+
+
 interface KTOFestivalDetail {
     contentid: string;
     contenttypeid: string;
@@ -24,7 +31,7 @@ interface KTOFestivalDetail {
 
 // 찜한 축제/관광지 아이템 컴포넌트
 interface LikedFestivalItemProps {
-    festival: KTOFestivalDetail;
+    festival: MyLikedFestivalDTO; // 타입을 백엔드 DTO와 일치시킴
     onItemClick: (contentId: string) => void;
     onUnlike: (contentId: string) => void;
 }
@@ -35,7 +42,7 @@ const LikedFestivalItem: React.FC<LikedFestivalItemProps> = ({ festival, onItemC
             <div className={styles.festivalDetails} onClick={() => onItemClick(festival.contentid)}>
                 {/* 썸네일 이미지가 있다면 표시, 없다면 기본 이미지 표시 */}
                 <img
-                    src={festival.firstimage || "https://placehold.co/80x80/cccccc/ffffff?text=No+Image"}
+                    src={festival.firstImage || "https://placehold.co/80x80/cccccc/ffffff?text=No+Image"} // 'i'를 대문자 'I'로 수정
                     alt={festival.title}
                     className={styles.festivalImage}
                 />
@@ -58,7 +65,7 @@ const LikedFestivalsPage: React.FC = () => {
     const isLoggedIn = !!jwtToken && !!userProfile?.username;
 
     // 찜한 축제 목록을 저장할 상태
-    const [likedFestivals, setLikedFestivals] = useState<KTOFestivalDetail[]>([]);
+    const [likedFestivals, setLikedFestivals] = useState<MyLikedFestivalDTO[]>([]);
     // 로딩 상태와 에러 상태
     const [isLoading, setIsLoading] = useState<boolean>(true);
     const [error, setError] = useState<string | null>(null);
@@ -77,56 +84,37 @@ const LikedFestivalsPage: React.FC = () => {
                 setIsLoading(true);
                 setError(null);
 
-                // 1. 백엔드에서 사용자가 찜한 콘텐츠 ID 목록을 가져옵니다.
-                const likedListResponse = await apiClient.get<{ contentIds: number[] }>(`/festivals/liked-list`, {
-                    headers: { Authorization: `Bearer ${jwtToken}` },
-                    params: { username: userProfile?.username }
-                });
-
-                const likedContentIds = likedListResponse.data.contentIds;
-
-                // 찜한 목록이 없으면 빈 배열로 상태 업데이트 후 종료
-                if (likedContentIds.length === 0) {
-                    setLikedFestivals([]);
-                    setIsLoading(false);
-                    return;
-                }
-
-                // 2. 찜한 ID들을 이용해 한국관광공사 API를 호출하여 상세 정보를 가져옵니다.
-                // Promise.all을 사용하여 모든 API 요청을 병렬로 처리합니다.
-                const fetchPromises = likedContentIds.map(id =>
-                    axios.get(`https://apis.data.go.kr/B551011/KorService2/detailCommon2?serviceKey=${SERVICE_KEY}&MobileApp=AppTest&MobileOS=ETC&_type=json`, {
-                        params: {
-                            numOfRows: 1,
-                            pageNo: 1,
-                            contentId: id,
-                        }
-                    })
+                // ✨ 1. 백엔드 API를 한 번만 호출하면 모든 정보가 다 들어있습니다! ✨
+                const response = await apiClient.get<MyLikedFestivalDTO[]>(
+                    `/festivals/likes/my-list`,
+                    {
+                        // 인터셉터가 헤더를 넣어주므로 여기서는 params만 신경쓰면 됩니다.
+                        params: { username: userProfile.username },
+                    }
                 );
 
-                const responses = await Promise.all(fetchPromises);
-                const festivalDetails = responses.flatMap(response => {
-                    const item = response.data.response.body.items.item;
-                    // API 응답 구조를 확인하여 유효한 데이터만 필터링
-                    return item ? [item[0]] : [];
-                });
+                // ✨ 2. 외부 API를 또 호출할 필요 없이, 백엔드가 준 데이터를 그대로 상태에 저장합니다. ✨
+                setLikedFestivals(response.data);
 
-                setLikedFestivals(festivalDetails);
             } catch (err) {
                 console.error("찜 목록을 불러오는 중 오류가 발생했습니다:", err);
-                setError("찜 목록을 불러오는 중 오류가 발생했습니다.");
+                if (axios.isAxiosError(err) && err.response?.status === 401) {
+                    setError("인증에 실패했습니다. 다시 로그인해주세요.");
+                } else {
+                    setError("찜 목록을 불러오는 중 오류가 발생했습니다.");
+                }
             } finally {
                 setIsLoading(false);
             }
         };
 
         fetchLikedFestivals();
-    }, [isLoggedIn, jwtToken, userProfile]);
+    }, [isLoggedIn, userProfile?.username]);
 
     // 아이템 클릭 시 상세 페이지로 이동하는 핸들러
-    const handleItemClick = (contentId: string) => {
+    const handleItemClick = (festivalId: string) => {
         // 상세 페이지 경로로 이동
-        navigate(`/detail/${contentId}`);
+        navigate(`/calender/${festivalId}`);
     };
 
     // '찜 해제' 버튼 클릭 시 실행되는 핸들러
@@ -139,7 +127,10 @@ const LikedFestivalsPage: React.FC = () => {
         try {
             // 백엔드 API 호출하여 찜 해제 요청
             const contentIdNum = Number(contentId);
+            // 백엔드 API 경로가 `/api/festivals/{contentid}/like`이므로 이전에 작성한 코드는 유효합니다.
+            // 백엔드 컨트롤러에 명시된 대로 username을 쿼리 파라미터로 전달합니다.
             await apiClient.post(`/festivals/${contentIdNum}/like`, null, {
+                headers: { Authorization: `Bearer ${jwtToken}` },
                 params: { username: userProfile.username }
             });
 
