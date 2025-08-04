@@ -201,9 +201,6 @@ const DetailPage = () => {
                         contentTypeId: 39, // 39 = 음식점
                     }
                 });
-
-                console.log(response.data);
-                // API 응답 데이터에 타입을 명시적으로 지정 (ts.타입)
                 const items: FoodSearchList[] = response.data.response.body.items.item || [];
                 // 받아온 데이터에서 firstimage가 있는 아이템만 필터링
                 const filteredFoodList = items.filter(food => food.firstimage && food.firstimage.trim() !== '');
@@ -218,51 +215,53 @@ const DetailPage = () => {
     }, [festival]); // festival 상태가 변경되면 실행
 
     useEffect(() => {
-        // festival 데이터, '구글맵' API(window.google), 그리고 'marker' 라이브러리가 준비되지 않았으면 실행하지 않음
-        if (!festival || !festival.mapy || !festival.mapx || !window.google || !window.google.maps.marker) return;
+        if (!festival || !festival.mapy || !festival.mapx) return;
+        if (!window.google || !window.google.maps || !window.google.maps.marker) {
+            console.warn("Google Maps API or marker library not ready");
+            return;
+        }
 
         const mapContainer = document.getElementById('map');
-        // mapContainer가 존재하는지 확인
         if (!mapContainer) {
-            console.warn("Google Map container element not found.");
+            console.warn("Map container not found");
             return;
         }
 
         const lat = parseFloat(festival.mapy);
         const lng = parseFloat(festival.mapx);
-        const position = {lat: lat, lng: lng}; // 구글맵은 {lat, lng} 객체를 사용
+        const position = {lat, lng};
 
-        // 구글맵 옵션
-        const mapOptions = {
+        const map = new window.google.maps.Map(mapContainer, {
             center: position,
             zoom: 15,
-            disableDefaultUI: true, // 기본 UI(스트리트뷰, 확대/축소 등)를 숨겨서 깔끔하게
+            disableDefaultUI: true,
             zoomControl: true,
-        };
-
-        // 구글맵 생성
-        const map = new window.google.maps.Map(mapContainer, mapOptions);
-
-        // ✨ AdvancedMarkerElement 사용
-        const marker = new window.google.maps.marker.AdvancedMarkerElement({
-            position: position,
-            map: map,
-            title: festival.title, // 마커에 툴팁으로 제목 표시
+            mapId: "ae83e317f75f679b42222114",
         });
 
-        // ✨ InfoWindow 생성 및 연결 (AdvancedMarkerElement와 호환)
+        const marker = new window.google.maps.marker.AdvancedMarkerElement({
+            position,
+            map,
+            title: festival.title,
+        });
+
+        const infoWindowContentString = `
+        <div class="custom-infowindow-content">
+            <h3>${festival.title}</h3>
+            <p>${festival.addr1}</p>
+        </div>
+    `;
+
         const infowindow = new window.google.maps.InfoWindow({
-            content: `<div class="google-infowindow">${festival.title}</div>`,
+            content: infoWindowContentString,
             ariaLabel: festival.title,
         });
 
         marker.addListener('click', () => {
-            infowindow.open({
-                anchor: marker,
-                map,
-            });
+            infowindow.open({anchor: marker, map});
         });
-    }, [festival]); // festival 상태가 변경되면 실행
+
+    }, [festival]);
 
     // // 현재 위치로 길찾기 함수
     // const handleRouteFromCurrentLocation = () => {
@@ -287,7 +286,7 @@ const DetailPage = () => {
             // contentId는 Long 타입으로 백엔드에 전달되어야 하므로, string -> number로 변환
             const contentIdNum = Number(festivalId);
             const response = await apiClient.get(`/festivals/${contentIdNum}/status`, {
-                params: { username: userProfile?.username || undefined }
+                params: {username: userProfile?.username || undefined}
             });
             // 서버가 준 값으로만 상태를 업데이트
             setIsLiked(response.data.isLiked);
@@ -330,7 +329,7 @@ const DetailPage = () => {
             // contentId는 Long 타입으로 백엔드에 전달되어야 하므로, string -> number로 변환
             const contentIdNum = Number(festivalId);
             await apiClient.post(`/festivals/${contentIdNum}/like`, null, {
-                params: { username: userProfile.username }
+                params: {username: userProfile.username}
             });
 
             // 성공하면 서버에서 정확한 상태 조회
