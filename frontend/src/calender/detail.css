@@ -777,6 +777,43 @@ body {
     color: #007bff;
 }
 
+/* 정보창의 기본 배경과 그림자를 제거합니다. */
+.gm-style .gm-style-iw-c {
+    padding: 0 !important;
+    border-radius: 12px !important;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15) !important;
+}
+
+/* 정보창의 꼬리(화살표) 모양을 숨깁니다. */
+.gm-style .gm-style-iw-t::after {
+    display: none;
+}
+
+
+/* 우리가 직접 디자인할 정보창의 컨테이너 스타일입니다. */
+.custom-infowindow-content {
+    padding: 10px;
+    font-family: 'Pretendard', sans-serif; /* 예시 폰트 */
+    color: #333;
+    max-width: 280px; /* 정보창의 최대 너비 */
+}
+
+/* 정보창 내부의 제목 스타일 */
+.custom-infowindow-content h3 {
+    font-size: 14px;
+    font-weight: 700;
+    margin: 0 0 8px 0;
+    color: #1a1a1a;
+}
+
+/* 정보창 내부의 주소(설명) 스타일 */
+.custom-infowindow-content p {
+    font-size: 14px;
+    margin: 0;
+    color: #555;
+    line-height: 1.5;
+}
+
 /* 업그레이드된 등장 애니메이션 */
 @keyframes fadeInScaleUp {
     from {
