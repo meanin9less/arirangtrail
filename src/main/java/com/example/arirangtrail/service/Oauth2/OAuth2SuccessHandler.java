@@ -36,6 +36,8 @@ public class OAuth2SuccessHandler implements AuthenticationSuccessHandler {
     private final UserRepository userRepository;
     private final RedisTemplate redisTemplate;
 
+    // OAuth2SuccessHandler.java의 수정된 부분
+
     @Override
     public void onAuthenticationSuccess(HttpServletRequest request, HttpServletResponse response, Authentication authentication) throws IOException, ServletException {
         // CustomOAuth2UserService에서 반환한 CustomOAuth2User 객체를 가져옴
@@ -45,31 +47,37 @@ public class OAuth2SuccessHandler implements AuthenticationSuccessHandler {
         String name = oAuth2User.getUserName();
         String email = oAuth2User.getEmail();
 
-        // 유저네임과 이메일 쿼리파람으로 넘기고 있음(code 기능과 중복), 보안상은 이 형태가 추천
-        String code = UUID.randomUUID().toString();// usage: 기존 사용자
-//        redisTemplate.opsForValue().set("code:" + code, email, Duration.ofMinutes(3));
+        String code = UUID.randomUUID().toString();
 
         // 클라이언트 타입 파라미터로 앱/웹 구분
-        String clientType = request.getParameter("client_type");
-        boolean isApp = "app".equalsIgnoreCase(clientType);
-        log.info("OAuth2 Success: client_type={}, isApp={}", clientType, isApp);
-
-        System.out.printf("@@@@@@@@@@@@@@@@@@@@@@@@@client type: %s\n", clientType);
-        System.out.println("@@@@@@@@@@@@@@@@@@@@@@@@@@isApp: " + isApp);
-//        String appHeader = request.getHeader("androidApp");
-//        boolean isApp = appHeader != null && appHeader.equalsIgnoreCase("AndroidApp");
+//        String clientType = request.getParameter("client_type");
+//        boolean isApp = "app".equalsIgnoreCase(clientType);
+//        log.info("OAuth2 Success: client_type={}, isApp={}", clientType, isApp);
+        // ✨ state 파라미터에서 client_type을 추출합니다.
+        String state = request.getParameter("state");
+        boolean isApp = state != null && state.contains("client_type=app");
+        log.info("OAuth2 Success: state={}, isApp={}", state, isApp);
 
         Optional<UserEntity> loginUserOptional = this.userRepository.findByEmail(email);
 
-        // 유저네임과 이메일 쿼리파람으로 넘기고 있음, 일단은 밑의 기존사용자 토큰 부분의 코드부터 처리.
         //1. 신규 사용자
         if (loginUserOptional.isEmpty()) {
-            String targetUrl = UriComponentsBuilder.fromUriString(isApp ? "arirangtrail://simplejoin" : "http://arirangtrail.duckdns.org/simplejoin")
-                    .queryParam("username", name)
-                    .queryParam("email", email)
-//                    .queryParam("code", code)//
-                    .encode(StandardCharsets.UTF_8)
-                    .build().toUriString();
+            String targetUrl;
+            if (isApp) {
+                // 앱의 경우 커스텀 스킴 사용
+                targetUrl = UriComponentsBuilder.fromUriString("arirangtrail://simplejoin")
+                        .queryParam("username", name)
+                        .queryParam("email", email)
+                        .encode(StandardCharsets.UTF_8)
+                        .build().toUriString();
+            } else {
+                // 웹의 경우 기존 URL 사용
+                targetUrl = UriComponentsBuilder.fromUriString("http://arirangtrail.duckdns.org/simplejoin")
+                        .queryParam("username", name)
+                        .queryParam("email", email)
+                        .encode(StandardCharsets.UTF_8)
+                        .build().toUriString();
+            }
             response.sendRedirect(targetUrl);
             return;
         }
@@ -99,16 +107,14 @@ public class OAuth2SuccessHandler implements AuthenticationSuccessHandler {
 
         // 클라이언트(Web/App)에 따라 분기 처리
         if (isApp) {
-            // 안드로이드 앱일 경우: 토큰을 담아 커스텀 스킴으로 리다이렉트
+            // 안드로이드 앱일 경우: 커스텀 스킴으로 리다이렉트
+            // 중요: 쿼리 파라미터를 포함한 완전한 URL을 생성
             String targetUrl = UriComponentsBuilder.fromUriString("arirangtrail://oauth-callback")
-                    .queryParam("code", code)// 코드만 전달
-//                    .queryParam("token", access)
-//                    .queryParam("expiresIn", accessTokenValidityInSeconds)
-//                    .queryParam("username", user.getUsername())
-//                    .queryParam("nickname", user.getNickname())
-//                    .queryParam("refreshToken", refresh)
-//                    .encode(StandardCharsets.UTF_8)
+                    .queryParam("code", code)
+                    .encode(StandardCharsets.UTF_8)
                     .build().toUriString();
+
+            log.info("App OAuth redirect URL: {}", targetUrl);
             response.sendRedirect(targetUrl);
         } else {
             // 웹 브라우저일 경우: 쿠키와 리다이렉트
@@ -129,8 +135,6 @@ public class OAuth2SuccessHandler implements AuthenticationSuccessHandler {
                     .encode(StandardCharsets.UTF_8).build().toUriString();
 
             response.sendRedirect(targetUrl);
-//            response.addHeader("authorization", "Bearer " + access);
-//            response.sendRedirect("http://arirangtrail.duckdns.org/userinfo"); // 원하는 페이지로 리다이렉트
         }
     }
 }
