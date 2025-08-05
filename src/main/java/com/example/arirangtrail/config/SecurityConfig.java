@@ -1,5 +1,6 @@
 package com.example.arirangtrail.config;
 
+import com.example.arirangtrail.config.oauth2.CustomAuthorizationRequestResolver;
 import com.example.arirangtrail.jwt.JwtFilter;
 import com.example.arirangtrail.jwt.JwtLoginFilter;
 import com.example.arirangtrail.jwt.JwtUtil;
@@ -18,10 +19,14 @@ import org.springframework.security.config.annotation.web.configuration.EnableWe
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.oauth2.client.registration.ClientRegistrationRepository;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.filter.ForwardedHeaderFilter;
+import org.springframework.security.oauth2.client.web.AuthorizationRequestRepository;
+import org.springframework.security.oauth2.client.web.HttpSessionOAuth2AuthorizationRequestRepository;
+import org.springframework.security.oauth2.core.endpoint.OAuth2AuthorizationRequest;
 
 import java.util.Collections;
 import java.util.List;
@@ -35,6 +40,7 @@ private final JwtUtil jwtUtil;
 private final CustomOAuth2UserService customOAuth2UserService;
 private final OAuth2SuccessHandler oAuth2SuccessHandler;
 private final CustomUserDetailsService customUserDetailsService;
+private final ClientRegistrationRepository clientRegistrationRepository;
 
 @Bean
 public AuthenticationManager authenticationManager(AuthenticationConfiguration configuration) throws Exception{
@@ -51,7 +57,10 @@ public ForwardedHeaderFilter forwardedHeaderFilter() {
     return new ForwardedHeaderFilter();
 }
 
-
+@Bean
+public AuthorizationRequestRepository<OAuth2AuthorizationRequest> authorizationRequestRepository() {
+    return new HttpSessionOAuth2AuthorizationRequestRepository();
+}
 
 @Bean
 public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
@@ -96,16 +105,27 @@ public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Excepti
 
             .addFilterAt(jwtLoginFilter, UsernamePasswordAuthenticationFilter.class)
 
-            .oauth2Login(oauth2->
-                    oauth2
-                            .userInfoEndpoint(userInfo->{
-                                userInfo.userService(customOAuth2UserService);
-                            })
-                            .successHandler(oAuth2SuccessHandler)
+            .oauth2Login(oauth2 -> oauth2
+                    // A. 인증 요청을 가로채서 커스터마이징하는 부분
+                    .authorizationEndpoint(auth -> auth
+                            .authorizationRequestRepository(authorizationRequestRepository())
+                            .authorizationRequestResolver(new CustomAuthorizationRequestResolver(
+                                    // ✨ 3. 주입받은 clientRegistrationRepository를 사용합니다.
+                                    clientRegistrationRepository,
+                                    "/oauth2/authorization"
+                            ))
+                    )
+                    // B. 인증 성공 후 사용자 정보를 가져오는 부분
+                    .userInfoEndpoint(userInfo -> userInfo
+                            .userService(customOAuth2UserService)
+                    )
+                    // C. 모든 과정 성공 후 리디렉션을 처리하는 부분
+                    .successHandler(oAuth2SuccessHandler)
             )
-            .exceptionHandling(exception->{
-                // exception 우선 비워둠
-            });
+
+            // --- 권한 설정 (일단 모든 요청 허용으로 유지) ---
+            .authorizeHttpRequests(auth -> auth.anyRequest().permitAll());
+
     return http.build();
-}
+    }
 }
