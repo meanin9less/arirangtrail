@@ -144,7 +144,7 @@ public class ChatService {
         chatMessage.setRoomId(messageDTO.getRoomId());
         chatMessage.setMessageSeq(nextSeq);
         chatMessage.setSender(messageDTO.getSender());
-        chatMessage.setSenderNickname(messageDTO.getNickname());
+        chatMessage.setNickname(messageDTO.getNickname());
         chatMessage.setMessage(messageDTO.getMessage());
         chatMessage.setMessageType(messageDTO.getType().name());
         chatMessage.setTimestamp(LocalDateTime.now());
@@ -250,14 +250,38 @@ public class ChatService {
 
         mongoTemplate.upsert(query, update, UserChatStatus.class);
 
-        // --- ✨ 2. 기존의 안 읽은 메시지 개수 계산 및 전송 로직은 그대로 유지합니다 ---
-        long totalMessageCount = chatMessageRepository.countByRoomId(roomId);
-        long unreadCount = totalMessageCount - lastReadSeq;
-        if (unreadCount < 0) unreadCount = 0;
+//        // --- ✨ 2. 기존의 안 읽은 메시지 개수 계산 및 전송 로직은 그대로 유지합니다 ---
+//        long totalMessageCount = chatMessageRepository.countByRoomId(roomId);
+//        long unreadCount = totalMessageCount - lastReadSeq;
+//        if (unreadCount < 0) unreadCount = 0;
+//
+//        UnreadUpdateDTO updateInfo = new UnreadUpdateDTO(roomId, unreadCount);
+//        messagingTemplate.convertAndSend("/sub/user/" + username, updateInfo);
+        // 1. "나의 총 안 읽은 메시지 수"를 다시 계산합니다.
+        long totalUnreadCount = getTotalUnreadCount(username);
 
-        UnreadUpdateDTO updateInfo = new UnreadUpdateDTO(roomId, unreadCount);
-        messagingTemplate.convertAndSend("/sub/user/" + username, updateInfo);
+        // 2. 계산된 "총 안 읽은 메시지 수"를 해당 유저의 개인 채널로 보냅니다.
+        //    리액트의 WebSocketManager가 이 메시지를 기다리고 있습니다.
+        log.info(">>>>> [개인 알림] User: {}의 총 안 읽은 메시지 수({})를 /sub/user/{}로 전송합니다.", username, totalUnreadCount, username);
+        messagingTemplate.convertAndSend(
+                "/sub/user/" + username,
+                Map.of(
+                        "type", "TOTAL_UNREAD_COUNT_UPDATE",
+                        "totalUnreadCount", totalUnreadCount
+                )
+        );
 
+        // 3. "채팅방 목록에 변화가 생겼으니 갱신하라"는 신호를 로비 채널로 보냅니다.
+        //    플러터의 ChatRoomListScreen이 이 메시지를 기다려야 합니다.
+        log.info(">>>>> [로비 업데이트] Room: {}의 정보 변경 신호를 /sub/chat/lobby로 전송합니다.", roomId);
+        messagingTemplate.convertAndSend(
+                "/sub/chat/lobby",
+                Map.of(
+                        "type", "LOBBY_ROOM_UPDATE",
+                        "roomId", roomId, // 어떤 방이 변경되었는지 알려주면 더 좋습니다.
+                        "updatedBy", username
+                )
+        );
     }
 
     // 해당 방의 이전 메세지들을 가져옴
