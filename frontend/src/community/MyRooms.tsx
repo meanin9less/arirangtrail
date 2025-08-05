@@ -28,6 +28,7 @@ const MyRooms = () => {
 
     const fetchData = useCallback(async () => {
         if (!userName) return;
+        console.log(`[fetchData] API 호출 시작. 사용자: ${userName}`);
         try {
             const [roomsResponse, myRoomsResponse] = await Promise.all([
                 apiClient.get<Room[]>(`chat/rooms`, { params: { username: userName } }),

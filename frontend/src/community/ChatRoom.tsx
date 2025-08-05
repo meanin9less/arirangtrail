@@ -15,7 +15,7 @@ import {
 // --- 타입 정의 ---
 interface ChatMessage {
     type: 'ENTER' | 'TALK' | 'LEAVE' | 'IMAGE' | 'KICK' | 'NOTICE_UPDATE';
-    senderNickname?: string;
+    nickname?: string;
     roomId: string;
     sender: string;
     message: string;
@@ -409,7 +409,7 @@ const ChatRoom = ({ roomId, onLeave }: ChatRoomProps) => {
                                 )}
                             </div>
                             <small style={{ color: '#6c757d', whiteSpace: 'nowrap' }}>
-                                {msg.senderNickname || (msg.sender === userName ? userNickname : msg.sender)}
+                                {msg.nickname || (msg.sender === userName ? userNickname : msg.sender)}
                             </small>
                         </div>
                     </div>
