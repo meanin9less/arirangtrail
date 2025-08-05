@@ -85,6 +85,7 @@ public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Excepti
                 corsConfiguration.addAllowedMethod("*");
                 corsConfiguration.addAllowedOrigin("http://localhost:3000");
                 corsConfiguration.addAllowedOrigin("http://arirangtrail.duckdns.org");
+                corsConfiguration.setAllowCredentials(true);
                 return corsConfiguration;
             }))
 

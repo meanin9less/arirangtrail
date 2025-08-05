@@ -16,6 +16,7 @@ interface TokenState {
     } | null;
     totalUnreadCount: number;
     lobbyLastUpdated: number | null;
+    expiresIn: number | null;
 }
 
 // 2. 'token' 슬라이스의 초기 상태를 정의합니다.
@@ -24,6 +25,7 @@ const initState: TokenState = {
     userProfile: null,
     totalUnreadCount: 0,
     lobbyLastUpdated: null as number | null,
+    expiresIn: null
 };
 
 // 3. Redux Toolkit의 createSlice를 사용하여 'token' 슬라이스를 생성합니다.
@@ -47,10 +49,15 @@ const tokenSlice = createSlice({
         setTotalUnreadCount: (state, action: PayloadAction<number>) => {
             state.totalUnreadCount = action.payload;
         },
+        setExpiresIn: (state, action: PayloadAction<number | null>) => {
+            state.expiresIn = action.payload;
+        },
         clearAuth: (state) => {
             state.token = null;
             state.userProfile = null;
             state.totalUnreadCount = 0;
+            state.expiresIn = null;
+            state.lobbyLastUpdated = null;
         },
         updateLobby: (state) => {
             state.lobbyLastUpdated = Date.now();
@@ -83,6 +90,6 @@ export const persistor = persistStore(store);
 export type RootState = ReturnType<typeof store.getState>;
 export type AppDispatch = typeof store.dispatch;
 
-export const { setToken, setUserProfile, clearAuth, setTotalUnreadCount,updateLobby } = tokenSlice.actions;
+export const { setToken, setUserProfile, clearAuth, setTotalUnreadCount,updateLobby,setExpiresIn } = tokenSlice.actions;
 
 export default store;
