@@ -1,8 +1,9 @@
-import React, { useEffect, useRef } from 'react';
+import React, {useCallback, useEffect, useRef } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import { Client } from '@stomp/stompjs';
 import SockJS from 'sockjs-client';
-import store, {RootState, setTotalUnreadCount, updateLobby} from "./store";
+import store, {clearAuth, RootState, setExpiresIn, setToken, setTotalUnreadCount, updateLobby} from "./store";
+import apiClient from "./api/axiosInstance";
 // 나중에 만들 Redux action들을 임포트한다고 가정
 // import { updateLobby, updateUnreadCount } from './store';
 
@@ -11,6 +12,57 @@ function WebSocketManager() {
     const userName = userProfile?.username;
     const dispatch = useDispatch();
     const clientRef = useRef<Client | null>(null);
+    const refreshTimerRef = useRef<NodeJS.Timeout | null>(null);
+    const token = useSelector((state:RootState)=>state.token.token);
+    const expiresIn = useSelector((state:RootState)=>state.token.expiresIn);
+
+    // 2. 토큰을 재발급하는 함수 (useCallback으로 최적화)
+    const refreshToken = useCallback(async () => {
+        console.log("⏰ [AuthManager] Access Token 갱신을 시도합니다...");
+        try {
+            const response = await apiClient.post('/reissue');
+
+            const newAccessToken = response.headers['authorization'];
+            const newExpiresIn = response.data.expiresIn;
+
+            if (newAccessToken && newExpiresIn) {
+                console.log("✅ [AuthManager] Access Token 갱신 성공!");
+                // ✨ Redux 스토어를 새 정보로 업데이트 (두 단계로 나누어 호출)
+                dispatch(setToken(newAccessToken));
+                dispatch(setExpiresIn(newExpiresIn));
+            } else {
+                throw new Error("New access token or expiresIn not found in reissue response.");
+            }
+        } catch (error) {
+            console.error("❌ [AuthManager] 토큰 갱신 실패:", error);
+            dispatch(clearAuth()); // 재발급 실패 시 로그아웃
+        }
+    }, [dispatch]);
+
+    // 토큰 자동 재발급 타이머 설정 useEffect
+    useEffect(() => {
+        if (refreshTimerRef.current) {
+            clearTimeout(refreshTimerRef.current);
+        }
+
+        if (token && expiresIn) {
+            const delay = (expiresIn * 1000) - 60000; // 만료 1분 전
+
+            if (delay > 0) {
+                console.log(`[AuthManager] 다음 토큰 갱신까지 남은 시간: ${delay / 1000}초`);
+                refreshTimerRef.current = setTimeout(refreshToken, delay);
+            } else {
+                refreshToken();
+            }
+        }
+
+        return () => {
+            if (refreshTimerRef.current) {
+                clearTimeout(refreshTimerRef.current);
+            }
+        };
+    }, [token, expiresIn, refreshToken]);
+
 
     useEffect(() => {
         const token = store.getState().token.token;

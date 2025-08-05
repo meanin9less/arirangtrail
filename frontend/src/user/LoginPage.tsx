@@ -3,7 +3,7 @@ import { Link, useNavigate, useLocation } from "react-router-dom"; // useLocatio
 import apiClient from "../api/axiosInstance";
 import axios from 'axios';
 import { useDispatch } from 'react-redux';
-import { setToken, setUserProfile, setTotalUnreadCount, AppDispatch } from '../store';
+import {setToken, setUserProfile, setTotalUnreadCount, AppDispatch, setExpiresIn} from '../store';
 import styles from './User.module.css';
 
 import arirang from '../images/arirang1.png';
@@ -20,9 +20,10 @@ interface LoginResponseData {
     username?: string;
     nickname?: string;
     imageUrl?: string;
+    expiresIn?: number;
 }
 
-const LoginPage = ({}: LoginProps) => {
+const LoginPage = () => {
     const API_URL = process.env.REACT_APP_API_URL;
 
     const navigate = useNavigate();
@@ -50,6 +51,7 @@ const LoginPage = ({}: LoginProps) => {
         const nickname = queryParams.get('nickname');
         const provider = queryParams.get('provider');
         const isNewUser = queryParams.get('isNewUser') === 'true';
+        const expiresInParam = queryParams.get('expiresIn');
 
         // 소셜 로그인 관련 파라미터가 존재하고 아직 처리 중이 아니라면
         if (token || isNewUser) {
@@ -80,16 +82,19 @@ const LoginPage = ({}: LoginProps) => {
                 }
             } else {
                 // 기존 사용자일 경우, 로그인 처리
-                if (token) {
-                    localStorage.setItem('jwtToken', token);
-                    dispatch(setToken(token));
-                    console.log('JWT 토큰 Redux Store에 저장됨.');
-
+                if (token && expiresInParam) {
+                    // localStorage.setItem('jwtToken', token);
                     const userProfileData = {
                         username: username || 'unknown',
                         nickname: nickname || username || 'unknown',
                         imageUrl: 'https://placehold.co/50x50/cccccc/ffffff?text=User'
                     };
+
+                    dispatch(setToken(token));
+                    dispatch(setUserProfile(userProfileData));
+                    dispatch(setExpiresIn(Number(expiresInParam)));
+                    console.log('JWT 토큰 Redux Store에 저장됨.');
+
                     dispatch(setUserProfile(userProfileData));
                     console.log('사용자 프로필 Redux Store에 저장됨:', userProfileData);
 
@@ -167,24 +172,28 @@ const LoginPage = ({}: LoginProps) => {
 
             const successMessage = response.data.message || '로그인 성공!';
             setMessage(successMessage);
-            console.log('로그인 성공 응답:', response.data);
 
-            const token = response.headers['authorization'] || response.data.accessToken;
+            const token = response.headers['authorization'];
+            const responseData = response.data; // 본문 전체
+            const expiresIn = response.data.expiresIn; // ✨ 1. 응답 본문에서 expiresIn 값을 추출합니다.
 
-            if (token) {
-                localStorage.setItem('jwtToken', token);
-                console.log('JWT 토큰 localStorage에 저장됨:', token);
-                dispatch(setToken(token));
-                console.log('JWT 토큰 Redux Store에 저장됨.');
+            if (token && responseData.username && expiresIn) {
+                // localStorage.setItem('jwtToken', token);
 
                 const userProfileData = {
-                    username: response.data.username || formData.username,
-                    nickname: response.data.nickname || formData.username,
-                    imageUrl: response.data.imageUrl || 'https://placehold.co/50x50/cccccc/ffffff?text=User'
+                    username: responseData.username,
+                    nickname: responseData.nickname,
+                    imageurl: responseData.imageUrl, // store의 필드명(imageurl)과 맞춰줍니다.
                 };
-                dispatch(setUserProfile(userProfileData));
-                console.log('사용자 프로필 Redux Store에 저장됨:', userProfileData);
 
+                // ✨ 2. Redux에 모든 정보를 순서대로 dispatch 합니다.
+                dispatch(setToken(token));
+                dispatch(setUserProfile(userProfileData));
+                dispatch(setExpiresIn(expiresIn)); // 👈 이 줄이 추가되었습니다!
+
+                console.log('JWT 토큰 및 사용자 프로필, 만료 시간 Redux Store에 저장됨.');
+
+                // 후속 작업
                 const unreadCountResponse = await apiClient.get(`/chat/users/${userProfileData.username}/unread-count`);
                 dispatch(setTotalUnreadCount(unreadCountResponse.data.totalUnreadCount));
 

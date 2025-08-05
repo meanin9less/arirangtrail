@@ -65,12 +65,11 @@ apiClient.interceptors.response.use(
                 // 토큰 재발급 요청 (리프레시 토큰은 withCredentials 덕분에 자동으로 전송)
                 // ✨ 변경할 부분: 여기에 백엔드 서버의 실제 주소를 입력하세요.
                 // 예: "http://52.78.46.203:8080/reissue"
-                const response = await axios.post(`${API_URL}/api/reissue`, null, {
-                    withCredentials: true,
-                });
+                const response = await apiClient.post(`/reissue`);
 
                 // 새로운 액세스 토큰을 응답 헤더에서 가져옵니다.
                 const newAccessToken = response.headers['authorization'];
+                const newExpiresIn = response.data.expiresIn;
 
                 if (newAccessToken) {
                     // Redux store에 새로운 액세스 토큰을 저장합니다.
