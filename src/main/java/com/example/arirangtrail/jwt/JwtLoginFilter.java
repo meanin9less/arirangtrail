@@ -50,6 +50,8 @@ public class JwtLoginFilter extends UsernamePasswordAuthenticationFilter {
         CustomUserDetails userDetails = (CustomUserDetails) authResult.getPrincipal();
         // CustomUserDetails에서 UserEntity를 꺼냄
         UserEntity userEntity = userDetails.getUserEntity();
+        long accessTokenValidityInSeconds = 300L;//(5분=300초)/(2분=120초 테스트용)
+        
 
         String username = userEntity.getUsername();
         String role = userEntity.getRole();
@@ -64,6 +66,7 @@ public class JwtLoginFilter extends UsernamePasswordAuthenticationFilter {
         responseData.put("nickname", userEntity.getNickname());
         responseData.put("imageUrl", userEntity.getImageurl());
         responseData.put("birthdate", userEntity.getBirthdate()); // LocalDate도 ObjectMapper가 변환해 줌
+        responseData.put("expiresIn", accessTokenValidityInSeconds);// 응답 데이터에 유효 시간 추가
 
         ObjectMapper mapper = new ObjectMapper();
         // Java 8 날짜/시간 타입을 위한 모듈 등록 (필요 시)
@@ -71,7 +74,8 @@ public class JwtLoginFilter extends UsernamePasswordAuthenticationFilter {
         mapper.disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
         String jsonMessage = mapper.writeValueAsString(responseData);
 
-        String access_token = this.jwtUtil.createToken("access", username, role, 300 * 1000L);// 5초
+
+        String access_token = this.jwtUtil.createToken("access", username, role, accessTokenValidityInSeconds * 1000L);// 1000L=1초
         String refresh_token = this.jwtUtil.createToken("refresh", username, role, 60 * 60 * 24 * 1000L);
 
         response.addHeader("authorization", "Bearer " + access_token);
