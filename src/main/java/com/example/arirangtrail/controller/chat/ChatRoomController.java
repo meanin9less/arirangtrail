@@ -7,9 +7,11 @@ import com.example.arirangtrail.data.dto.chat.message.UpdateReqDTO;
 import com.example.arirangtrail.service.chat.ChatService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.security.Principal;
 import java.util.List;
 import java.util.Map;
 
@@ -22,7 +24,12 @@ public class ChatRoomController {
 
     // 모든 채팅방 목록 반환
     @GetMapping
-    public ResponseEntity<List<ChatRoomListDTO>> getAllRooms(@RequestParam String username) {
+    public ResponseEntity<List<ChatRoomListDTO>> getAllRooms(Principal principal) {
+        if (principal == null || principal.getName() == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
+        String username = principal.getName();
+
         return ResponseEntity.ok(chatService.findAllRoom(username));
     }
 
@@ -90,7 +97,13 @@ public class ChatRoomController {
     // ★★★ 내 참여방 ID 목록을 반환하는 API ★★★추후
     @GetMapping("/my-rooms")
     // 실제로는 @AuthenticationPrincipal을 통해 로그인된 유저 정보를 가져옵니다.
-    public ResponseEntity<List<Long>> getMyRoomIds(@RequestParam String username) {
+    public ResponseEntity<List<Long>> getMyRoomIds(Principal principal) {
+        if (principal == null || principal.getName() == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
+
+        String username = principal.getName();
+
         List<Long> myRoomIds = chatService.findMyRoomIdsByUsername(username);
         return ResponseEntity.ok(myRoomIds);
     }
@@ -152,7 +165,13 @@ public class ChatRoomController {
     @GetMapping("/{roomId}/participants")
     public ResponseEntity<List<ParticipantDTO>> getParticipants(
             @PathVariable Long roomId,
-            @RequestParam String username) { // 실제로는 @AuthenticationPrincipal 로 가져와야 안전
+            Principal principal) { // 실제로는 @AuthenticationPrincipal 로 가져와야 안전
+        if (principal == null || principal.getName() == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
+
+        String username = principal.getName();
+
         List<ParticipantDTO> participants = chatService.getParticipants(roomId, username);
         return ResponseEntity.ok(participants);
     }

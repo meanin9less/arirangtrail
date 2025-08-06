@@ -11,6 +11,7 @@ interface OutletContext {
 }
 
 type SortOrder = 'asc' | 'desc';
+type SortType = 'title' | 'subject';
 
 const AllRooms = () => {
     const { handleEnterRoom } = useOutletContext<OutletContext>();
@@ -22,6 +23,7 @@ const AllRooms = () => {
     const [filteredRooms, setFilteredRooms] = useState<Room[]>([]);
     const [searchKeyword, setSearchKeyword] = useState('');
     const [sortOrder, setSortOrder] = useState<SortOrder>('asc');
+    const [sortType, setSortType] = useState<SortType>('title');
     const [myRoomIds, setMyRoomIds] = useState<string[]>([]);
 
     const fetchAllData = useCallback(async () => {
@@ -58,37 +60,67 @@ const AllRooms = () => {
         }
 
         otherRooms.sort((a, b) => {
-            const titleA = a.title || '';
-            const titleB = b.title || '';
-            if (sortOrder === 'asc') {
-                return titleA.localeCompare(titleB);
+            let valueA = '';
+            let valueB = '';
+
+            if (sortType === 'title') {
+                valueA = a.title || '';
+                valueB = b.title || '';
             } else {
-                return titleB.localeCompare(titleA);
+                valueA = a.subject || '';
+                valueB = b.subject || '';
+            }
+
+            if (sortOrder === 'asc') {
+                return valueA.localeCompare(valueB);
+            } else {
+                return valueB.localeCompare(valueA);
             }
         });
 
         setFilteredRooms(otherRooms);
-    }, [rooms, myRoomIds, searchKeyword, sortOrder]);
+    }, [rooms, myRoomIds, searchKeyword, sortOrder, sortType]);
 
-    const toggleSort = () => setSortOrder(prev => prev === 'asc' ? 'desc' : 'asc');
+    const toggleSort = (type: SortType) => {
+        if (sortType === type) {
+            setSortOrder(prev => prev === 'asc' ? 'desc' : 'asc');
+        } else {
+            setSortType(type);
+            setSortOrder('asc');
+        }
+    };
 
     return (
         <div style={styles.container}>
-            {/* 상단 검색 및 정렬 부분은 그대로 유지 */}
+            {/* 상단 검색 및 정렬 부분 */}
             <div style={styles.controlsContainer}>
                 <div style={styles.searchContainer}>
                     <IoSearch style={styles.searchIcon} />
                     <input
                         type="text"
-                        placeholder="방 이름, 주제로 검색..."
+                        placeholder="방 이름, 축제 이름으로 검색..."
                         value={searchKeyword}
                         onChange={(e) => setSearchKeyword(e.target.value)}
                         style={styles.searchInput}
                     />
                 </div>
-                <button onClick={toggleSort} style={styles.sortButton}>
+                <button
+                    onClick={() => toggleSort('title')}
+                    style={styles.sortButton}
+                >
                     제목순
-                    {sortOrder === 'asc' ? <IoArrowUpOutline style={styles.sortIcon} /> : <IoArrowDownOutline style={styles.sortIcon} />}
+                    {sortType === 'title' && (
+                        sortOrder === 'asc' ? <IoArrowUpOutline style={styles.sortIcon} /> : <IoArrowDownOutline style={styles.sortIcon} />
+                    )}
+                </button>
+                <button
+                    onClick={() => toggleSort('subject')}
+                    style={styles.sortButton}
+                >
+                    축제이름순
+                    {sortType === 'subject' && (
+                        sortOrder === 'asc' ? <IoArrowUpOutline style={styles.sortIcon} /> : <IoArrowDownOutline style={styles.sortIcon} />
+                    )}
                 </button>
             </div>
 
@@ -122,11 +154,11 @@ const AllRooms = () => {
                             <div style={styles.cardRight}>
                                 <div style={styles.infoItem}>
                                     <IoPeopleOutline style={styles.infoIcon} />
-                                    <span>{`${room.participantCount || 0} / ${room.maxParticipants || '-'}`}</span>
+                                    <span>참여인원: {`${room.participantCount || 0} / ${room.maxParticipants || '-'}`}</span>
                                 </div>
                                 <div style={styles.infoItem}>
                                     <IoCalendarOutline style={styles.infoIcon} />
-                                    <span>{room.meetingDate ? new Date(room.meetingDate).toLocaleDateString() : '날짜 미정'}</span>
+                                    <span>모임날짜: {room.meetingDate ? new Date(room.meetingDate).toLocaleDateString() : '날짜 미정'}</span>
                                 </div>
                             </div>
                         </div>
@@ -139,11 +171,11 @@ const AllRooms = () => {
 
 const styles: { [key: string]: React.CSSProperties } = {
     container: { width: '100%' },
-    controlsContainer: { display: 'flex', alignItems: 'center', gap: '15px', marginBottom: '25px', padding: '15px 0' },
+    controlsContainer: { display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '25px', padding: '15px 0' },
     searchContainer: { position: 'relative', flex: 1 },
     searchIcon: { position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: '#6c757d', fontSize: '16px' },
     searchInput: { width: '100%', padding: '12px 12px 12px 40px', border: '2px solid #e9ecef', borderRadius: '8px', fontSize: '14px', outline: 'none', transition: 'border-color 0.2s ease', boxSizing: 'border-box' },
-    sortButton: { display: 'flex', alignItems: 'center', gap: '6px', padding: '12px 18px', border: '2px solid #e9ecef', backgroundColor: 'white', borderRadius: '8px', cursor: 'pointer', fontSize: '14px', fontWeight: '500', color: '#495057', transition: 'all 0.2s ease' },
+    sortButton: { display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px', padding: '12px 16px', border: '2px solid #e9ecef', backgroundColor: 'white', borderRadius: '8px', cursor: 'pointer', fontSize: '14px', fontWeight: '500', color: '#495057', transition: 'all 0.2s ease', whiteSpace: 'nowrap', minWidth: '120px' },
     sortIcon: { fontSize: '16px' },
     emptyMessage: { textAlign: 'center', color: '#6c757d', fontSize: '16px', padding: '60px 20px', backgroundColor: '#f8f9fa', borderRadius: '8px' },
 
