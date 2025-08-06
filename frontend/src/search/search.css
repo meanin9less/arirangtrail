@@ -236,3 +236,97 @@ body {
     flex-shrink: 0;
     white-space: nowrap;
 }
+
+/* --- 반응형 레이아웃: 모바일 (iPhone 12 Pro 및 유사 기기, 767px 이하) --- */
+@media (max-width: 767px) {
+
+    /* --- Global & Typography --- */
+    .search-page-container {
+        margin: 20px auto;
+        padding: 15px;
+    }
+
+    /* --- Search Header --- */
+    .search-header {
+        margin-bottom: 32px;
+    }
+
+    .search-title {
+        font-size: 2rem; /* 폰트 크기 축소 */
+    }
+
+    .search-subtitle {
+        font-size: 1rem; /* 폰트 크기 축소 */
+    }
+
+    /* --- Search Form --- */
+    .search-input-wrapper {
+        flex-direction: column; /* 검색 지역과 키워드 입력을 세로로 배치 */
+        padding: 12px;
+        border-radius: 12px;
+    }
+
+    .search-select-area {
+        border-right: none; /* 세로 배치이므로 오른쪽 구분선 제거 */
+        border-bottom: 1px solid #e9ecef; /* 아래쪽 구분선 추가 */
+        margin-right: 0;
+        margin-bottom: 8px; /* 키워드 입력창과의 간격 */
+        text-align: center; /* 가운데 정렬 */
+    }
+
+    .search-input-keyword {
+        text-align: center;
+    }
+
+    .search-controls-wrapper {
+        align-items: center; /* 자식 요소(필터 버튼)들을 가운데 정렬 */
+        gap: 20px;
+    }
+
+    .filter-checkbox-label {
+        padding: 9px 15px;
+        font-size: 0.95rem;
+    }
+
+    /* --- Search Results --- */
+    .festival-search-list {
+        gap: 16px; /* 목록 아이템 간 간격 축소 */
+    }
+
+    /* [핵심] 검색 결과 항목 레이아웃 변경 (가로 -> 세로) */
+    .festival-search-link {
+        flex-direction: column; /* 세로로 쌓는 구조로 변경 */
+        align-items: flex-start; /* 컨텐츠를 왼쪽 정렬 */
+        padding: 16px;
+    }
+
+    .festival-search-link:hover {
+        transform: none; /* 모바일에서는 호버 시 움직임 효과 제거 */
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+    }
+
+    .festival-search-image {
+        width: 100%; /* 이미지를 가로로 꽉 채움 */
+        height: 180px; /* 이미지 높이를 적절하게 조정 */
+        margin-right: 0; /* 오른쪽 여백 제거 */
+        margin-bottom: 16px; /* 이미지와 텍스트 사이에 하단 여백 추가 */
+    }
+
+    .festival-search-info {
+        width: 100%; /* 정보 영역도 가로로 꽉 채움 */
+        gap: 10px;
+    }
+
+    .festival-search-title {
+        font-size: 1.1rem;
+    }
+
+    .festival-search-meta {
+        font-size: 0.85rem;
+    }
+
+    .ongoing-badge {
+        padding: 3px 8px;
+        font-size: 12px;
+    }
+}

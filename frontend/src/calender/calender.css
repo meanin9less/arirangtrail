@@ -286,3 +286,111 @@ body {
     font-weight: 500;
     z-index: 999;
 }
+
+@media (max-width: 767px) {
+    body {
+        -webkit-overflow-scrolling: touch;
+    }
+
+    .festival-calendar-container {
+        margin: 20px 15px;
+        padding: 20px;
+        border-radius: 12px;
+    }
+
+    .custom-header {
+        margin-bottom: 30px;
+    }
+
+    .header-title {
+        font-size: 24px;
+    }
+
+    /* FullCalendar 모바일 최적화 */
+    .fc .fc-toolbar-title {
+        font-size: 22px;
+    }
+
+    .fc .fc-col-header-cell {
+        padding: 12px 0;
+        font-size: 14px;
+    }
+
+    /*  캘린더 셀 내부 컨텐츠 스타일 */
+    .day-content-wrapper {
+        padding: 6px;
+        align-items: flex-start; /* 기존 center에서 상단 정렬로 변경 */
+        height: auto; /*  100% 높이 제거하여 셀이 불필요하게 늘어나는 것 방지 */
+    }
+
+    .day-number {
+        font-size: 13px;
+    }
+
+    .fc-day-today .day-number {
+        width: 22px;
+        height: 22px;
+    }
+
+    .day-event-count {
+        font-size: 11px;
+        padding: 2px 6px;
+        margin-top: 4px;
+    }
+
+    /* 축제 목록 모바일 최적화 */
+    .festival-list-container {
+        margin-top: 30px;
+        padding: 20px 15px;
+        border-radius: 10px;
+    }
+
+    .festivals-list-title {
+        font-size: 20px;
+        margin-bottom: 20px;
+    }
+
+    .sort-buttons-container {
+        justify-content: center;
+        margin-bottom: 25px;
+    }
+
+    .festival-list-container ul {
+        grid-template-columns: 1fr; /* 1단 목록 유지 */
+        gap: 20px;
+    }
+
+    .festival-item {
+        flex-direction: column;
+        align-items: stretch;
+        max-height: none;
+    }
+
+    .festival-item:hover {
+        transform: none;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.04);
+    }
+
+    .festival-image {
+        width: 100%;
+        height: 160px;
+        flex-shrink: 1;
+    }
+
+    .festival-details {
+        padding: 15px;
+        justify-content: flex-start;
+    }
+
+    .festival-card-title {
+        font-size: 16px;
+        flex-direction: row;
+        align-items: flex-start;
+        gap: 8px;
+        margin-bottom: 12px;
+    }
+
+    .meta-item {
+        font-size: 13px;
+    }
+}

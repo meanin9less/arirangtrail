@@ -11,6 +11,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.boot.autoconfigure.security.servlet.PathRequest;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.http.RequestEntity;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
@@ -70,18 +71,60 @@ public class SecurityConfig {
                 .formLogin(formLogin->formLogin.disable())
                 .httpBasic(httpBasic->httpBasic.disable())
 
-                .authorizeHttpRequests(authorizeHttpRequests->{
-                    authorizeHttpRequests.anyRequest().permitAll();
-                })
-//            // 추후 웹소켓 인증 통과를 위한 절차
-//            .authorizeHttpRequests(authorizeHttpRequests -> {
-//                authorizeHttpRequests
-//                        // ★★★ 웹소켓 연결 경로는 인증 없이 허용해야 합니다. ★★★
-//                        .requestMatchers("/ws-stomp/**").permitAll()
-//                        .requestMatchers("/api/login", "/api/join", "/api/reissue", "/login/oauth2/**").permitAll()
-//                        .requestMatchers("/api/admin/**").hasRole("ADMIN")
-//                        .anyRequest().authenticated();
-//            })
+//                .authorizeHttpRequests(authorizeHttpRequests->{
+//                    authorizeHttpRequests.anyRequest().permitAll();
+//                })
+            // 추후 웹소켓 인증 통과를 위한 절차
+            .authorizeHttpRequests(authorizeHttpRequests -> {
+                authorizeHttpRequests
+                        // 모두 접속 및 접근 가능한 페이지
+                        .requestMatchers(
+                                "/",
+                                "/login", "/logout", "/join",
+                                "/api/reissue",
+                                "/favicon.ico"
+                        ).permitAll()
+                        .requestMatchers("/api/simplejoin").permitAll() // 소셜 로그인 후 간편가입 경로
+
+                        //축제 상태, 리뷰보기
+                        .requestMatchers(HttpMethod.GET,
+                                "/api/festivals/{contentid}/status",
+                                "/api/reviews",
+                                "/api/reviews/{reviewId}",
+                                "/api/reviews/{reviewId}/comments"
+                        ).permitAll()
+
+                        //  인증이 필요한 API (authenticated)
+                        .requestMatchers(
+                                "/api/festivals/{contentid}/like",
+                                "/api/likes/my-list",
+                                "/api/files/upload",
+
+                                "/api/reviews/**", // 리뷰 작성(POST), 수정(PUT), 삭제(DELETE)
+                                "/api/reviews/{reviewId}/comments/**", // 댓글 작성, 수정, 삭제
+
+                                // --- 마이페이지 관련 ---
+                                "/api/userinfo",                  // 내 정보 조회 (GET)
+                                "/api/update-inform",             // 내 정보 수정 (PUT)
+                                "/api/upload-profile-image",      // 프로필 이미지 업로드 (POST)
+                                "/api/compare-password",          // 비밀번호 비교 (POST)
+                                "/api/reset-pw",                  // 비밀번호 재설정 (PUT)
+                                "/api/delete-member",             // 회원 탈퇴 (DELETE)
+                                "/api/reviews/my",                // 내가 쓴 리뷰 목록 (GET)
+
+                                // --- 채팅 관련 ---
+                                "/api/chat/**"
+                        ).authenticated()
+
+                        // 소셜 로그인 관련 경로
+                        .requestMatchers("/oauth2/**").permitAll()
+
+                        // WebSocket 연결 경로
+                        .requestMatchers("/ws-stomp/**").permitAll()
+
+                        // 나머지 모든 요청은 인증된 사용자만 접근 가능
+                        .anyRequest().authenticated();
+            })
 
 
                 .cors(cors->cors.configurationSource(request -> {
