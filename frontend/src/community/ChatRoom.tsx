@@ -6,6 +6,8 @@ import store, { RootState, setTotalUnreadCount } from '../store';
 import axios from 'axios';
 import apiClient from '../api/axiosInstance';
 import { Room } from './CommunityPage';
+import EmoticonPicker from './EmoticonPicker';
+import { Emoticon } from '../data/emoticons';
 import {
     IoSend, IoAddCircleOutline, IoCameraOutline, IoArrowBack, IoLogOutOutline,
     IoTrashOutline, IoMegaphoneOutline, IoHandRightOutline, IoHappyOutline,
@@ -14,7 +16,7 @@ import {
 
 // --- 타입 정의 ---
 interface ChatMessage {
-    type: 'ENTER' | 'TALK' | 'LEAVE' | 'IMAGE' | 'KICK' | 'NOTICE_UPDATE';
+    type: 'ENTER' | 'TALK' | 'LEAVE' | 'IMAGE' | 'EMOTICON' | 'KICK' | 'NOTICE_UPDATE';
     nickname?: string;
     roomId: string;
     sender: string;
@@ -60,6 +62,8 @@ const ChatRoom = ({ roomId, onLeave }: ChatRoomProps) => {
 
     const dispatch = useDispatch();
     const API_URL = process.env.REACT_APP_API_URL;
+
+    const [isEmoticonPickerOpen, setIsEmoticonPickerOpen] = useState(false);
 
     const updateLastReadSequence = useCallback(async (seqToUpdate: number) => {
         if (!userName || seqToUpdate === 0) return;
@@ -300,14 +304,39 @@ const ChatRoom = ({ roomId, onLeave }: ChatRoomProps) => {
         }
     };
 
+    const sendEmoticonMessage = (emoticon: Emoticon) => {
+        if (clientRef.current?.connected && userName) {
+            clientRef.current.publish({
+                destination: '/api/pub/chat/message',
+                body: JSON.stringify({
+                    roomId,
+                    sender: userName,
+                    nickname: userNickname,
+                    message: emoticon.s3Url, // S3 URL을 메시지로 전송
+                    type: 'EMOTICON',        // 타입은 'EMOTICON'으로 지정
+                }),
+            });
+            setIsEmoticonPickerOpen(false); // 전송 후 선택기 닫기
+        }
+    };
+
+
+
     const handleAnnouncement = () => {
         setTempNotice(notice); // 현재 공지를 임시 상태에 저장
         setIsNoticeModalOpen(true); // 모달 열기
     };
 
-    const handleEmoticonClick = () => { alert("이모티콘 기능은 준비 중입니다."); setIsOptionsOpen(false); };
+    const handleEmoticonClick = (e: React.MouseEvent) => {
+        e.stopPropagation(); // 이벤트 버블링 방지
+        setIsOptionsOpen(false); // 다른 메뉴는 닫기
+        setIsEmoticonPickerOpen(prev => !prev); // 이모티콘 선택기 토글
+    };
 
-    const handleOutsideClick = () => { if (isOptionsOpen) setIsOptionsOpen(false); };
+    const handleOutsideClick = () => {
+        if (isOptionsOpen) setIsOptionsOpen(false);
+        if (isEmoticonPickerOpen) setIsEmoticonPickerOpen(false);
+    };
 
     const menuOptions = [
         { icon: <IoHappyOutline size={24} color="#a0a0a0" />, handler: handleEmoticonClick, title: '이모티콘' },
@@ -357,7 +386,7 @@ const ChatRoom = ({ roomId, onLeave }: ChatRoomProps) => {
                             </div>
                             <div style={styles.metaItem}>
                                 <IoChatbubblesOutline style={styles.metaIcon} />
-                                <span>개설자: <strong>{roomInfo.creatorNickname || roomInfo.creator}</strong></span>
+                                <span><strong>{roomInfo.creatorNickname || roomInfo.creator}</strong></span>
                             </div>
                         </div>
                     </div>
@@ -395,13 +424,15 @@ const ChatRoom = ({ roomId, onLeave }: ChatRoomProps) => {
                         <div style={{ display: 'flex', flexDirection: msg.sender === userName ? 'row-reverse' : 'row', alignItems: 'flex-end', gap: '8px' }}>
                             <div style={{
                                 display: 'inline-block',
-                                padding: msg.type === 'IMAGE' ? '0px' : '8px 12px',
+                                padding: (msg.type === 'IMAGE'|| msg.type === 'EMOTICON') ? '0px' : '8px 12px',
                                 borderRadius: '18px',
                                 maxWidth: '70%',
                                 backgroundColor: msg.type === 'IMAGE' ? 'transparent' : (msg.type === 'ENTER' || msg.type === 'LEAVE' ? '#FFFACD' : (msg.sender === userName ? '#DCF8C6' : '#EAEAEA'))
                             }}>
                                 {msg.type === 'IMAGE' ? (
                                     <img src={msg.message} alt="채팅 이미지" style={{ maxWidth: '200px', borderRadius: '8px', cursor: 'pointer', display: 'block' }} onClick={() => window.open(msg.message, '_blank')} />
+                                ) : msg.type === 'EMOTICON' ? (
+                                    <img src={msg.message} alt="이모티콘" style={{ width: '100px', height: '100px', display: 'block' }} />
                                 ) : (
                                     <span style={{ whiteSpace: 'pre-wrap', wordBreak: 'break-all' }}>{msg.message}</span>
                                 )}
@@ -416,6 +447,11 @@ const ChatRoom = ({ roomId, onLeave }: ChatRoomProps) => {
 
             <footer style={styles.footer}>
                 <div style={{ position: 'relative' }}>
+                    {isEmoticonPickerOpen && (
+                        <div onClick={(e) => e.stopPropagation()}>
+                            <EmoticonPicker onSelect={sendEmoticonMessage} />
+                        </div>
+                    )}
                     {isOptionsOpen && (
                         <div
                             style={{
