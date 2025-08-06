@@ -179,6 +179,8 @@ public class UserController {
         }
         redisTemplate.delete(redisKey);
 
+        System.out.println("email !!!!!!!!!!!!!!!!! : "+email);
+
         UserDTO user = this.userService.findByEmail(email);
 
         // ✨ 1. 토큰 만료 시간 설정 (밀리초 단위)
