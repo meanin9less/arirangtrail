@@ -88,8 +88,8 @@ const LikedFestivalsPage: React.FC = () => {
                 const response = await apiClient.get<MyLikedFestivalDTO[]>(
                     `/festivals/likes/my-list`,
                     {
-                        // 인터셉터가 헤더를 넣어주므로 여기서는 params만 신경쓰면 됩니다.
-                        params: { username: userProfile.username },
+                        // // 인터셉터가 헤더를 넣어주므로 여기서는 params만 신경쓰면 됩니다.
+                        // params: { username: userProfile.username },
                     }
                 );
 
@@ -130,8 +130,8 @@ const LikedFestivalsPage: React.FC = () => {
             // 백엔드 API 경로가 `/api/festivals/{contentid}/like`이므로 이전에 작성한 코드는 유효합니다.
             // 백엔드 컨트롤러에 명시된 대로 username을 쿼리 파라미터로 전달합니다.
             await apiClient.post(`/festivals/${contentIdNum}/like`, null, {
-                headers: { Authorization: `Bearer ${jwtToken}` },
-                params: { username: userProfile.username }
+                // headers: { Authorization: `Bearer ${jwtToken}` },
+                // params: { username: userProfile.username }
             });
 
             // UI에서 해당 아이템을 즉시 제거하여 사용자에게 피드백 제공

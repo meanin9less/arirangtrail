@@ -286,7 +286,7 @@ const DetailPage = () => {
             // contentId는 Long 타입으로 백엔드에 전달되어야 하므로, string -> number로 변환
             const contentIdNum = Number(festivalId);
             const response = await apiClient.get(`/festivals/${contentIdNum}/status`, {
-                params: {username: userProfile?.username || undefined}
+                // params: {username: userProfile?.username || undefined}
             });
             // 서버가 준 값으로만 상태를 업데이트
             setIsLiked(response.data.isLiked);
@@ -328,9 +328,10 @@ const DetailPage = () => {
         try {
             // contentId는 Long 타입으로 백엔드에 전달되어야 하므로, string -> number로 변환
             const contentIdNum = Number(festivalId);
-            await apiClient.post(`/festivals/${contentIdNum}/like`, null, {
-                params: {username: userProfile.username}
-            });
+            // await apiClient.post(`/festivals/${contentIdNum}/like`, null, {
+            //     params: {username: userProfile.username}
+            // });
+            await apiClient.post(`/festivals/${contentIdNum}/like`);
 
             // 성공하면 서버에서 정확한 상태 조회
             await fetchLikeData();
