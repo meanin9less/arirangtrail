@@ -49,7 +49,6 @@
 }
 
 .navGroupCenter {
-    margin-right: 100px;
     display: flex;
     gap: 25px;
     flex-wrap: wrap;
@@ -305,6 +304,7 @@
     .navGroupCenter {
         gap: 20px;
         flex-direction: row;
+        margin-right: 0;
     }
 
     .navLink, .homeLink {

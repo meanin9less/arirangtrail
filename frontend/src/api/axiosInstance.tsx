@@ -29,6 +29,11 @@ const apiClient: AxiosInstance = axios.create({
 
 // 2. 요청 인터셉터: 모든 요청에 JWT 토큰을 추가합니다.
 apiClient.interceptors.request.use((config: InternalAxiosRequestConfig) => {
+    // 요청 데이터가 멀티를 통한 이미지 등록일 경우 변경합니다.
+    if (config.data instanceof FormData) {
+        delete config.headers["Content-Type"];
+    }
+
     // 요청 데이터가 URLSearchParams 타입인 경우 Content-Type을 변경합니다.
     if (config.data instanceof URLSearchParams) {
         config.headers["Content-Type"] = "application/x-www-form-urlencoded";

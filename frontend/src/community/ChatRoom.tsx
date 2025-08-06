@@ -236,9 +236,7 @@ const ChatRoom = ({ roomId, onLeave }: ChatRoomProps) => {
         const formData = new FormData();
         formData.append('file', file);
         try {
-            const response = await axios.post<{ url: string }>(`${API_URL}/api/files/upload`, formData, {
-                headers: { 'Content-Type': 'multipart/form-data' }
-            });
+            const response = await apiClient.post<{ url: string }>(`/files/upload`, formData);
             const imageUrl = response.data.url;
             if (clientRef.current?.connected) {
                 clientRef.current.publish({
