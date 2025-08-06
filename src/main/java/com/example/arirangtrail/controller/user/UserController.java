@@ -6,6 +6,7 @@ import com.example.arirangtrail.data.dto.user.UserDTO;
 import com.example.arirangtrail.data.entity.UserEntity; // UserEntity 임포트 추가 (updateInform 때문)
 import com.example.arirangtrail.jwt.JwtUtil;
 import com.example.arirangtrail.service.user.UserService;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -173,15 +174,30 @@ public class UserController {
         }
 
         String redisKey = "oauth-code:" + authorizationCode;
-        String email = redisTemplate.opsForValue().get(redisKey);
-        if (email == null) {
+        String emailJson = redisTemplate.opsForValue().get(redisKey);
+        if (emailJson == null) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Invalid or expired authorization code.");
         }
         redisTemplate.delete(redisKey);
 
-        System.out.println("email !!!!!!!!!!!!!!!!! : "+email);
+        String actualEmail;
+        try {
+            // 2. ObjectMapper를 사용하여 JSON 문자열을 파싱합니다.
+            ObjectMapper mapper = new ObjectMapper();
+            // JSON 문자열을 Map으로 변환
+            Map<String, String> emailMap = mapper.readValue(emailJson, Map.class);
+            // "email" 키로 실제 이메일 값을 추출합니다.
+            actualEmail = emailMap.get("email");
+            if (actualEmail == null) {
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Email information is missing in the Redis data.");
+            }
+        } catch (Exception e) {
+            actualEmail = emailJson;
+        }
 
-        UserDTO user = this.userService.findByEmail(email);
+        System.out.println("Extracted email : " + actualEmail);
+
+        UserDTO user = this.userService.findByEmail(actualEmail);
 
         // ✨ 1. 토큰 만료 시간 설정 (밀리초 단위)
         long accessTokenValidity = 60 * 10 * 1000L; // 10분
