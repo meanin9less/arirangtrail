@@ -107,12 +107,8 @@ public class ReviewController {
 
     @GetMapping("/rating/{contentid}")
     public ResponseEntity<Double> getAverageRatingByContentid(@PathVariable Long contentid) {
-        // 이 메서드는 ReviewService에 findAverageRatingByContentid 메서드가 있다고 가정합니다.
-        // 해당 서비스 메서드가 없으면 오류가 발생할 수 있습니다.
-        // 예시: return ResponseEntity.ok(this.reviewService.findAverageRatingByContentid(contentid));
-        // 현재 ReviewService에는 findAverageRatingByContentid 메서드가 없으므로,
-        // 이 부분은 ReviewService에 해당 로직을 추가하거나, 이 엔드포인트가 필요 없으면 삭제해야 합니다.
-        return ResponseEntity.status(HttpStatus.NOT_IMPLEMENTED).body(null); // 임시로 501 Not Implemented 반환
+        Double averageRating = reviewService.findAverageRatingByContentid(contentid);
+        return ResponseEntity.ok(averageRating); // 0.0일 경우도 그대로 반환//프론트에서 처리
     }
 
     @GetMapping("/{reviewid}/comments")
