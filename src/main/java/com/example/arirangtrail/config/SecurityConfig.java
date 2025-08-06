@@ -108,9 +108,11 @@ public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Excepti
 
             .oauth2Login(oauth2 -> oauth2
                     // A. 인증 요청을 가로채서 커스터마이징하는 부분
-                    .authorizationEndpoint(authorizationEndpointConfig ->
-                            authorizationEndpointConfig
-                                    .authorizationRequestRepository(this.authorizationRequestRepository))                    // B. 인증 성공 후 사용자 정보를 가져오는 부분
+                    .authorizationEndpoint(auth ->
+                            auth
+                            // ✨ 주입받은 필드를 사용하여 순환 참조를 방지합니다.
+                            .authorizationRequestRepository(this.authorizationRequestRepository)
+                    )               // B. 인증 성공 후 사용자 정보를 가져오는 부분
                     .userInfoEndpoint(userInfo -> userInfo
                             .userService(customOAuth2UserService)
                     )
