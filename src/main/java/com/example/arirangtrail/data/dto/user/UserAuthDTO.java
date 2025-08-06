@@ -8,4 +8,5 @@ public class UserAuthDTO {
     private String name;
     private String username;
     private String email;
+    private boolean isApp;
 }

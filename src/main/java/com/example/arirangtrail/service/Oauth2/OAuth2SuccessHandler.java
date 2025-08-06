@@ -50,13 +50,9 @@ public class OAuth2SuccessHandler implements AuthenticationSuccessHandler {
 
         String name = oAuth2User.getUserName();
         String email = oAuth2User.getEmail();
-
+        boolean isApp = oAuth2User.getUserAuthDTO().isApp();
+        System.out.println("!!!!!!!!!!!!!!!!!!!!!!!!!isApp: " + isApp);
         String code = UUID.randomUUID().toString();
-
-        OAuth2AuthorizationRequest oAuth2AuthorizationRequest = authorizationRequestRepository.loadAuthorizationRequest(request);
-        String state = oAuth2AuthorizationRequest.getState();
-        boolean isApp = state != null && state.contains("client_type=app");
-        log.info("OAuth2 Success: state={}, isApp={}", state, isApp);
 
         Optional<UserEntity> loginUserOptional = this.userRepository.findByEmail(email);
         //1. 신규 사용자
