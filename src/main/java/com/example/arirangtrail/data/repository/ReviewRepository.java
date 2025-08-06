@@ -28,4 +28,6 @@ public interface ReviewRepository extends JpaRepository<ReviewEntity, Long> {
      */
     @Query("SELECT AVG(e.rating) FROM ReviewEntity e WHERE e.contentid = :contentid") // contentid 필드 이름 확인
     Double findAverageRatingByContentid(@Param("contentid") String contentid); // contentid의 타입이 String이므로 변경
+
+    List<ReviewEntity> findByContentid(Long contentid);
 }

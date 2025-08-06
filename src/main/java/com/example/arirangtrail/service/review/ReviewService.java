@@ -157,14 +157,21 @@ public class ReviewService {
                 .collect(Collectors.toList());
     }
 
-    // `getAverageRatingByContentid` 메서드가 ReviewService에 없으므로,
-    // 필요하다면 여기에 추가하거나, ReviewController에서 해당 엔드포인트를 삭제해야 합니다.
-    // 임시로 주석 처리하거나, 필요에 따라 구현하세요.
-    // public Double findAverageRatingByContentid(Long contentid) {
-    //     // TODO: contentid에 따른 평균 평점 계산 로직 구현
-    //     return 0.0; // 임시 반환값
-    // }
+    public Double findAverageRatingByContentid(Long contentid) {
+        List<ReviewEntity> reviews = reviewRepository.findByContentid(contentid);
 
+        if (reviews.isEmpty()) {
+            return 0.0; // ⭐ 리뷰 없으면 0.0 반환
+        }
+
+        // 평점 평균 계산
+        double average = reviews.stream()
+                .mapToDouble(r -> r.getRating().doubleValue())
+                .average()
+                .orElse(0.0); // fallback (사실상 위 isEmpty 조건으로 인해 여기엔 안 옴)
+
+        return average;
+    }
     private ReviewResponseDto convertToDto(ReviewEntity entity) {
         List<ReviewPhotoResponseDto> photos = (entity.getReviewphotos() != null) ?
                 entity.getReviewphotos().stream()

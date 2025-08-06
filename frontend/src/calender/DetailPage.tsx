@@ -129,14 +129,20 @@ const DetailPage = () => {
             // 별점 API 요청 (주소는 나중에 사용자가 채워넣을 예정)
             const fetchStarRating = async () => {
                 try {
-                    // TODO: 여기에 실제 별점 API 주소를 넣어주세요.
-                    // 예시: const ratingResponse = await apiClient.get(`/reviews/average-rating/${festivalId}`);
-                    // setStarRating(ratingResponse.data.averageRating);
-                    // 임시 데이터
-                    setStarRating(4.5);
+                    const res = await apiClient.get(`/api/reviews/rating/${festivalId}`);
+                    // res.data가 { rating: 4.5 } 같은 객체일 것이므로, .rating으로 접근하여 숫자 값을 추출합니다.
+                    const ratingValue = res.data.rating;
+
+                    // 받아온 값이 실제 숫자인지 확인 후 상태에 저장하면 더욱 안전합니다.
+                    if (typeof ratingValue === 'number') {
+                        setStarRating(ratingValue);
+                    } else {
+                        // 만약 예상치 못한 값이 오면 0으로 처리
+                        setStarRating(0);
+                    }
                 } catch (error) {
                     console.error("별점 로딩 실패:", error);
-                    setStarRating(0); // 에러 발생 시 0으로 설정
+                    setStarRating(0); // 에러 발생 시도 0으로 처리
                 }
             };
             fetchStarRating();
