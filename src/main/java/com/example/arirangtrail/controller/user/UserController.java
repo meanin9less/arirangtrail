@@ -195,7 +195,7 @@ public class UserController {
         result.put("lastname",  user.getLastname());
         result.put("nickname",  user.getNickname());
         result.put("birthdate", user.getBirthdate().toString());
-        result.put("imageurl", user.getImageurl());
+        result.put("imageUrl", user.getImageurl());
 
         return ResponseEntity.ok(result);
     }
