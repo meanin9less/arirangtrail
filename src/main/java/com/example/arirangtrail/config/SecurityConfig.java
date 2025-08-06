@@ -41,8 +41,6 @@ private final JwtUtil jwtUtil;
 private final CustomOAuth2UserService customOAuth2UserService;
 private final OAuth2SuccessHandler oAuth2SuccessHandler;
 private final CustomUserDetailsService customUserDetailsService;
-private final ClientRegistrationRepository clientRegistrationRepository;
-private final HttpSessionOAuth2AuthorizationRequestRepository httpSessionOAuth2AuthorizationRequestRepository;
 private final AuthorizationRequestRepository<OAuth2AuthorizationRequest> authorizationRequestRepository;
 
 @Bean
@@ -112,8 +110,7 @@ public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Excepti
                     // A. 인증 요청을 가로채서 커스터마이징하는 부분
                     .authorizationEndpoint(authorizationEndpointConfig ->
                             authorizationEndpointConfig
-                                    .authorizationRequestRepository(httpSessionOAuth2AuthorizationRequestRepository))
-                    // B. 인증 성공 후 사용자 정보를 가져오는 부분
+                                    .authorizationRequestRepository(this.authorizationRequestRepository))                    // B. 인증 성공 후 사용자 정보를 가져오는 부분
                     .userInfoEndpoint(userInfo -> userInfo
                             .userService(customOAuth2UserService)
                     )
