@@ -1,5 +1,6 @@
 package com.example.arirangtrail.config;
 
+import com.example.arirangtrail.config.oauth2.CustomAuthorizationRequestResolver;
 import com.example.arirangtrail.jwt.JwtFilter;
 import com.example.arirangtrail.jwt.JwtLoginFilter;
 import com.example.arirangtrail.jwt.JwtUtil;
@@ -18,6 +19,8 @@ import org.springframework.security.config.annotation.web.configuration.EnableWe
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.oauth2.client.registration.ClientRegistrationRepository;
+import org.springframework.security.oauth2.client.web.OAuth2AuthorizationRequestResolver;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.web.cors.CorsConfiguration;
@@ -35,6 +38,7 @@ public class SecurityConfig {
     private final CustomOAuth2UserService customOAuth2UserService;
     private final OAuth2SuccessHandler oAuth2SuccessHandler;
     private final CustomUserDetailsService customUserDetailsService;
+    private final ClientRegistrationRepository clientRegistrationRepository;
 
     @Bean
     public AuthenticationManager authenticationManager(AuthenticationConfiguration configuration) throws Exception{
@@ -51,10 +55,13 @@ public class SecurityConfig {
         return new ForwardedHeaderFilter();
     }
 
-
+    @Bean
+    public OAuth2AuthorizationRequestResolver customAuthorizationRequestResolver() {
+        return new CustomAuthorizationRequestResolver(clientRegistrationRepository, "/oauth2/authorization");
+    }
 
     @Bean
-    public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+    public SecurityFilterChain securityFilterChain(HttpSecurity http, OAuth2AuthorizationRequestResolver customAuthorizationRequestResolver) throws Exception {
 
         JwtLoginFilter jwtLoginFilter = new JwtLoginFilter(authenticationManager(authenticationConfiguration), jwtUtil);
         jwtLoginFilter.setFilterProcessesUrl("/api/login");
@@ -98,6 +105,10 @@ public class SecurityConfig {
 
                 .oauth2Login(oauth2->
                         oauth2
+                                .authorizationEndpoint(authorization ->
+                                        authorization
+                                                .authorizationRequestResolver(customAuthorizationRequestResolver)
+                                )
                                 .userInfoEndpoint(userInfo->{
                                     userInfo.userService(customOAuth2UserService);
                                 })
