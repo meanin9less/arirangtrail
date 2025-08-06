@@ -91,7 +91,9 @@ public class SecurityConfig {
                                 "/api/festivals/{contentid}/status",
                                 "/api/reviews",
                                 "/api/reviews/{reviewId}",
-                                "/api/reviews/{reviewId}/comments"
+                                "/api/reviews/{reviewId}/comments",
+                                "/api/reviews/rating/**"
+
                         ).permitAll()
 
                         //  인증이 필요한 API (authenticated)

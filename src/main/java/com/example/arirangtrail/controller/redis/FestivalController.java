@@ -27,11 +27,16 @@ public class FestivalController { // 이름이 FestivalController로 되어있�
     @PostMapping("/{contentid}/like")
     public ResponseEntity<LikeStatusDTO> toggleLike(
             @PathVariable Long contentid,
-            @RequestParam String username // 어슨 수정할 생각 해놔야 함.
-//            @AuthenticationPrincipal String username // security context holder를 통해 현재 토큰의 로그인한 사용자 username 가져오기 자동완성// 근데 경로 닫아놔야 인증함
+            Principal principal
     ) {
+        // 인증되지 않은 사용자의 경우 401 반환
+        if (principal == null || principal.getName() == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
+
+        String username = principal.getName();
         LikeStatusDTO likestatus = festivalService.toggleLike(username, contentid);
-        return ResponseEntity.ok(likestatus); // 현재 좋아요 상태 (true: 좋아요, false: 취소) 반환
+        return ResponseEntity.ok(likestatus);
     }
 
     // 특정 축제 공유 1회 증가
@@ -48,24 +53,18 @@ public class FestivalController { // 이름이 FestivalController로 되어있�
         return ResponseEntity.ok(meta);
     }
 
+    // 내가 좋아요 한 리스트를 가져옵니다.
     @GetMapping("/likes/my-list")
     public ResponseEntity<List<MyLikedFestivalDTO>> getMyLikedFestivalsDetails(
-            // (추후 복구) Principal principal
-            //  @RequestParam을 사용하여 URL 쿼리 파라미터로 username을 직접 받습니다.
-            @RequestParam String username
+            Principal principal
     ) {
-        /*
-         (추후 복구) 아래 로직은 Principal을 다시 사용할 때 활성화합니다.
+        // 인증되지 않은 사용자의 경우 401 반환
         if (principal == null || principal.getName() == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build(); // 401 Unauthorized
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
         }
+
         String username = principal.getName();
-        */
-
-        // 서비스를 호출하여 DTO 리스트를 받아옵니다.
         List<MyLikedFestivalDTO> likedFestivals = festivalService.getMyLikedFestivalsDetails(username);
-
-        // 결과를 반환합니다.
         return ResponseEntity.ok(likedFestivals);
     }
 
@@ -74,10 +73,11 @@ public class FestivalController { // 이름이 FestivalController로 되어있�
     @GetMapping("/{contentid}/status")
     public ResponseEntity<FestivalStatusDTO> getFestivalStatus(
             @PathVariable Long contentid,
-            // username은 필수값이 아니므로 `required = false`를 추가합니다.
-            // 비로그인 사용자는 username 없이 요청을 보내게 됩니다.
-            @RequestParam(required = false) String username
+            Principal principal // Principal로 변경, required = false 제거
     ) {
+        // Principal이 null이면 비로그인 상태로 처리
+        String username = (principal != null) ? principal.getName() : null;
+
         FestivalStatusDTO statusDto = festivalService.getFestivalStatus(contentid, username);
         return ResponseEntity.ok(statusDto);
     }

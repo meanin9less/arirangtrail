@@ -172,7 +172,7 @@ public class UserController {
             return ResponseEntity.badRequest().body("Authorization code is missing.");
         }
 
-        String redisKey = "code:" + authorizationCode;
+        String redisKey = "oauth-code:" + authorizationCode;
         String email = redisTemplate.opsForValue().get(redisKey);
 
         if (email == null) {
