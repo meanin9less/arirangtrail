@@ -92,7 +92,7 @@ public class SecurityConfig {
                                 "/api/reviews",
                                 "/api/reviews/{reviewId}",
                                 "/api/reviews/{reviewId}/comments",
-                                "/api/rating/**"
+                                "/api/reviews/rating/**"
 
                         ).permitAll()
 
