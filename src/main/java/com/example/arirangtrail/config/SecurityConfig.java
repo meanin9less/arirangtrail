@@ -80,7 +80,7 @@ public class SecurityConfig {
                         // 모두 접속 및 접근 가능한 페이지
                         .requestMatchers(
                                 "/",
-                                "/login", "/logout", "/join",
+                                "/login", "/logout", "/join", "/api/app/login", "/api/app/simplejoin",
                                 "/api/reissue",
                                 "/favicon.ico"
                         ).permitAll()
