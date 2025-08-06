@@ -6,6 +6,7 @@ import com.example.arirangtrail.jwt.JwtLoginFilter;
 import com.example.arirangtrail.jwt.JwtUtil;
 import com.example.arirangtrail.jwt.customuserdetails.CustomUserDetailsService;
 import com.example.arirangtrail.service.Oauth2.CustomOAuth2UserService;
+import com.example.arirangtrail.service.Oauth2.HttpSessionOAuth2AuthorizationRequestRepository;
 import com.example.arirangtrail.service.Oauth2.OAuth2SuccessHandler;
 import lombok.RequiredArgsConstructor;
 import org.springframework.boot.autoconfigure.security.servlet.PathRequest;
@@ -25,8 +26,8 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.filter.ForwardedHeaderFilter;
 import org.springframework.security.oauth2.client.web.AuthorizationRequestRepository;
-import org.springframework.security.oauth2.client.web.HttpSessionOAuth2AuthorizationRequestRepository;
 import org.springframework.security.oauth2.core.endpoint.OAuth2AuthorizationRequest;
+
 
 import java.util.Collections;
 import java.util.List;
@@ -42,6 +43,7 @@ private final OAuth2SuccessHandler oAuth2SuccessHandler;
 private final CustomUserDetailsService customUserDetailsService;
 private final ClientRegistrationRepository clientRegistrationRepository;
 private final HttpSessionOAuth2AuthorizationRequestRepository httpSessionOAuth2AuthorizationRequestRepository;
+private final AuthorizationRequestRepository<OAuth2AuthorizationRequest> authorizationRequestRepository;
 
 @Bean
 public AuthenticationManager authenticationManager(AuthenticationConfiguration configuration) throws Exception{
