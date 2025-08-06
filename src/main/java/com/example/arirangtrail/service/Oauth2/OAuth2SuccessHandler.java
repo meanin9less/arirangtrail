@@ -80,25 +80,13 @@ public class OAuth2SuccessHandler implements AuthenticationSuccessHandler {
         //2. 기존 사용자
         UserEntity user = loginUserOptional.get();
 
-        String access = jwtUtil.createToken("access", user.getUsername(), user.getRole(), accessTokenValidityInSeconds * 1000L);
-        String refresh = jwtUtil.createToken("refresh", user.getUsername(), user.getRole(), 24 * 60 * 60 * 1000L);
 
         // redis에 모든 정보를 Map 형태로 저장
-        Map<String, Object> tokenData = new HashMap<>();
-        tokenData.put("accessToken", "Bearer " + access);
-        tokenData.put("refreshToken", refresh);
-        tokenData.put("expiresIn", accessTokenValidityInSeconds);
-
-        // UserProfile 한번에 담기 위해 별도의 Map을 만듭니다.
-        Map<String, Object> userProfileData = new HashMap<>();
-        userProfileData.put("username", user.getUsername());
-        userProfileData.put("nickname", user.getNickname());
-        userProfileData.put("imageUrl", user.getImageurl());
-
-        tokenData.put("userProfile", userProfileData);
+        Map<String, Object> data = new HashMap<>();
+        data.put("email", user.getEmail());
 
         // 1분 유효
-        redisTemplate.opsForValue().set("oauth-code:" + code, tokenData, Duration.ofMinutes(1));
+        redisTemplate.opsForValue().set("oauth-code:" + code, data, Duration.ofMinutes(1));
 
         // 클라이언트(Web/App)에 따라 분기 처리
         if (isApp) {
@@ -108,11 +96,12 @@ public class OAuth2SuccessHandler implements AuthenticationSuccessHandler {
                     .queryParam("code", code)
                     .encode(StandardCharsets.UTF_8)
                     .build().toUriString();
-
             log.info("App OAuth redirect URL: {}", targetUrl);
             response.sendRedirect(targetUrl);
         } else {
             // 웹 브라우저일 경우: 쿠키와 리다이렉트
+            String access = jwtUtil.createToken("access", user.getUsername(), user.getRole(), accessTokenValidityInSeconds * 1000L);
+            String refresh = jwtUtil.createToken("refresh", user.getUsername(), user.getRole(), 24 * 60 * 60 * 1000L);
             ResponseCookie cookie = ResponseCookie.from("refresh", refresh)
                     .httpOnly(true)
                     .secure(false) // 운영 시 true
