@@ -14,6 +14,8 @@ import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseCookie;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.oauth2.client.web.AuthorizationRequestRepository;
+import org.springframework.security.oauth2.core.endpoint.OAuth2AuthorizationRequest;
 import org.springframework.security.web.authentication.AuthenticationSuccessHandler;
 import org.springframework.stereotype.Component;
 import org.springframework.web.util.UriComponentsBuilder;
@@ -35,6 +37,8 @@ public class OAuth2SuccessHandler implements AuthenticationSuccessHandler {
     private final ObjectMapper objectMapper = new ObjectMapper();
     private final UserRepository userRepository;
     private final RedisTemplate redisTemplate;
+    private final AuthorizationRequestRepository<OAuth2AuthorizationRequest> authorizationRequestRepository;
+
 
     // OAuth2SuccessHandler.java의 수정된 부분
 
@@ -49,15 +53,10 @@ public class OAuth2SuccessHandler implements AuthenticationSuccessHandler {
 
         String code = UUID.randomUUID().toString();
 
-        // 클라이언트 타입 파라미터로 앱/웹 구분
-//        String clientType = request.getParameter("client_type");
-//        boolean isApp = "app".equalsIgnoreCase(clientType);
-//        log.info("OAuth2 Success: client_type={}, isApp={}", clientType, isApp);
-        // ✨ state 파라미터에서 client_type을 추출합니다.
-        String state = request.getParameter("state");
+        OAuth2AuthorizationRequest oAuth2AuthorizationRequest = authorizationRequestRepository.loadAuthorizationRequest(request);
+        String state = oAuth2AuthorizationRequest.getState();
         boolean isApp = state != null && state.contains("client_type=app");
         log.info("OAuth2 Success: state={}, isApp={}", state, isApp);
-
         Optional<UserEntity> loginUserOptional = this.userRepository.findByEmail(email);
 
         //1. 신규 사용자
