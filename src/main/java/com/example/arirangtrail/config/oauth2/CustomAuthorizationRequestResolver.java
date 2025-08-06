@@ -1,6 +1,4 @@
 package com.example.arirangtrail.config.oauth2;
-
-// service/Oauth2/CustomAuthorizationRequestResolver.java
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.security.oauth2.client.registration.ClientRegistrationRepository;
 import org.springframework.security.oauth2.client.web.DefaultOAuth2AuthorizationRequestResolver;
@@ -14,43 +12,44 @@ public class CustomAuthorizationRequestResolver implements OAuth2AuthorizationRe
 
     private final OAuth2AuthorizationRequestResolver defaultResolver;
 
-    public CustomAuthorizationRequestResolver(ClientRegistrationRepository repo, String authorizationRequestBaseUri) {
-        this.defaultResolver = new DefaultOAuth2AuthorizationRequestResolver(repo, authorizationRequestBaseUri);
+    public CustomAuthorizationRequestResolver(ClientRegistrationRepository clientRegistrationRepository, String authorizationRequestBaseUri) {
+        this.defaultResolver = new DefaultOAuth2AuthorizationRequestResolver(clientRegistrationRepository, authorizationRequestBaseUri);
     }
 
     @Override
     public OAuth2AuthorizationRequest resolve(HttpServletRequest request) {
-        OAuth2AuthorizationRequest req = defaultResolver.resolve(request);
-        if (req != null) {
-            return customizeAuthorizationRequest(req, request);
-        }
-        return null;
+        OAuth2AuthorizationRequest authorizationRequest = this.defaultResolver.resolve(request);
+        return customizeAuthorizationRequest(authorizationRequest, request);
     }
 
     @Override
     public OAuth2AuthorizationRequest resolve(HttpServletRequest request, String clientRegistrationId) {
-        OAuth2AuthorizationRequest req = defaultResolver.resolve(request, clientRegistrationId);
-        if (req != null) {
-            return customizeAuthorizationRequest(req, request);
-        }
-        return null;
+        OAuth2AuthorizationRequest authorizationRequest = this.defaultResolver.resolve(request, clientRegistrationId);
+        return customizeAuthorizationRequest(authorizationRequest, request);
     }
 
-    private OAuth2AuthorizationRequest customizeAuthorizationRequest(
-            OAuth2AuthorizationRequest req, HttpServletRequest request) {
-
-        String clientType = request.getParameter("client_type");
-        if (clientType == null) {
-            return req;
+    private OAuth2AuthorizationRequest customizeAuthorizationRequest(OAuth2AuthorizationRequest authorizationRequest, HttpServletRequest request) {
+        if (authorizationRequest == null) {
+            return null;
         }
 
-        Map<String, Object> additionalParameters = new HashMap<>(req.getAdditionalParameters());
-        // ✨ state 파라미터에 client_type을 인코딩하여 숨깁니다.
-        String newState = req.getState() + "&client_type=" + clientType;
-        additionalParameters.put("state", newState);
+        String originalState = request.getParameter("state");
+        if (originalState != null && originalState.contains("client_type=app")) {
+            // ★★★ 세션에 is_app 플래그를 저장 ★★★
+            request.getSession().setAttribute("is_app_login", true);
+        }
 
-        return OAuth2AuthorizationRequest.from(req)
-                .additionalParameters(additionalParameters)
-                .build();
+        // 최초 요청에서 'state' 파라미터를 읽어 'client_type=app'인지 확인
+        if (originalState != null && originalState.contains("client_type=app")) {
+            Map<String, Object> additionalParameters = new HashMap<>(authorizationRequest.getAdditionalParameters());
+            // isApp이라는 파라미터를 추가해서 이후 단계에서 사용할 수 있도록 함
+            additionalParameters.put("is_app", "true");
+
+            return OAuth2AuthorizationRequest.from(authorizationRequest)
+                    .additionalParameters(additionalParameters)
+                    .build();
+        }
+
+        return authorizationRequest;
     }
 }

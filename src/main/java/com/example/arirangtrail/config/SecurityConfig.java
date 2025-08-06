@@ -107,7 +107,7 @@ public class SecurityConfig {
                         oauth2
                                 .authorizationEndpoint(authorization ->
                                         authorization
-                                                .authorizationRequestResolver(customAuthorizationRequestResolver)
+                                                .authorizationRequestResolver(customAuthorizationRequestResolver())
                                 )
                                 .userInfoEndpoint(userInfo->{
                                     userInfo.userService(customOAuth2UserService);

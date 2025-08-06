@@ -2,6 +2,7 @@ package com.example.arirangtrail.service.Oauth2;
 
 import com.example.arirangtrail.data.dto.user.UserAuthDTO;
 import com.example.arirangtrail.data.dto.oauth2.*;
+import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.oauth2.client.userinfo.DefaultOAuth2UserService;
 import org.springframework.security.oauth2.client.userinfo.OAuth2UserRequest;
@@ -14,12 +15,17 @@ import java.util.Map;
 @Service
 @RequiredArgsConstructor
 public class CustomOAuth2UserService extends DefaultOAuth2UserService {
+    private final HttpServletRequest request;
 
     @Override
     public OAuth2User loadUser(OAuth2UserRequest userRequest) throws OAuth2AuthenticationException {
         System.out.printf("loadUser !!!!!!!!!!!!!");
         OAuth2User oAuth2User = super.loadUser(userRequest);
 
+        Object isAppObject = request.getSession().getAttribute("is_app_login");
+        System.out.println("isAppObject!!!!!!!!!!!!!!!!!!!!!: " + isAppObject);
+        boolean isApp = (isAppObject instanceof Boolean) && (Boolean) isAppObject;
+        System.out.println("isApp !!!!!!!!!!!!!"+isApp);
         // 현재 로그인 진행 중인 서비스를 구분하는 ID (google, naver, kakao...)
         String registrationId = userRequest.getClientRegistration().getRegistrationId();
 
@@ -46,6 +52,7 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
         userAuthDTO.setName(auth2Response.getName());
         userAuthDTO.setEmail(auth2Response.getEmail());
         userAuthDTO.setRole("ROLE_USER");
+        userAuthDTO.setApp(isApp);
 
         // DB 저장 로직 (생략) ...
 
