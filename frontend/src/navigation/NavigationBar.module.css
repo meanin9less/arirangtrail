@@ -49,7 +49,6 @@
 }
 
 .navGroupCenter {
-    margin-right: 100px;
     display: flex;
     gap: 25px;
     flex-wrap: wrap;
