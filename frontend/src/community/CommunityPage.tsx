@@ -272,13 +272,15 @@ const CommunityPage = () => {
             <header style={styles.header}>
                 <img src={"/dochat-e2.png"} alt="커뮤니티 아이콘" style={styles.headerImage} />
                 <div>
-                    <h1 style={styles.headerTitle}>아리랑 트레일 커뮤니티</h1>
+                    <div style={styles.titleContainer}>
+                        <h1 style={styles.headerTitle}>아리랑 트레일 커뮤니티</h1>
+                        <p style={styles.headerSubtitle}>여행 메이트를 찾고, 함께 출발하세요. – 외국인 여행자들의 커뮤니티 채팅방</p>
+                    </div>
                     <p style={styles.welcomeMessage}>
                         <strong>{userNickname || userName}</strong>님, 환영합니다.
                     </p>
                 </div>
             </header>
-
             <div style={styles.tabContainer}>
                 <div>
                     <button onClick={() => navigate('/community/all-rooms')} style={{ ...styles.tab, ...(isAllRoomsActive ? styles.activeTab : {}) }}>
@@ -397,7 +399,18 @@ const styles: { [key: string]: React.CSSProperties } = {
     },
     createRoomText: { padding: '12px 24px', color: '#6c757d', cursor: 'pointer', fontSize: '16px', fontWeight: '500', transition: 'color 0.2s ease' },
     createRoomTextHover: { color: '#007bff' },
-    tabContent: { minHeight: '400px' }
+    tabContent: { minHeight: '400px' },
+    titleContainer: {
+        display: 'flex', // 자식 요소들을 가로로 배치
+        alignItems: 'baseline', // 텍스트의 기준선(baseline)에 맞춰 정렬 (글씨 크기가 달라도 보기 좋음)
+        gap: '15px' // 제목과 부제목 사이의 간격
+    },
+    headerSubtitle: {
+        // 새로 추가된 p 태그 스타일
+        margin: 0, // p의 기본 마진을 제거
+        fontSize: '1rem', // 예시 크기
+        color: '#000'
+    },
 };
 
 export default CommunityPage;
