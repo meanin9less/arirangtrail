@@ -174,14 +174,12 @@ public class UserController {
 
         String redisKey = "oauth-code:" + authorizationCode;
         String email = redisTemplate.opsForValue().get(redisKey);
-
         if (email == null) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Invalid or expired authorization code.");
         }
         redisTemplate.delete(redisKey);
 
         UserDTO user = this.userService.findByEmail(email);
-
 
         String access = jwtUtil.createToken("access", user.getUsername(), user.getRole(), 60 * 10 * 1000L);
         String refresh = jwtUtil.createToken("refresh", user.getUsername(), user.getRole(), 24 * 60 * 60 * 1000L);
