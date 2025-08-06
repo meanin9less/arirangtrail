@@ -33,8 +33,13 @@ public class CustomAuthorizationRequestResolver implements OAuth2AuthorizationRe
             return null;
         }
 
-        // 최초 요청에서 'state' 파라미터를 읽어 'client_type=app'인지 확인
         String originalState = request.getParameter("state");
+        if (originalState != null && originalState.contains("client_type=app")) {
+            // ★★★ 세션에 is_app 플래그를 저장 ★★★
+            request.getSession().setAttribute("is_app_login", true);
+        }
+
+        // 최초 요청에서 'state' 파라미터를 읽어 'client_type=app'인지 확인
         if (originalState != null && originalState.contains("client_type=app")) {
             Map<String, Object> additionalParameters = new HashMap<>(authorizationRequest.getAdditionalParameters());
             // isApp이라는 파라미터를 추가해서 이후 단계에서 사용할 수 있도록 함
