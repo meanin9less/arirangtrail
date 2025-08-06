@@ -181,19 +181,31 @@ public class UserController {
 
         UserDTO user = this.userService.findByEmail(email);
 
-        String access = jwtUtil.createToken("access", user.getUsername(), user.getRole(), 60 * 10 * 1000L);
-        String refresh = jwtUtil.createToken("refresh", user.getUsername(), user.getRole(), 24 * 60 * 60 * 1000L);
+        // ✨ 1. 토큰 만료 시간 설정 (밀리초 단위)
+        long accessTokenValidity = 60 * 10 * 1000L; // 10분
 
-        Map<String, String> result = new HashMap<>();
-        result.put("access", "Bearer " + access);
-        result.put("refresh", refresh);
-        result.put("username", user.getUsername());
-        result.put("email", user.getEmail());
-        result.put("firstname",  user.getFirstname());
-        result.put("lastname",  user.getLastname());
-        result.put("nickname",  user.getNickname());
-        result.put("birthdate", user.getBirthdate().toString());
-        result.put("imageUrl", user.getImageurl());
+        String accessToken = jwtUtil.createToken("access", user.getUsername(), user.getRole(), accessTokenValidity);
+        String refreshToken = jwtUtil.createToken("refresh", user.getUsername(), user.getRole(), 24 * 60 * 60 * 1000L);
+
+        // ✨ 2. 클라이언트에 전달할 응답 데이터 구조화
+        Map<String, Object> result = new HashMap<>();
+
+        // 토큰 정보
+        result.put("accessToken", accessToken);
+        result.put("refreshToken", refreshToken);
+        result.put("expiresIn", accessTokenValidity / 1000); // 클라이언트에서 초 단위로 사용하기 쉽게 변환
+
+        // 사용자 정보 (UserProfile 모델과 일치하도록 구성)
+        Map<String, Object> userProfile = new HashMap<>();
+        userProfile.put("username", user.getUsername());
+        userProfile.put("email", user.getEmail());
+        userProfile.put("firstname",  user.getFirstname());
+        userProfile.put("lastname",  user.getLastname());
+        userProfile.put("nickname",  user.getNickname());
+        userProfile.put("birthdate", user.getBirthdate().toString());
+        userProfile.put("imageUrl", user.getImageurl());
+
+        result.put("userProfile", userProfile);
 
         return ResponseEntity.ok(result);
     }
