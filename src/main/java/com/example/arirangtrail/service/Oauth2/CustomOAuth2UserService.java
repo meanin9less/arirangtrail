@@ -21,9 +21,10 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
     public OAuth2User loadUser(OAuth2UserRequest userRequest) throws OAuth2AuthenticationException {
         System.out.printf("loadUser !!!!!!!!!!!!!");
         OAuth2User oAuth2User = super.loadUser(userRequest);
-        String state = request.getParameter("state");
-        boolean isApp = state != null && state.contains("client_type=app");
-        System.out.println("state !!!!!!!!!!!!!!!"+state);
+
+        Map<String, Object> additionalParameters = userRequest.getAdditionalParameters();
+        boolean isApp = "true".equals(additionalParameters.get("is_app"));
+        System.out.println("additionalParameters!!!!!!!!!!!!!!!!!!!!!!! = " + additionalParameters);
         System.out.println("isApp !!!!!!!!!!!!!"+isApp);
         // 현재 로그인 진행 중인 서비스를 구분하는 ID (google, naver, kakao...)
         String registrationId = userRequest.getClientRegistration().getRegistrationId();
