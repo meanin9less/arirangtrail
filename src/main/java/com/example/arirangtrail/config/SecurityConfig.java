@@ -1,12 +1,10 @@
 package com.example.arirangtrail.config;
 
-import com.example.arirangtrail.config.oauth2.CustomAuthorizationRequestResolver;
 import com.example.arirangtrail.jwt.JwtFilter;
 import com.example.arirangtrail.jwt.JwtLoginFilter;
 import com.example.arirangtrail.jwt.JwtUtil;
 import com.example.arirangtrail.jwt.customuserdetails.CustomUserDetailsService;
 import com.example.arirangtrail.service.Oauth2.CustomOAuth2UserService;
-import com.example.arirangtrail.service.Oauth2.HttpSessionOAuth2AuthorizationRequestRepository;
 import com.example.arirangtrail.service.Oauth2.OAuth2SuccessHandler;
 import lombok.RequiredArgsConstructor;
 import org.springframework.boot.autoconfigure.security.servlet.PathRequest;
@@ -20,14 +18,10 @@ import org.springframework.security.config.annotation.web.configuration.EnableWe
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.security.oauth2.client.registration.ClientRegistrationRepository;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.filter.ForwardedHeaderFilter;
-import org.springframework.security.oauth2.client.web.AuthorizationRequestRepository;
-import org.springframework.security.oauth2.core.endpoint.OAuth2AuthorizationRequest;
-
 
 import java.util.Collections;
 import java.util.List;
@@ -36,42 +30,38 @@ import java.util.List;
 @EnableWebSecurity
 @RequiredArgsConstructor
 public class SecurityConfig {
-private final AuthenticationConfiguration authenticationConfiguration;
-private final JwtUtil jwtUtil;
-private final CustomOAuth2UserService customOAuth2UserService;
-private final OAuth2SuccessHandler oAuth2SuccessHandler;
-private final CustomUserDetailsService customUserDetailsService;
-private final AuthorizationRequestRepository<OAuth2AuthorizationRequest> authorizationRequestRepository;
+    private final AuthenticationConfiguration authenticationConfiguration;
+    private final JwtUtil jwtUtil;
+    private final CustomOAuth2UserService customOAuth2UserService;
+    private final OAuth2SuccessHandler oAuth2SuccessHandler;
+    private final CustomUserDetailsService customUserDetailsService;
 
-@Bean
-public AuthenticationManager authenticationManager(AuthenticationConfiguration configuration) throws Exception{
-    return configuration.getAuthenticationManager();
-}
+    @Bean
+    public AuthenticationManager authenticationManager(AuthenticationConfiguration configuration) throws Exception{
+        return configuration.getAuthenticationManager();
+    }
 
-@Bean
-public PasswordEncoder passwordEncoder() {
-    return new BCryptPasswordEncoder();
-}
+    @Bean
+    public PasswordEncoder passwordEncoder() {
+        return new BCryptPasswordEncoder();
+    }
 
-@Bean
-public ForwardedHeaderFilter forwardedHeaderFilter() {
-    return new ForwardedHeaderFilter();
-}
+    @Bean
+    public ForwardedHeaderFilter forwardedHeaderFilter() {
+        return new ForwardedHeaderFilter();
+    }
 
-@Bean
-public AuthorizationRequestRepository<OAuth2AuthorizationRequest> authorizationRequestRepository() {
-    return new HttpSessionOAuth2AuthorizationRequestRepository();
-}
 
-@Bean
-public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
 
-    JwtLoginFilter jwtLoginFilter = new JwtLoginFilter(authenticationManager(authenticationConfiguration), jwtUtil);
-    jwtLoginFilter.setFilterProcessesUrl("/api/login");
+    @Bean
+    public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
 
-    http.csrf(csrf->csrf.disable())
-            .formLogin(formLogin->formLogin.disable())
-            .httpBasic(httpBasic->httpBasic.disable())
+        JwtLoginFilter jwtLoginFilter = new JwtLoginFilter(authenticationManager(authenticationConfiguration), jwtUtil);
+        jwtLoginFilter.setFilterProcessesUrl("/api/login");
+
+        http.csrf(csrf->csrf.disable())
+                .formLogin(formLogin->formLogin.disable())
+                .httpBasic(httpBasic->httpBasic.disable())
 
                 .authorizeHttpRequests(authorizeHttpRequests->{
                     authorizeHttpRequests.anyRequest().permitAll();
@@ -87,42 +77,35 @@ public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Excepti
 //            })
 
 
-            .cors(cors->cors.configurationSource(request -> {
-                CorsConfiguration corsConfiguration = new CorsConfiguration();
-                corsConfiguration.setAllowCredentials(true);
-                corsConfiguration.addAllowedHeader("*"); //클라이언트가 요청을 보낼때 보낼수 있는 헤더
-                corsConfiguration.setExposedHeaders(List.of("Authorization")); //서버가 응답을 보낼때 브라우저가 접근할수 있는 헤더
-                corsConfiguration.addAllowedMethod("*");
-                corsConfiguration.addAllowedOrigin("http://localhost:3000");
-                corsConfiguration.addAllowedOrigin("http://arirangtrail.duckdns.org");
-                corsConfiguration.setAllowCredentials(true);
-                return corsConfiguration;
-            }))
+                .cors(cors->cors.configurationSource(request -> {
+                    CorsConfiguration corsConfiguration = new CorsConfiguration();
+                    corsConfiguration.setAllowCredentials(true);
+                    corsConfiguration.addAllowedHeader("*"); //클라이언트가 요청을 보낼때 보낼수 있는 헤더
+                    corsConfiguration.setExposedHeaders(List.of("Authorization")); //서버가 응답을 보낼때 브라우저가 접근할수 있는 헤더
+                    corsConfiguration.addAllowedMethod("*");
+                    corsConfiguration.addAllowedOrigin("http://localhost:3000");
+                    corsConfiguration.addAllowedOrigin("http://arirangtrail.duckdns.org");
+                    corsConfiguration.setAllowCredentials(true);
+                    return corsConfiguration;
+                }))
 
-            .sessionManagement(session->
-                    session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+                .sessionManagement(session->
+                        session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
 
-            .addFilterBefore(new JwtFilter(jwtUtil,customUserDetailsService), JwtLoginFilter.class)
+                .addFilterBefore(new JwtFilter(jwtUtil,customUserDetailsService), JwtLoginFilter.class)
 
-            .addFilterAt(jwtLoginFilter, UsernamePasswordAuthenticationFilter.class)
+                .addFilterAt(jwtLoginFilter, UsernamePasswordAuthenticationFilter.class)
 
-            .oauth2Login(oauth2 -> oauth2
-                    // A. 인증 요청을 가로채서 커스터마이징하는 부분
-                    .authorizationEndpoint(auth ->
-                            auth
-                            // ✨ 주입받은 필드를 사용하여 순환 참조를 방지합니다.
-                            .authorizationRequestRepository(this.authorizationRequestRepository)
-                    )               // B. 인증 성공 후 사용자 정보를 가져오는 부분
-                    .userInfoEndpoint(userInfo -> userInfo
-                            .userService(customOAuth2UserService)
-                    )
-                    // C. 모든 과정 성공 후 리디렉션을 처리하는 부분
-                    .successHandler(oAuth2SuccessHandler)
-            )
-
-            // --- 권한 설정 (일단 모든 요청 허용으로 유지) ---
-            .authorizeHttpRequests(auth -> auth.anyRequest().permitAll());
-
-    return http.build();
+                .oauth2Login(oauth2->
+                        oauth2
+                                .userInfoEndpoint(userInfo->{
+                                    userInfo.userService(customOAuth2UserService);
+                                })
+                                .successHandler(oAuth2SuccessHandler)
+                )
+                .exceptionHandling(exception->{
+                    // exception 우선 비워둠
+                });
+        return http.build();
     }
 }
