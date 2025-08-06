@@ -41,6 +41,7 @@ private final CustomOAuth2UserService customOAuth2UserService;
 private final OAuth2SuccessHandler oAuth2SuccessHandler;
 private final CustomUserDetailsService customUserDetailsService;
 private final ClientRegistrationRepository clientRegistrationRepository;
+private final HttpSessionOAuth2AuthorizationRequestRepository httpSessionOAuth2AuthorizationRequestRepository;
 
 @Bean
 public AuthenticationManager authenticationManager(AuthenticationConfiguration configuration) throws Exception{
@@ -107,14 +108,9 @@ public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Excepti
 
             .oauth2Login(oauth2 -> oauth2
                     // A. 인증 요청을 가로채서 커스터마이징하는 부분
-                    .authorizationEndpoint(auth -> auth
-                            .authorizationRequestRepository(authorizationRequestRepository())
-                            .authorizationRequestResolver(new CustomAuthorizationRequestResolver(
-                                    // ✨ 3. 주입받은 clientRegistrationRepository를 사용합니다.
-                                    clientRegistrationRepository,
-                                    "/oauth2/authorization"
-                            ))
-                    )
+                    .authorizationEndpoint(authorizationEndpointConfig ->
+                            authorizationEndpointConfig
+                                    .authorizationRequestRepository(httpSessionOAuth2AuthorizationRequestRepository))
                     // B. 인증 성공 후 사용자 정보를 가져오는 부분
                     .userInfoEndpoint(userInfo -> userInfo
                             .userService(customOAuth2UserService)
