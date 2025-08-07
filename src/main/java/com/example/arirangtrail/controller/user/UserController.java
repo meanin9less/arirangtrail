@@ -209,7 +209,7 @@ public class UserController {
         Map<String, Object> result = new HashMap<>();
 
         // 토큰 정보
-        result.put("accessToken", accessToken);
+        result.put("accessToken", "Bearer "+accessToken);
         result.put("refreshToken", refreshToken);
         result.put("expiresIn", accessTokenValidity / 1000); // 클라이언트에서 초 단위로 사용하기 쉽게 변환
 
