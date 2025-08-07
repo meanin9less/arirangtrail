@@ -1,13 +1,13 @@
-import React, { useState, useEffect, useCallback, useRef } from 'react';
+import React, {useState, useEffect, useCallback, useRef} from 'react';
 import apiClient from '../api/axiosInstance';
-import { useNavigate, Link } from 'react-router-dom';
+import {useNavigate, Link} from 'react-router-dom';
 import styles from './Review.module.css';
-import { Swiper, SwiperSlide } from 'swiper/react';
+import {Swiper, SwiperSlide} from 'swiper/react';
 import 'swiper/css';
 import 'swiper/css/navigation';
 import 'swiper/css/pagination';
 import './swiper-custom.css';
-import { Navigation, Pagination } from 'swiper/modules';
+import {Navigation, Pagination} from 'swiper/modules';
 import {useSelector} from "react-redux";
 import {RootState} from "../store";
 
@@ -71,7 +71,7 @@ function ReviewPage() {
                     fetchReviews();
                 }
             },
-            { threshold: 1.0 }
+            {threshold: 1.0}
         );
 
         const currentLoader = loader.current;
@@ -116,21 +116,32 @@ function ReviewPage() {
                 <div className={styles.reviewList}>
                     {reviews.map(review => (
                         <div key={review.reviewId} className={styles.reviewItem}>
-                            {review.photos && review.photos.length > 0 && (
+                            {review.photos && review.photos.length > 0 ? (
                                 <Swiper
                                     modules={[Navigation, Pagination]}
                                     spaceBetween={50}
                                     slidesPerView={1}
                                     navigation
-                                    pagination={{ clickable: true }}
+                                    pagination={{clickable: true}}
                                     className="review-swiper"
                                 >
                                     {review.photos.map(photo => (
                                         <SwiperSlide key={photo.photoId}>
-                                            <img src={photo.photoUrl} alt={review.caption || review.title} className={styles.reviewImage} />
+                                            <img src={photo.photoUrl} alt={review.caption || review.title}
+                                                 className={styles.reviewImage}/>
                                         </SwiperSlide>
                                     ))}
                                 </Swiper>
+                            ) : (
+                                <div className={styles.reviewImage} style={{
+                                    backgroundColor: '#f0f0f0',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    color: '#ccc'
+                                }}>
+                                    <span>No Image</span>
+                                </div>
                             )}
                             <div className={styles.reviewInfo}>
                                 <p className={styles.reviewTitleLink}>
@@ -138,7 +149,8 @@ function ReviewPage() {
                                         <strong>{review.title}</strong>
                                     </Link>
                                 </p>
-                                <Link to={'/calender/'+review.contentId} className={styles.reviewContentLink}>{review.contentTitle}</Link>
+                                <Link to={'/calender/' + review.contentId}
+                                      className={styles.reviewContentLink}>{review.contentTitle}</Link>
                                 <div className={styles.reviewMeta}>
                                     <span>{review.username}</span>
                                     <span>⭐ {review.rating}</span>
