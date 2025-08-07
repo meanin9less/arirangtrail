@@ -60,9 +60,14 @@ const ShareApi = ({shareData, children, className}: ShareApiProps) => {
         setShowMoreOptions(false); // 메뉴 닫기
     };
 
-    const copyUrlToClipboard = async () => {
+    const copyUrlToClipboard = () => {
         try {
-            await navigator.clipboard.writeText(shareData.url);
+            const tempInput = document.createElement('input');
+            tempInput.value = shareData.url;
+            document.body.appendChild(tempInput);
+            tempInput.select();
+            document.execCommand('copy');
+            document.body.removeChild(tempInput);
             alert('페이지 주소가 클립보드에 복사되었습니다.');
         } catch (err) {
             alert('주소 복사에 실패했습니다.');
@@ -75,15 +80,6 @@ const ShareApi = ({shareData, children, className}: ShareApiProps) => {
         setShowMoreOptions(prev => !prev);
     };
 
-    const handleShare = async () => {
-        // navigator.share가 존재하고, "동시에 모바일 환경일 때만" 네이티브 공유창을 사용합니다.
-        if (navigator.share && isMobile) {
-            await navigator.share(shareData);
-        } else {
-            // PC 환경이거나, navigator.share를 지원하지 않으면 무조건 우리가 만든 메뉴를 띄웁니다.
-            setShowMoreOptions(prev => !prev);
-        }
-    };
 
     useEffect(() => {
         const handleClickOutside = (event: MouseEvent) => {
