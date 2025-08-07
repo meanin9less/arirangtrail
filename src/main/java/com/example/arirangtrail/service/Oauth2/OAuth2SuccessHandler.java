@@ -46,7 +46,7 @@ public class OAuth2SuccessHandler implements AuthenticationSuccessHandler {
     public void onAuthenticationSuccess(HttpServletRequest request, HttpServletResponse response, Authentication authentication) throws IOException, ServletException {
         // CustomOAuth2UserService에서 반환한 CustomOAuth2User 객체를 가져옴
         CustomOAuth2User oAuth2User = (CustomOAuth2User) authentication.getPrincipal();
-        long accessTokenValidityInSeconds = 600L;
+        long accessTokenValidityInSeconds = 6000L;
 
         String name = oAuth2User.getUserName();
         String email = oAuth2User.getEmail();
