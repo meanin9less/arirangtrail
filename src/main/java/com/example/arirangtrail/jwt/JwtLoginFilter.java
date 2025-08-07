@@ -50,7 +50,7 @@ public class JwtLoginFilter extends UsernamePasswordAuthenticationFilter {
         CustomUserDetails userDetails = (CustomUserDetails) authResult.getPrincipal();
         // CustomUserDetails에서 UserEntity를 꺼냄
         UserEntity userEntity = userDetails.getUserEntity();
-        long accessTokenValidityInSeconds = 120L;//(5분=300초)/(2분=120초 테스트용)
+        long accessTokenValidityInSeconds = 6000L;//(5분=300초)/(2분=120초 테스트용)
         
 
         String username = userEntity.getUsername();

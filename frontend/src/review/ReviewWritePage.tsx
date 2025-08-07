@@ -1,7 +1,7 @@
-import React, { useState, ChangeEvent, FormEvent, useEffect } from 'react';
+import React, {useState, ChangeEvent, FormEvent, useEffect} from 'react';
 import apiClient from '../api/axiosInstance';
 import axios from 'axios';
-import { useNavigate } from 'react-router-dom';
+import {useNavigate} from 'react-router-dom';
 import styles from './ReviewWrite.module.css';
 import {useSelector} from "react-redux";
 import {RootState} from "../store";
@@ -14,7 +14,7 @@ interface Location {
 function ReviewWritePage() {
     const navigate = useNavigate();
     const username = useSelector((state: RootState) => state.token.userProfile?.username);
-    if(!username){
+    if (!username) {
         navigate(-1);
     }
     const [title, setTitle] = useState<string>('');
@@ -128,7 +128,7 @@ function ReviewWritePage() {
             visitdate: visitDate,
         };
 
-        formData.append('createRequest', new Blob([JSON.stringify(createRequest)], { type: "application/json" }));
+        formData.append('createRequest', new Blob([JSON.stringify(createRequest)], {type: "application/json"}));
 
         photos.forEach(photo => {
             formData.append('photos', photo);
@@ -246,7 +246,7 @@ function ReviewWritePage() {
                     >
                         {[5, 4, 3, 2, 1].map(ratingValue => (
                             <option key={ratingValue} value={ratingValue}>
-                                {'⭐'.repeat(ratingValue)} {ratingValue}점
+                                {'⭐'.repeat(ratingValue)}
                             </option>
                         ))}
                     </select>
@@ -263,11 +263,6 @@ function ReviewWritePage() {
                         multiple
                         required // 사진 첨부 필수
                     />
-                    <div className={styles.imagePreviewContainer}>
-                        {imagePreviews.map((preview, index) => (
-                            <img key={index} src={preview} alt={`이미지 미리보기 ${index + 1}`} className={styles.imagePreview} />
-                        ))}
-                    </div>
                 </div>
 
                 <div className={styles.buttonContainer}>
