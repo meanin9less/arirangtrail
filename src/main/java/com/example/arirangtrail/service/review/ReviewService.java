@@ -7,6 +7,7 @@ import com.example.arirangtrail.data.entity.ReviewEntity;
 import com.example.arirangtrail.data.entity.ReviewphotoEntity;
 import com.example.arirangtrail.data.repository.ReviewRepository;
 import com.example.arirangtrail.data.repository.ReviewphotoRepository;
+import com.example.arirangtrail.data.repository.UserRepository;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.Builder;
 import lombok.RequiredArgsConstructor;
@@ -22,6 +23,7 @@ import java.io.IOException;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
@@ -37,6 +39,7 @@ public class ReviewService {
     private final ReviewRepository reviewRepository;
     private final ReviewphotoRepository reviewphotoRepository;
     private final FileStore fileStore;
+    private final UserRepository userRepository;
 
     @Value("${cloud.aws.s3.bucket}")
     private String bucket;
@@ -181,10 +184,10 @@ public class ReviewService {
                                 .build())
                         .collect(Collectors.toList())
                 : List.of();
-
+        String nickname = Objects.requireNonNull(this.userRepository.findById(entity.getUsername()).orElse(null)).getNickname();
         return ReviewResponseDto.builder()
                 .reviewId(entity.getId())
-                .username(entity.getUsername())
+                .username(nickname)
                 .contentId(entity.getContentid())
                 .contentTitle(entity.getContenttitle())
                 .title(entity.getTitle())
