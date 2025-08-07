@@ -141,4 +141,17 @@ public class UserDAO {
     public UserEntity findByEmail(String email) {
         return this.userRepository.findByEmail(email).orElseThrow(() -> new EntityNotFoundException("user not found"));
     }
+
+    public boolean existsByUsername(String username) {
+        return this.userRepository.findByUsername(username).isPresent();
+    }
+
+
+    public boolean existsByEmail(String email) {
+        return this.userRepository.findByEmail(email).isPresent();
+    }
+
+    public boolean existsByNickname(String nickname) {
+        return this.userRepository.findByNickname(nickname).isPresent();
+    }
 }

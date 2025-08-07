@@ -23,6 +23,7 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
                 .withSockJS();
         registry.addEndpoint("/ws-flutter") // 👈 플러터용 경로
                 .setAllowedOriginPatterns("*");
+
     }
 
     @Override

@@ -1,6 +1,7 @@
+// SecurityConfig.java (최종 수정 완료)
+
 package com.example.arirangtrail.config;
 
-import com.example.arirangtrail.config.oauth2.CustomAuthorizationRequestResolver;
 import com.example.arirangtrail.jwt.JwtFilter;
 import com.example.arirangtrail.jwt.JwtLoginFilter;
 import com.example.arirangtrail.jwt.JwtUtil;
@@ -8,26 +9,23 @@ import com.example.arirangtrail.jwt.customuserdetails.CustomUserDetailsService;
 import com.example.arirangtrail.service.Oauth2.CustomOAuth2UserService;
 import com.example.arirangtrail.service.Oauth2.OAuth2SuccessHandler;
 import lombok.RequiredArgsConstructor;
-import org.springframework.boot.autoconfigure.security.servlet.PathRequest;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
-import org.springframework.http.RequestEntity;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
+import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.security.oauth2.client.registration.ClientRegistrationRepository;
-import org.springframework.security.oauth2.client.web.OAuth2AuthorizationRequestResolver;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.web.cors.CorsConfiguration;
-import org.springframework.web.filter.ForwardedHeaderFilter;
+import org.springframework.web.cors.CorsConfigurationSource;
+import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
-import java.util.Collections;
 import java.util.List;
 
 @Configuration
@@ -39,10 +37,9 @@ public class SecurityConfig {
     private final CustomOAuth2UserService customOAuth2UserService;
     private final OAuth2SuccessHandler oAuth2SuccessHandler;
     private final CustomUserDetailsService customUserDetailsService;
-    private final ClientRegistrationRepository clientRegistrationRepository;
 
     @Bean
-    public AuthenticationManager authenticationManager(AuthenticationConfiguration configuration) throws Exception{
+    public AuthenticationManager authenticationManager(AuthenticationConfiguration configuration) throws Exception {
         return configuration.getAuthenticationManager();
     }
 
@@ -52,116 +49,75 @@ public class SecurityConfig {
     }
 
     @Bean
-    public ForwardedHeaderFilter forwardedHeaderFilter() {
-        return new ForwardedHeaderFilter();
-    }
-
-    @Bean
-    public OAuth2AuthorizationRequestResolver customAuthorizationRequestResolver() {
-        return new CustomAuthorizationRequestResolver(clientRegistrationRepository, "/oauth2/authorization");
-    }
-
-    @Bean
-    public SecurityFilterChain securityFilterChain(HttpSecurity http, OAuth2AuthorizationRequestResolver customAuthorizationRequestResolver) throws Exception {
+    public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
 
         JwtLoginFilter jwtLoginFilter = new JwtLoginFilter(authenticationManager(authenticationConfiguration), jwtUtil);
         jwtLoginFilter.setFilterProcessesUrl("/api/login");
 
-        http.csrf(csrf->csrf.disable())
-                .formLogin(formLogin->formLogin.disable())
-                .httpBasic(httpBasic->httpBasic.disable())
+        http
+                // 1. 기본 설정 (CSRF, FormLogin, HttpBasic 비활성화)
+                .csrf(AbstractHttpConfigurer::disable)
+                .formLogin(AbstractHttpConfigurer::disable)
+                .httpBasic(AbstractHttpConfigurer::disable)
 
-//                .authorizeHttpRequests(authorizeHttpRequests->{
-//                    authorizeHttpRequests.anyRequest().permitAll();
-//                })
-            // 추후 웹소켓 인증 통과를 위한 절차
-            .authorizeHttpRequests(authorizeHttpRequests -> {
-                authorizeHttpRequests
-                        // 모두 접속 및 접근 가능한 페이지
-                        .requestMatchers(
-                                "/",
-                                "/login", "/logout", "/join", "/api/app/login", "/api/app/simplejoin",
-                                "/api/reissue",
-                                "/favicon.ico"
-                        ).permitAll()
-                        .requestMatchers("/api/simplejoin").permitAll() // 소셜 로그인 후 간편가입 경로
+                // 2. CORS 설정 (별도 Bean 사용)
+                .cors(cors -> cors.configurationSource(corsConfigurationSource()))
 
-                        //축제 상태, 리뷰보기
-                        .requestMatchers(HttpMethod.GET,
-                                "/api/festivals/{contentid}/status",
-                                "/api/reviews",
-                                "/api/reviews/{reviewId}",
-                                "/api/reviews/{reviewId}/comments",
-                                "/api/reviews/rating/**"
-
-                        ).permitAll()
-
-                        //  인증이 필요한 API (authenticated)
-                        .requestMatchers(
-                                "/api/festivals/{contentid}/like",
-                                "/api/likes/my-list",
-                                "/api/files/upload",
-
-                                "/api/reviews/**", // 리뷰 작성(POST), 수정(PUT), 삭제(DELETE)
-                                "/api/reviews/{reviewId}/comments/**", // 댓글 작성, 수정, 삭제
-
-                                // --- 마이페이지 관련 ---
-                                "/api/userinfo",                  // 내 정보 조회 (GET)
-                                "/api/update-inform",             // 내 정보 수정 (PUT)
-                                "/api/upload-profile-image",      // 프로필 이미지 업로드 (POST)
-                                "/api/compare-password",          // 비밀번호 비교 (POST)
-                                "/api/reset-pw",                  // 비밀번호 재설정 (PUT)
-                                "/api/delete-member",             // 회원 탈퇴 (DELETE)
-                                "/api/reviews/my",                // 내가 쓴 리뷰 목록 (GET)
-
-                                // --- 채팅 관련 ---
-                                "/api/chat/**"
-                        ).authenticated()
-
-                        // 소셜 로그인 관련 경로
-                        .requestMatchers("/oauth2/**").permitAll()
-
-                        // WebSocket 연결 경로
-                        .requestMatchers("/ws-stomp/**").permitAll()
-
-                        // 나머지 모든 요청은 인증된 사용자만 접근 가능
-                        .anyRequest().authenticated();
-            })
-
-
-                .cors(cors->cors.configurationSource(request -> {
-                    CorsConfiguration corsConfiguration = new CorsConfiguration();
-                    corsConfiguration.setAllowCredentials(true);
-                    corsConfiguration.addAllowedHeader("*"); //클라이언트가 요청을 보낼때 보낼수 있는 헤더
-                    corsConfiguration.setExposedHeaders(List.of("Authorization")); //서버가 응답을 보낼때 브라우저가 접근할수 있는 헤더
-                    corsConfiguration.addAllowedMethod("*");
-                    corsConfiguration.addAllowedOrigin("http://localhost:3000");
-                    corsConfiguration.addAllowedOrigin("http://arirangtrail.duckdns.org");
-                    corsConfiguration.setAllowCredentials(true);
-                    return corsConfiguration;
-                }))
-
-                .sessionManagement(session->
+                // 3. 세션 관리 (STATELESS)
+                .sessionManagement(session ->
                         session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
 
-                .addFilterBefore(new JwtFilter(jwtUtil,customUserDetailsService), JwtLoginFilter.class)
+                // 4. 경로별 인가 설정
+                .authorizeHttpRequests(auth -> auth
+                        .requestMatchers(
+                                "/", "/login", "/join", "/api/reissue", "/api/app/**", "/oauth2/**",
+                                "/ws-stomp/**", "/ws-flutter/**", "/favicon.ico", "/error"
+                        ).permitAll()
+                        .requestMatchers(HttpMethod.GET,
+                                "/api/festivals/**",
+                                "/api/reviews/**"
+                        ).permitAll()
+                        .anyRequest().authenticated()
+                )
 
-                .addFilterAt(jwtLoginFilter, UsernamePasswordAuthenticationFilter.class)
-
-                .oauth2Login(oauth2->
+                // 5. OAuth2 로그인 설정
+                .oauth2Login(oauth2 ->
                         oauth2
-                                .authorizationEndpoint(authorization ->
-                                        authorization
-                                                .authorizationRequestResolver(customAuthorizationRequestResolver())
+                                // CustomAuthorizationRequestResolver는 현재 코드에 없으므로 일단 제거, 필요 시 추가
+                                // .authorizationEndpoint(authorization ->
+                                //         authorization.authorizationRequestResolver(...)
+                                // )
+                                .userInfoEndpoint(userInfo ->
+                                        userInfo.userService(customOAuth2UserService)
                                 )
-                                .userInfoEndpoint(userInfo->{
-                                    userInfo.userService(customOAuth2UserService);
-                                })
                                 .successHandler(oAuth2SuccessHandler)
                 )
-                .exceptionHandling(exception->{
-                    // exception 우선 비워둠
-                });
+
+                // 6. ✨ JwtFilter를 UsernamePasswordAuthenticationFilter 앞에 한 번만 추가
+                .addFilterBefore(new JwtFilter(jwtUtil, customUserDetailsService), UsernamePasswordAuthenticationFilter.class)
+
+                // 7. JwtLoginFilter를 UsernamePasswordAuthenticationFilter 위치에 추가
+                .addFilterAt(jwtLoginFilter, UsernamePasswordAuthenticationFilter.class);
+
+        // ✨ 중복되므로 이 부분은 삭제되었습니다.
+
         return http.build();
+    }
+
+    @Bean
+    public CorsConfigurationSource corsConfigurationSource() {
+        CorsConfiguration configuration = new CorsConfiguration();
+
+        // ✨ 개발 중에는 모든 출처를 허용하는 것이 가장 간단하고 확실합니다.
+        configuration.setAllowedOriginPatterns(List.of("*"));
+
+        configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"));
+        configuration.setAllowedHeaders(List.of("*"));
+        configuration.setExposedHeaders(List.of("Authorization"));
+        configuration.setAllowCredentials(true);
+
+        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+        source.registerCorsConfiguration("/**", configuration);
+        return source;
     }
 }
