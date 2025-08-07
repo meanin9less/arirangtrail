@@ -128,7 +128,7 @@ function ReviewUpdatePage() {
         setShowModal(false);
         setModalMessage('');
         if (messageType === 'success') {
-            navigate(`/review/${reviewId}`);
+            navigate(`/review/detail/${reviewId}`);
         }
     };
 
@@ -297,7 +297,7 @@ function ReviewUpdatePage() {
                     </button>
                     <button
                         type="button"
-                        onClick={() => navigate(`/review/${reviewId}`)}
+                        onClick={() => navigate(`/review/detail/${reviewId}`)}
                         className={styles.cancelButton}
                     >
                         취소

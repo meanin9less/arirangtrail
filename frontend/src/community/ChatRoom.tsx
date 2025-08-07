@@ -257,12 +257,14 @@ const ChatRoom = ({ roomId, onLeave }: ChatRoomProps) => {
     };
 
     const handleImageIconClick = () => { fileInputRef.current?.click(); setIsOptionsOpen(false); };
+
     const handleLeaveRoom = async () => {
         if (!userName) return;
         try { await apiClient.post(`chat/rooms/${roomId}/leave`, { username: userName }); alert("채팅방에서 나갔습니다."); onLeave(-1);
         } catch (error) { console.error("채팅방 나가기에 실패했습니다.", error); alert("채팅방을 나가는 중 오류가 발생했습니다."); }
     };
     const handleExitToLobby = () => { onLeave(lastMessageSeqRef.current); };
+
     const handleDeleteRoom = async () => {
         if (!userName || !window.confirm("정말로 이 방을 삭제하시겠습니까?")) return;
         try { await apiClient.delete(`chat/rooms/${roomId}`, { data: { username: userName } }); alert("채팅방이 삭제되었습니다."); onLeave(0);
