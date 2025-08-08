@@ -26,6 +26,22 @@ public class UserService {
 
     // --- 기존 함수들: 이 부분은 사용자님께서 제공해주신 코드와 동일하게 유지됩니다. ---
     public String join(JoinDTO joinDTO) {
+        // 1. 아이디(username) 중복 확인
+        if (userDAO.existsByUsername(joinDTO.getUsername())) {
+            return "이미 사용 중인 아이디입니다.";
+        }
+
+        // 2. 이메일(email) 중복 확인
+        if (userDAO.existsByEmail(joinDTO.getEmail())) {
+            return "이미 사용 중인 이메일입니다.";
+        }
+
+        // 3. 닉네임(nickname) 중복 확인
+        if (userDAO.existsByNickname(joinDTO.getNickname())) {
+            return "이미 사용 중인 닉네임입니다.";
+        }
+
+        // 4. 모든 중복 검사를 통과했을 때만 회원가입 진행
         return userDAO.join(
                 joinDTO.getUsername(),
                 joinDTO.getPassword(),

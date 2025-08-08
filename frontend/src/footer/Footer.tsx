@@ -27,9 +27,10 @@ const Footer: React.FC = () => {
                     <p className={styles.contact}>대표 전화: 02-1234-5678 | 이메일: info@arirangtrail.com</p>
                     <p className={styles.contact2}>출처: 한국관광공사</p>
                 </div>
-                {visitorCount !== 0 && (
+
+                {visitorCount !== null && visitorCount !== undefined && visitorCount > 0 &&(
                     <p className={styles.contact2}>
-                        금일 홈페이지 방문자수 : {visitorCount}
+                        금일 홈페이지 방문자수 : {visitorCount} 명
                     </p>
                 )}
                 <p className={styles.copyright}>&copy; {new Date().getFullYear()} Arirang Trail. All rights

@@ -44,6 +44,11 @@ public class JwtFilter extends OncePerRequestFilter {
 //            // 추가적으로 인증 없이 접근해야 하는 모든 경로를 여기에 추가합니다.
 //    };
 
+    private static final String[] WHITELIST = {
+            "/ws-stomp/**",
+            "/ws-flutter/**",
+    };
+
 
 
     @Override
@@ -56,6 +61,14 @@ public class JwtFilter extends OncePerRequestFilter {
         if (requestURI.startsWith("/login/oauth2/")) {
             filterChain.doFilter(request, response);
             return;
+        }
+
+        // ✨ 3. 현재 요청 경로가 화이트리스트에 있는지 확인
+        if (Arrays.stream(WHITELIST).anyMatch(pattern -> antPathMatcher.match(pattern, requestURI))) {
+            // 화이트리스트에 있는 경로라면, 토큰 검사 로직을 모두 건너뛰고
+            // 즉시 다음 필터로 제어권을 넘깁니다.
+            filterChain.doFilter(request, response);
+            return; // ✨ 여기서 함수를 종료하는 것이 핵심입니다.
         }
 
 
