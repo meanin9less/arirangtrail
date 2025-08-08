@@ -70,7 +70,7 @@ public class SecurityConfig {
                 // 4. 경로별 인가 설정
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(
-                                "/", "/login", "/join", "/api/reissue", "/api/app/**", "/oauth2/**",
+                                "/", "/login", "/api/join", "/api/reissue", "/api/app/**", "/oauth2/**",
                                 "/ws-stomp/**", "/ws-flutter/**", "/favicon.ico", "/error"
                         ).permitAll()
                         .requestMatchers(HttpMethod.GET,
