@@ -55,15 +55,9 @@ public class SecurityConfig {
         jwtLoginFilter.setFilterProcessesUrl("/api/login");
 
         http
-                // 1. 기본 설정 (CSRF, FormLogin, HttpBasic 비활성화)
                 .csrf(AbstractHttpConfigurer::disable)
                 .formLogin(AbstractHttpConfigurer::disable)
                 .httpBasic(AbstractHttpConfigurer::disable)
-
-//                .authorizeHttpRequests(authorizeHttpRequests->{
-//                    authorizeHttpRequests.anyRequest().permitAll();
-//                })
-            // 추후 웹소켓 인증 통과를 위한 절차
             .authorizeHttpRequests(authorizeHttpRequests -> {
                 authorizeHttpRequests
                         // 모두 접속 및 접근 가능한 페이지
@@ -81,7 +75,7 @@ public class SecurityConfig {
                                 "/api/reviews",
                                 "/api/reviews/{reviewId}",
                                 "/api/reviews/{reviewId}/comments",
-                                "/api/reviews/rating/**"
+                                "/api/reviews/rating/**");})
 
                 // 2. CORS 설정 (별도 Bean 사용)
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
