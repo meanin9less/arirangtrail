@@ -60,6 +60,29 @@ public class SecurityConfig {
                 .formLogin(AbstractHttpConfigurer::disable)
                 .httpBasic(AbstractHttpConfigurer::disable)
 
+//                .authorizeHttpRequests(authorizeHttpRequests->{
+//                    authorizeHttpRequests.anyRequest().permitAll();
+//                })
+            // 추후 웹소켓 인증 통과를 위한 절차
+            .authorizeHttpRequests(authorizeHttpRequests -> {
+                authorizeHttpRequests
+                        // 모두 접속 및 접근 가능한 페이지
+                        .requestMatchers(
+                                "/",
+                                "/login", "/logout", "/join", "/api/app/login", "/api/app/simplejoin", "/api/join",
+                                "/api/reissue",
+                                "/favicon.ico"
+                        ).permitAll()
+                        .requestMatchers("/api/simplejoin").permitAll() // 소셜 로그인 후 간편가입 경로
+
+                        //축제 상태, 리뷰보기
+                        .requestMatchers(HttpMethod.GET,
+                                "/api/festivals/{contentid}/status",
+                                "/api/reviews",
+                                "/api/reviews/{reviewId}",
+                                "/api/reviews/{reviewId}/comments",
+                                "/api/reviews/rating/**"
+
                 // 2. CORS 설정 (별도 Bean 사용)
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
 
