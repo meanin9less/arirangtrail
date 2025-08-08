@@ -61,7 +61,7 @@ function JoinPage() {
         console.log('회원가입 데이터:', formData);
 
         try {
-            const response = await apiClient.post<JoinResponse>('/join', formData);
+            const response = await apiClient.post<JoinResponse>('api/join', formData);
 
             const successMessage = response.data.message || '회원가입 성공!';
             setMessage(successMessage);
